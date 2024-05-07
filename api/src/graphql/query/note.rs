@@ -1,5 +1,5 @@
 use async_graphql::{Context, Object, Result};
-use entity::{async_graphql, note};
+use entity::{async_graphql, notes};
 use omnity_indexer_service::Query;
 
 use crate::db::Database;
@@ -9,7 +9,7 @@ pub struct NoteQuery;
 
 #[Object]
 impl NoteQuery {
-    async fn get_notes(&self, ctx: &Context<'_>) -> Result<Vec<note::Model>> {
+    async fn get_notes(&self, ctx: &Context<'_>) -> Result<Vec<notes::Model>> {
         let db = ctx.data::<Database>().unwrap();
         let conn = db.get_connection();
 
@@ -18,7 +18,7 @@ impl NoteQuery {
             .map_err(|e| e.to_string())?)
     }
 
-    async fn get_note_by_id(&self, ctx: &Context<'_>, id: i32) -> Result<Option<note::Model>> {
+    async fn get_note_by_id(&self, ctx: &Context<'_>, id: i32) -> Result<Option<notes::Model>> {
         let db = ctx.data::<Database>().unwrap();
         let conn = db.get_connection();
 

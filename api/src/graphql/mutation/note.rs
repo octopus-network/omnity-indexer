@@ -1,6 +1,6 @@
 use async_graphql::{Context, Object, Result};
 use entity::async_graphql::{self, InputObject, SimpleObject};
-use entity::note;
+use entity::notes;
 use omnity_indexer_service::Mutation;
 
 use crate::db::Database;
@@ -15,8 +15,8 @@ pub struct CreateNoteInput {
 }
 
 impl CreateNoteInput {
-    fn into_model_with_arbitrary_id(self) -> note::Model {
-        note::Model {
+    fn into_model_with_arbitrary_id(self) -> notes::Model {
+        notes::Model {
             id: 0,
             title: self.title,
             text: self.text,
@@ -39,7 +39,7 @@ impl NoteMutation {
         &self,
         ctx: &Context<'_>,
         input: CreateNoteInput,
-    ) -> Result<note::Model> {
+    ) -> Result<notes::Model> {
         let db = ctx.data::<Database>().unwrap();
         let conn = db.get_connection();
 

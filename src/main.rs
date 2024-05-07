@@ -1,3 +1,3 @@
 fn main() {
-    omnity_indexer_api::main();
+    omnity_indexer_sync::main();
 }

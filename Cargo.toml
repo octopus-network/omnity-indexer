@@ -10,4 +10,4 @@ publish = false
 members = [".", "sync", "api", "service", "entity", "migration"]
 
 [dependencies]
-omnity-indexer-api = { path = "api" }
+omnity-indexer-sync = { path = "sync" }

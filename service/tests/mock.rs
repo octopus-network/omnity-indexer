@@ -1,6 +1,6 @@
 mod prepare;
 
-use entity::note;
+use entity::notes;
 use omnity_indexer_service::{Mutation, Query};
 use prepare::prepare_mock_db;
 
@@ -23,7 +23,7 @@ async fn main() {
     {
         let note = Mutation::create_note(
             db,
-            note::Model {
+            notes::Model {
                 id: 0,
                 title: "Title D".to_owned(),
                 text: "Text D".to_owned(),
@@ -34,7 +34,7 @@ async fn main() {
 
         assert_eq!(
             note,
-            note::Model {
+            notes::Model {
                 id: 6,
                 title: "Title D".to_owned(),
                 text: "Text D".to_owned(),
@@ -46,7 +46,7 @@ async fn main() {
         let note = Mutation::update_note_by_id(
             db,
             1,
-            note::Model {
+            notes::Model {
                 id: 1,
                 title: "New Title A".to_owned(),
                 text: "New Text A".to_owned(),
@@ -57,7 +57,7 @@ async fn main() {
 
         assert_eq!(
             note,
-            note::Model {
+            notes::Model {
                 id: 1,
                 title: "New Title A".to_owned(),
                 text: "New Text A".to_owned(),

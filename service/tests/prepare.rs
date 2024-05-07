@@ -1,36 +1,36 @@
-use ::entity::note;
+use ::entity::notes;
 use sea_orm::*;
 
 #[cfg(feature = "mock")]
 pub fn prepare_mock_db() -> DatabaseConnection {
     MockDatabase::new(DatabaseBackend::Postgres)
         .append_query_results([
-            [note::Model {
+            [notes::Model {
                 id: 1,
                 title: "Title A".to_owned(),
                 text: "Text A".to_owned(),
             }],
-            [note::Model {
+            [notes::Model {
                 id: 5,
                 title: "Title C".to_owned(),
                 text: "Text C".to_owned(),
             }],
-            [note::Model {
+            [notes::Model {
                 id: 6,
                 title: "Title D".to_owned(),
                 text: "Text D".to_owned(),
             }],
-            [note::Model {
+            [notes::Model {
                 id: 1,
                 title: "Title A".to_owned(),
                 text: "Text A".to_owned(),
             }],
-            [note::Model {
+            [notes::Model {
                 id: 1,
                 title: "New Title A".to_owned(),
                 text: "New Text A".to_owned(),
             }],
-            [note::Model {
+            [notes::Model {
                 id: 5,
                 title: "Title C".to_owned(),
                 text: "Text C".to_owned(),

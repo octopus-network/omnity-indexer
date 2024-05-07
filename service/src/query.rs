@@ -1,14 +1,14 @@
-use ::entity::{note, note::Entity as Note};
+use ::entity::{notes, notes::Entity as Note};
 use sea_orm::*;
 
 pub struct Query;
 
 impl Query {
-    pub async fn find_note_by_id(db: &DbConn, id: i32) -> Result<Option<note::Model>, DbErr> {
+    pub async fn find_note_by_id(db: &DbConn, id: i32) -> Result<Option<notes::Model>, DbErr> {
         Note::find_by_id(id).one(db).await
     }
 
-    pub async fn get_all_notes(db: &DbConn) -> Result<Vec<note::Model>, DbErr> {
+    pub async fn get_all_notes(db: &DbConn) -> Result<Vec<notes::Model>, DbErr> {
         Note::find().all(db).await
     }
 
@@ -17,10 +17,10 @@ impl Query {
         db: &DbConn,
         page: u64,
         notes_per_page: u64,
-    ) -> Result<(Vec<note::Model>, u64), DbErr> {
+    ) -> Result<(Vec<notes::Model>, u64), DbErr> {
         // Setup paginator
         let paginator = Note::find()
-            .order_by_asc(note::Column::Id)
+            .order_by_asc(notes::Column::Id)
             .paginate(db, notes_per_page);
         let num_pages = paginator.num_pages().await?;
 
