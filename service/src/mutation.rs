@@ -1,4 +1,8 @@
+use ::entity::{chain_meta, chain_meta::Entity as ChainMeta};
 use ::entity::{notes, notes::Entity as Note};
+use ::entity::{ticket, ticket::Entity as Ticket};
+use ::entity::{token_meta, token_meta::Entity as TokenMeta};
+
 use sea_orm::*;
 
 pub struct Mutation;
@@ -50,5 +54,63 @@ impl Mutation {
 
     pub async fn delete_all_notes(db: &DbConn) -> Result<DeleteResult, DbErr> {
         Note::delete_many().exec(db).await
+    }
+    pub async fn create_chain(
+        db: &DbConn,
+        form_data: chain_meta::Model,
+    ) -> Result<chain_meta::Model, DbErr> {
+        let active_model = chain_meta::ActiveModel {
+            chain_id: Set(form_data.chain_id.to_owned()),
+            canister_id: Set(form_data.canister_id.to_owned()),
+            chain_type: Set(form_data.chain_type.to_owned()),
+            chain_state: Set(form_data.chain_state.to_owned()),
+            contract_address: Set(form_data.contract_address.to_owned()),
+            counterparties: Set(form_data.counterparties.to_owned()),
+            fee_token: Set(form_data.fee_token.to_owned()),
+        };
+        let res = ChainMeta::insert(active_model).exec(db).await?;
+        println!("create_chain result: {:?}", res);
+        Ok(chain_meta::Model { ..form_data })
+    }
+    pub async fn create_token(
+        db: &DbConn,
+        form_data: token_meta::Model,
+    ) -> Result<token_meta::Model, DbErr> {
+        let active_model = token_meta::ActiveModel {
+            token_id: Set(form_data.token_id.to_owned()),
+            name: Set(form_data.name.to_owned()),
+            symbol: Set(form_data.symbol.to_owned()),
+            issue_chain: Set(form_data.issue_chain.to_owned()),
+            decimals: Set(form_data.decimals.to_owned()),
+            icon: Set(form_data.icon.to_owned()),
+            metadata: Set(form_data.metadata.to_owned()),
+            dst_chains: Set(form_data.dst_chains.to_owned()),
+        };
+        let res = TokenMeta::insert(active_model).exec(db).await?;
+        println!("create_token result: {:?}", res);
+        Ok(token_meta::Model { ..form_data })
+    }
+    pub async fn create_ticket(
+        db: &DbConn,
+        form_data: ticket::Model,
+    ) -> Result<ticket::Model, DbErr> {
+        let active_model = ticket::ActiveModel {
+            ticket_id: Set(form_data.ticket_id.to_owned()),
+            ticket_type: Set(form_data.ticket_type.to_owned()),
+            ticket_time: Set(form_data.ticket_time.to_owned()),
+            src_chain: Set(form_data.src_chain.to_owned()),
+            dst_chain: Set(form_data.dst_chain.to_owned()),
+            action: Set(form_data.action.to_owned()),
+            token: Set(form_data.token.to_owned()),
+            amount: Set(form_data.amount.to_owned()),
+            sender: Set(form_data.sender.to_owned()),
+            receiver: Set(form_data.receiver.to_owned()),
+            memo: Set(form_data.memo.to_owned()),
+        };
+        // let res = Ticket::insert(active_model).exec(db).await?;
+        // Ok(ticket::Model { ..form_data })
+        let res = active_model.insert(db).await?;
+        println!("create_ticket result: {:?}", res);
+        Ok(res)
     }
 }

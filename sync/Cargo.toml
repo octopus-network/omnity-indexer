@@ -6,11 +6,32 @@ edition = "2021"
 publish = false
 
 [dependencies]
-omnity-indexer-service = { path = "../service" }
+candid = "0.10.1"
+ic-agent = "0.34.0"
+ic-identity-hsm = "0.34.0"
+ic-utils = { version = "0.34.0", features = ["raw"] }
+ring = "0.17.7"
+serde = { version = "1.0.162", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10.6"
 tokio = { version = "1.29", features = ["full"] }
 axum = "0.6.18"
 axum-macros = "0.3"
 dotenvy = "0.15.7"
 async-graphql-axum = "5.0.10"
+
+sea-orm = { version = "0.12", features = [
+    "debug-print",
+    "runtime-tokio-rustls",
+    "sqlx-postgres",
+] }
+
+omnity-indexer-service = { path = "../service" }
 entity = { path = "../entity" }
 migration = { path = "../migration" }
+ciborium = "0.2.1"
+thiserror = "1"
+
+[dev-dependencies]
+serde_cbor = "0.11.2"
+ic-certification = "2.2"

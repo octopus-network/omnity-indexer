@@ -10,7 +10,7 @@ path = "src/lib.rs"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-
+# omnity-indexer-sync = { path = "../sync" }
 [dependencies.async-graphql]
 version = "5.0.10"
 

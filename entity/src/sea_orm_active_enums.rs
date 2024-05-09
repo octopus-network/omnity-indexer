@@ -9,8 +9,6 @@ pub enum ChainState {
     Active,
     #[sea_orm(string_value = "Deactive")]
     Deactive,
-    #[sea_orm(string_value = "chain_state")]
-    ChainState,
 }
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "chain_type")]
@@ -19,8 +17,6 @@ pub enum ChainType {
     ExecutionChain,
     #[sea_orm(string_value = "SettlementChain")]
     SettlementChain,
-    #[sea_orm(string_value = "chain_type")]
-    ChainType,
 }
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "ticket_type")]
@@ -29,8 +25,6 @@ pub enum TicketType {
     Normal,
     #[sea_orm(string_value = "Resubmit")]
     Resubmit,
-    #[sea_orm(string_value = "ticket_type")]
-    TicketType,
 }
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "tx_action")]
@@ -39,6 +33,4 @@ pub enum TxAction {
     Redeem,
     #[sea_orm(string_value = "Transfer")]
     Transfer,
-    #[sea_orm(string_value = "tx_action")]
-    TxAction,
 }

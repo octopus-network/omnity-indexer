@@ -7,9 +7,7 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "ticket")]
 pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: i32,
-    #[sea_orm(column_type = "Text")]
+    #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub ticket_id: String,
     pub ticket_type: TicketType,
     pub ticket_time: i64,

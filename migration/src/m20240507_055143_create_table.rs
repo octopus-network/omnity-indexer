@@ -1,8 +1,4 @@
-use sea_orm_migration::{
-    prelude::*,
-    sea_orm::{EnumIter, Iterable},
-    sea_query::extension::postgres::Type,
-};
+use sea_orm_migration::{prelude::*, sea_orm::EnumIter, sea_query::extension::postgres::Type};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -15,7 +11,7 @@ impl MigrationTrait for Migration {
             .create_type(
                 Type::create()
                     .as_enum(Alias::new("chain_type"))
-                    .values(ChainType::iter())
+                    .values([ChainType::SettlementChain, ChainType::ExecutionChain])
                     .to_owned(),
             )
             .await?;
@@ -23,7 +19,7 @@ impl MigrationTrait for Migration {
             .create_type(
                 Type::create()
                     .as_enum(Alias::new("chain_state"))
-                    .values(ChainState::iter())
+                    .values([ChainState::Active, ChainState::Deactive])
                     .to_owned(),
             )
             .await?;
@@ -31,7 +27,7 @@ impl MigrationTrait for Migration {
             .create_type(
                 Type::create()
                     .as_enum(Alias::new("ticket_type"))
-                    .values(TicketType::iter())
+                    .values([TicketType::Normal, TicketType::Resubmit])
                     .to_owned(),
             )
             .await?;
@@ -39,7 +35,7 @@ impl MigrationTrait for Migration {
             .create_type(
                 Type::create()
                     .as_enum(Alias::new("tx_action"))
-                    .values(TxAction::iter())
+                    .values([TxAction::Transfer, TxAction::Redeem])
                     .to_owned(),
             )
             .await?;
@@ -56,15 +52,17 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(ChainMeta::CanisterId).text().not_null())
-                    .col(
-                        ColumnDef::new(ChainMeta::ChainType)
-                            .not_null()
-                            .enumeration(Alias::new("chain_type"), ChainType::iter()),
-                    )
+                    .col(ColumnDef::new(ChainMeta::ChainType).not_null().enumeration(
+                        Alias::new("chain_type"),
+                        [ChainType::SettlementChain, ChainType::ExecutionChain],
+                    ))
                     .col(
                         ColumnDef::new(ChainMeta::ChainState)
                             .not_null()
-                            .enumeration(Alias::new("chain_state"), ChainState::iter()),
+                            .enumeration(
+                                Alias::new("chain_state"),
+                                [ChainState::Active, ChainState::Deactive],
+                            ),
                     )
                     .col(ColumnDef::new(ChainMeta::ContractAddress).string().null())
                     .col(ColumnDef::new(ChainMeta::Counterparties).json().null())
@@ -94,8 +92,8 @@ impl MigrationTrait for Migration {
                             .not_null(),
                     )
                     .col(ColumnDef::new(TokenMeta::Icon).text().null())
-                    .col(ColumnDef::new(TokenMeta::Metadata).json().null())
-                    .col(ColumnDef::new(TokenMeta::DstChains).json().null())
+                    .col(ColumnDef::new(TokenMeta::Metadata).json().not_null())
+                    .col(ColumnDef::new(TokenMeta::DstChains).json().not_null())
                     .to_owned(),
             )
             .await?;
@@ -107,26 +105,22 @@ impl MigrationTrait for Migration {
                     .table(Ticket::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Ticket::Id)
-                            .integer()
+                        ColumnDef::new(Ticket::TicketId)
+                            .text()
                             .not_null()
-                            .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Ticket::TicketId).text().not_null())
-                    .col(
-                        ColumnDef::new(Ticket::TicketType)
-                            .not_null()
-                            .enumeration(Alias::new("ticket_type"), TicketType::iter()),
-                    )
+                    .col(ColumnDef::new(Ticket::TicketType).not_null().enumeration(
+                        Alias::new("ticket_type"),
+                        [TicketType::Normal, TicketType::Resubmit],
+                    ))
                     .col(ColumnDef::new(Ticket::TicketTime).big_unsigned().not_null())
                     .col(ColumnDef::new(Ticket::SrcChain).string().not_null())
                     .col(ColumnDef::new(Ticket::DstChain).string().not_null())
-                    .col(
-                        ColumnDef::new(Ticket::Action)
-                            .not_null()
-                            .enumeration(Alias::new("tx_action"), TxAction::iter()),
-                    )
+                    .col(ColumnDef::new(Ticket::Action).not_null().enumeration(
+                        Alias::new("tx_action"),
+                        [TxAction::Transfer, TxAction::Redeem],
+                    ))
                     .col(ColumnDef::new(Ticket::Token).string().not_null())
                     .col(ColumnDef::new(Ticket::Amount).string().not_null())
                     .col(ColumnDef::new(Ticket::Sender).string().null())
@@ -192,7 +186,6 @@ enum TokenMeta {
 #[derive(DeriveIden)]
 enum Ticket {
     Table,
-    Id,
     TicketId,
     TicketType,
     TicketTime,

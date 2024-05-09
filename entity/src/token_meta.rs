@@ -13,8 +13,8 @@ pub struct Model {
     pub decimals: i16,
     #[sea_orm(column_type = "Text", nullable)]
     pub icon: Option<String>,
-    pub metadata: Option<Json>,
-    pub dst_chains: Option<Json>,
+    pub metadata: Json,
+    pub dst_chains: Json,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
