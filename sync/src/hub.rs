@@ -11,7 +11,7 @@ use sea_orm::DbConn;
 use std::{error::Error, future::Future, path::Path};
 use types::{ChainState, ChainType, Error as OmnityError};
 
-pub fn with_omnity_hub_canister<F, R>(f: F)
+pub async fn with_omnity_hub_canister<F, R>(f: F)
 where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent, Principal) -> R,
@@ -20,10 +20,11 @@ where
         let canister_id = create_omnity_hub_canister(&agent).await?;
         f(agent, canister_id).await
     })
+    .await;
 }
 
 //TODO: add env var for identity
-pub fn with_omnity_hub_canister_as<I, F, R>(identity: I, f: F)
+pub async fn with_omnity_hub_canister_as<I, F, R>(identity: I, f: F)
 where
     I: Identity + 'static,
     R: Future<Output = Result<(), Box<dyn Error>>>,
@@ -33,6 +34,7 @@ where
         let canister_id = create_omnity_hub_canister(&agent).await?;
         f(agent, canister_id).await
     })
+    .await;
 }
 
 pub async fn create_omnity_hub_canister(agent: &Agent) -> Result<Principal, Box<dyn Error>> {
@@ -77,8 +79,9 @@ pub async fn create_omnity_hub_canister(agent: &Agent) -> Result<Principal, Box<
     }
 }
 
-pub fn sync_chains(db: &DbConn) {
+pub async fn sync_chains(db: &DbConn) {
     with_omnity_hub_canister(|agent, canister_id| async move {
+        println!("{:?} syncing chains ... ", chrono::Utc::now());
         let offset = 0u64;
         let limit = 10u64;
         let args = Encode!(&offset, &limit).unwrap();
@@ -89,17 +92,19 @@ pub fn sync_chains(db: &DbConn) {
             .await?;
 
         let ret = Decode!(&ret, Result<Vec<ChainMeta>, OmnityError>)?.unwrap();
-
+        println!("synced chains {:?} ", ret);
         for chain in ret {
-            Mutation::create_chain(db, chain.into()).await?;
+            Mutation::save_chain(db, chain.into()).await?;
         }
 
         Ok(())
     })
+    .await
 }
 
-pub fn sync_tokens(db: &DbConn) {
+pub async fn sync_tokens(db: &DbConn) {
     with_omnity_hub_canister(|agent, canister_id| async move {
+        println!("{:?} syncing tokens ... ", chrono::Utc::now());
         let offset = 0u64;
         let limit = 10u64;
         let args = Encode!(&offset, &limit).unwrap();
@@ -110,17 +115,20 @@ pub fn sync_tokens(db: &DbConn) {
             .await?;
 
         let ret = Decode!(&ret, Result<Vec<TokenMeta>, OmnityError>)?.unwrap();
+        println!("synced tokens {:?} ", ret);
 
         for chain in ret {
-            Mutation::create_token(db, chain.into()).await?;
+            Mutation::save_token(db, chain.into()).await?;
         }
 
         Ok(())
     })
+    .await
 }
 
-pub fn sync_tickets(db: &DbConn) {
+pub async fn sync_tickets(db: &DbConn) {
     with_omnity_hub_canister(|agent, canister_id| async move {
+        println!("{:?} syncing tickets ... ", chrono::Utc::now());
         let offset = 0u64;
         let limit = 10u64;
         let args = Encode!(&offset, &limit).unwrap();
@@ -131,11 +139,13 @@ pub fn sync_tickets(db: &DbConn) {
             .await?;
 
         let tickets = Decode!(&ret, Result<Vec<Ticket>, OmnityError>)?.unwrap();
+        println!("synced tickets {:?} ", tickets);
 
         for ticket in tickets {
-            Mutation::create_ticket(db, ticket.into()).await?;
+            Mutation::save_ticket(db, ticket.into()).await?;
         }
 
         Ok(())
     })
+    .await
 }

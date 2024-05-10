@@ -97,7 +97,7 @@ async fn test_chain_meta() {
         }
     }
     {
-        let chain = Mutation::create_chain(
+        let chain = Mutation::save_chain(
             db,
             chain_meta::Model {
                 chain_id: "EVM-Arbitrum".to_string(),
@@ -154,7 +154,7 @@ async fn test_token_meta() {
         }
     }
     {
-        let token = Mutation::create_token(
+        let token = Mutation::save_token(
             db,
             token_meta::Model {
                 token_id: "Ethereum-ERC20-ARB".to_string(),
@@ -237,7 +237,7 @@ async fn test_ticket() {
         // let res = ticket::Entity::insert(active_model).exec(db).await;
         // println!("create_ticket result: {:?}", res);
 
-        let ticket = Mutation::create_ticket(
+        let ticket = Mutation::save_ticket(
             db,
             ticket::Model {
                 ticket_id: ticket_id.clone(),

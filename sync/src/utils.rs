@@ -5,6 +5,9 @@ use ic_identity_hsm::HardwareIdentity;
 use ic_utils::interfaces::{management_canister::builders::MemoryAllocation, ManagementCanister};
 use omnity_indexer_service::sea_orm::DatabaseConnection;
 use ring::signature::Ed25519KeyPair;
+use sea_orm::ConnectOptions;
+use std::sync::Arc;
+use std::time::Duration;
 use std::{convert::TryFrom, error::Error, future::Future, path::Path};
 
 const HSM_PKCS11_LIBRARY_PATH: &str = "HSM_PKCS11_LIBRARY_PATH";
@@ -104,7 +107,7 @@ pub async fn create_agent(identity: impl Identity + 'static) -> Result<Agent, St
         .map_err(|e| format!("{:?}", e))
 }
 
-pub fn with_agent<F, R>(f: F)
+pub async fn with_agent<F, R>(f: F)
 where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent) -> R,
@@ -121,29 +124,41 @@ where
         Err(_) => create_identity().expect("Could not create an identity."),
     };
 
-    with_agent_as(agent_identity, f)
+    with_agent_as(agent_identity, f).await
 }
 
-pub fn with_agent_as<I, F, R>(agent_identity: I, f: F)
+pub async fn with_agent_as<I, F, R>(agent_identity: I, f: F)
 where
     I: Identity + 'static,
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent) -> R,
 {
-    let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
-    runtime.block_on(async {
-        let agent = create_agent(agent_identity)
-            .await
-            .expect("Could not create an agent.");
-        agent
-            .fetch_root_key()
-            .await
-            .expect("could not fetch root key");
-        match f(agent).await {
-            Ok(_) => {}
-            Err(e) => panic!("{:?}", e),
-        };
-    })
+    // let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
+    // runtime.block_on(async {
+    //     let agent = create_agent(agent_identity)
+    //         .await
+    //         .expect("Could not create an agent.");
+    //     agent
+    //         .fetch_root_key()
+    //         .await
+    //         .expect("could not fetch root key");
+    //     match f(agent).await {
+    //         Ok(_) => {}
+    //         Err(e) => panic!("{:?}", e),
+    //     };
+    // })
+
+    let agent = create_agent(agent_identity)
+        .await
+        .expect("Could not create an agent.");
+    agent
+        .fetch_root_key()
+        .await
+        .expect("could not fetch root key");
+    match f(agent).await {
+        Ok(_) => {}
+        Err(e) => panic!("{:?}", e),
+    };
 }
 
 pub async fn create_universal_canister(agent: &Agent) -> Result<Principal, Box<dyn Error>> {
@@ -215,7 +230,7 @@ pub async fn create_wallet_canister(
     Ok(canister_id)
 }
 
-pub fn with_universal_canister<F, R>(f: F)
+pub async fn with_universal_canister<F, R>(f: F)
 where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent, Principal) -> R,
@@ -224,9 +239,10 @@ where
         let canister_id = create_universal_canister(&agent).await?;
         f(agent, canister_id).await
     })
+    .await
 }
 
-pub fn with_universal_canister_as<I, F, R>(identity: I, f: F)
+pub async fn with_universal_canister_as<I, F, R>(identity: I, f: F)
 where
     I: Identity + 'static,
     R: Future<Output = Result<(), Box<dyn Error>>>,
@@ -236,9 +252,10 @@ where
         let canister_id = create_universal_canister(&agent).await?;
         f(agent, canister_id).await
     })
+    .await
 }
 
-pub fn with_wallet_canister<F, R>(cycles: Option<u128>, f: F)
+pub async fn with_wallet_canister<F, R>(cycles: Option<u128>, f: F)
 where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent, Principal) -> R,
@@ -247,24 +264,37 @@ where
         let canister_id = create_wallet_canister(&agent, cycles).await?;
         f(agent, canister_id).await
     })
+    .await
 }
 
 pub struct Database {
-    pub connection: DatabaseConnection,
+    pub connection: Arc<DatabaseConnection>, //
 }
 
 impl Database {
-    pub async fn new() -> Self {
-        let connection = omnity_indexer_service::sea_orm::Database::connect(
-            std::env::var("DATABASE_URL").unwrap(),
-        )
-        .await
-        .expect("Could not connect to database");
+    pub async fn new(db_url: String) -> Self {
+        let mut opt = ConnectOptions::new(db_url);
+        opt.max_connections(100)
+            .min_connections(5)
+            .connect_timeout(Duration::from_secs(8))
+            .acquire_timeout(Duration::from_secs(8))
+            .idle_timeout(Duration::from_secs(8))
+            .max_lifetime(Duration::from_secs(8))
+            .sqlx_logging(true)
+            .sqlx_logging_level(log::LevelFilter::Info);
+        // .set_schema_search_path("omnity"); // Setting default PostgreSQL schema
 
-        Database { connection }
+        let connection = omnity_indexer_service::sea_orm::Database::connect(opt)
+            .await
+            .expect("Could not connect to database");
+        assert!(connection.ping().await.is_ok());
+
+        Database {
+            connection: Arc::new(connection),
+        }
     }
 
-    pub fn get_connection(&self) -> &DatabaseConnection {
-        &self.connection
+    pub fn get_connection(&self) -> Arc<DatabaseConnection> {
+        self.connection.clone()
     }
 }

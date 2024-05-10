@@ -5,6 +5,11 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[lib]
+name = "omnity_indexer_sync"
+path = "src/lib.rs"
+
+
 [dependencies]
 candid = "0.10.1"
 ic-agent = "0.34.0"
@@ -19,7 +24,8 @@ axum = "0.6.18"
 axum-macros = "0.3"
 dotenvy = "0.15.7"
 async-graphql-axum = "5.0.10"
-
+log = { version = "0.4", default-features = false }
+chrono = "0.4"
 sea-orm = { version = "0.12", features = [
     "debug-print",
     "runtime-tokio-rustls",
@@ -31,6 +37,7 @@ entity = { path = "../entity" }
 migration = { path = "../migration" }
 ciborium = "0.2.1"
 thiserror = "1"
+futures = "0.3"
 
 [dev-dependencies]
 serde_cbor = "0.11.2"

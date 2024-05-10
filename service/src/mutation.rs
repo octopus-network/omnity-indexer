@@ -55,7 +55,7 @@ impl Mutation {
     pub async fn delete_all_notes(db: &DbConn) -> Result<DeleteResult, DbErr> {
         Note::delete_many().exec(db).await
     }
-    pub async fn create_chain(
+    pub async fn save_chain(
         db: &DbConn,
         form_data: chain_meta::Model,
     ) -> Result<chain_meta::Model, DbErr> {
@@ -68,11 +68,13 @@ impl Mutation {
             counterparties: Set(form_data.counterparties.to_owned()),
             fee_token: Set(form_data.fee_token.to_owned()),
         };
-        let res = ChainMeta::insert(active_model).exec(db).await?;
-        println!("create_chain result: {:?}", res);
+        // let res = ChainMeta::insert(active_model).exec(db).await?;
+
+        let res = active_model.save(db).await?;
+        println!("save_chain result: {:?}", res);
         Ok(chain_meta::Model { ..form_data })
     }
-    pub async fn create_token(
+    pub async fn save_token(
         db: &DbConn,
         form_data: token_meta::Model,
     ) -> Result<token_meta::Model, DbErr> {
@@ -86,11 +88,12 @@ impl Mutation {
             metadata: Set(form_data.metadata.to_owned()),
             dst_chains: Set(form_data.dst_chains.to_owned()),
         };
-        let res = TokenMeta::insert(active_model).exec(db).await?;
-        println!("create_token result: {:?}", res);
+        // let res = TokenMeta::insert(active_model).exec(db).await?;
+        let res = active_model.save(db).await?;
+        println!("save_token result: {:?}", res);
         Ok(token_meta::Model { ..form_data })
     }
-    pub async fn create_ticket(
+    pub async fn save_ticket(
         db: &DbConn,
         form_data: ticket::Model,
     ) -> Result<ticket::Model, DbErr> {
@@ -108,9 +111,9 @@ impl Mutation {
             memo: Set(form_data.memo.to_owned()),
         };
         // let res = Ticket::insert(active_model).exec(db).await?;
-        // Ok(ticket::Model { ..form_data })
-        let res = active_model.insert(db).await?;
-        println!("create_ticket result: {:?}", res);
-        Ok(res)
+
+        let res = active_model.save(db).await?;
+        println!("save_ticket result: {:?}", res);
+        Ok(ticket::Model { ..form_data })
     }
 }
