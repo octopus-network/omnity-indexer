@@ -1,7 +1,7 @@
 use ::entity::{chain_meta, chain_meta::Entity as ChainMeta};
+use ::entity::{notes, notes::Entity as Note};
 use ::entity::{ticket, ticket::Entity as Ticket};
 use ::entity::{token_meta, token_meta::Entity as TokenMeta};
-use ::entity::{notes, notes::Entity as Note};
 use sea_orm::*;
 
 pub struct Query;
@@ -39,5 +39,11 @@ impl Query {
     }
     pub async fn get_all_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
         Ticket::find().all(db).await
+    }
+    pub async fn get_latest_tickets(db: &DbConn) -> Result<Option<ticket::Model>, DbErr> {
+        Ticket::find()
+            .order_by_desc(ticket::Column::Seq)
+            .one(db)
+            .await
     }
 }

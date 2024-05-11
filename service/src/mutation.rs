@@ -1,7 +1,7 @@
-use ::entity::{chain_meta, chain_meta::Entity as ChainMeta};
+use ::entity::chain_meta;
+use ::entity::ticket;
+use ::entity::token_meta;
 use ::entity::{notes, notes::Entity as Note};
-use ::entity::{ticket, ticket::Entity as Ticket};
-use ::entity::{token_meta, token_meta::Entity as TokenMeta};
 
 use sea_orm::*;
 
@@ -99,6 +99,7 @@ impl Mutation {
     ) -> Result<ticket::Model, DbErr> {
         let active_model = ticket::ActiveModel {
             ticket_id: Set(form_data.ticket_id.to_owned()),
+            seq: Set(form_data.seq.to_owned()),
             ticket_type: Set(form_data.ticket_type.to_owned()),
             ticket_time: Set(form_data.ticket_time.to_owned()),
             src_chain: Set(form_data.src_chain.to_owned()),

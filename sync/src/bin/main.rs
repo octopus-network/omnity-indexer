@@ -4,7 +4,7 @@ use omnity_indexer_sync::utils::*;
 
 #[cfg(debug_assertions)]
 use dotenvy::dotenv;
-use std::sync::Arc;
+
 use tokio::task;
 use tokio::time::{self, Duration};
 

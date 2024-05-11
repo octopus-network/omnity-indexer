@@ -322,6 +322,7 @@ impl From<sea_orm_active_enums::TicketType> for TicketType {
 )]
 pub struct Ticket {
     pub ticket_id: TicketId,
+    pub ticket_seq: u64,
     pub ticket_type: TicketType,
     pub ticket_time: Timestamp,
     pub src_chain: ChainId,
@@ -338,8 +339,9 @@ impl core::fmt::Display for Ticket {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(
             f,
-            "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
+            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
             self.ticket_id,
+            self.ticket_seq,
             self.ticket_type,
             self.ticket_time,
             self.src_chain,
@@ -354,11 +356,11 @@ impl core::fmt::Display for Ticket {
     }
 }
 
-
 impl From<Ticket> for ticket::Model {
     fn from(ticket: Ticket) -> Self {
         ticket::Model {
             ticket_id: ticket.ticket_id,
+            seq: ticket.ticket_seq as i64,
             ticket_type: ticket.ticket_type.into(),
             ticket_time: ticket.ticket_time as i64,
             src_chain: ticket.src_chain,
@@ -377,6 +379,7 @@ impl From<ticket::Model> for Ticket {
     fn from(model: ticket::Model) -> Self {
         Ticket {
             ticket_id: model.ticket_id,
+            ticket_seq: model.seq as u64,
             ticket_type: model.ticket_type.into(),
             ticket_time: model.ticket_time as u64,
             src_chain: model.src_chain,

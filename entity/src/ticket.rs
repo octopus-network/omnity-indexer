@@ -9,6 +9,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub ticket_id: String,
+    pub seq: i64,
     pub ticket_type: TicketType,
     pub ticket_time: i64,
     pub src_chain: String,

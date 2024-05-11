@@ -2,7 +2,6 @@
 members = ["sync", "service", "entity", "migration"]
 resolver = "2"
 [workspace.package]
-name = "omnity-indexer"
 authors = ["Boern <boern.x@gmail.com>"]
 version = "0.1.0"
 edition = "2021"
