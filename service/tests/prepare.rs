@@ -190,6 +190,7 @@ pub fn prepare_mock_tickets() -> DatabaseConnection {
         .append_query_results([[
             ticket::Model {
                 ticket_id: Uuid::new_v4().to_string(),
+                ticket_seq: Some(0i64),
                 ticket_type: TicketType::Normal,
                 ticket_time: get_timestamp(),
                 src_chain: "Bitcoin".to_string(),
@@ -203,6 +204,7 @@ pub fn prepare_mock_tickets() -> DatabaseConnection {
             },
             ticket::Model {
                 ticket_id: Uuid::new_v4().to_string(),
+                ticket_seq: Some(1i64),
                 ticket_type: TicketType::Normal,
                 ticket_time: get_timestamp(),
                 src_chain: "EVM-Arbitrum".to_string(),

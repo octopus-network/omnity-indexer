@@ -77,6 +77,7 @@ impl Into<Chain> for ChainMeta {
 impl From<ChainMeta> for chain_meta::Model {
     fn from(chain: ChainMeta) -> Self {
         chain_meta::Model {
+         
             chain_id: chain.chain_id,
             canister_id: chain.canister_id,
             chain_type: chain.chain_type.into(),
@@ -145,6 +146,7 @@ impl Into<Token> for TokenMeta {
 impl From<TokenMeta> for token_meta::Model {
     fn from(token_meta: TokenMeta) -> Self {
         token_meta::Model {
+      
             token_id: token_meta.token_id,
             name: token_meta.name,
             symbol: token_meta.symbol,
@@ -317,6 +319,24 @@ impl From<sea_orm_active_enums::TicketType> for TicketType {
         }
     }
 }
+
+#[derive(
+    CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+pub struct OmnityTicket {
+    pub ticket_id: TicketId,
+    pub ticket_type: TicketType,
+    pub ticket_time: Timestamp,
+    pub src_chain: ChainId,
+    pub dst_chain: ChainId,
+    pub action: TxAction,
+    pub token: TokenId,
+    pub amount: String,
+    pub sender: Option<Account>,
+    pub receiver: Account,
+    pub memo: Option<Vec<u8>>,
+}
+
 #[derive(
     CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
@@ -333,6 +353,77 @@ pub struct Ticket {
     pub sender: Option<Account>,
     pub receiver: Account,
     pub memo: Option<Vec<u8>>,
+}
+
+impl Ticket {
+    pub fn new(
+        ticket_id: TicketId,
+        ticket_seq: u64,
+        ticket_type: TicketType,
+        ticket_time: Timestamp,
+        src_chain: ChainId,
+        dst_chain: ChainId,
+        action: TxAction,
+        token: TokenId,
+        amount: String,
+        sender: Option<Account>,
+        receiver: Account,
+        memo: Option<Vec<u8>>,
+    ) -> Self {
+        Self {
+            ticket_id,
+            ticket_seq,
+            ticket_type,
+            ticket_time,
+            src_chain,
+            dst_chain,
+            action,
+            token,
+            amount,
+            sender,
+            receiver,
+            memo,
+        }
+    }
+}
+
+impl From<Ticket> for ticket::Model {
+    fn from(ticket: Ticket) -> Self {
+        ticket::Model {
+       
+            ticket_id: ticket.ticket_id,
+            ticket_seq: Some(ticket.ticket_seq as i64),
+            ticket_type: ticket.ticket_type.into(),
+            ticket_time: ticket.ticket_time as i64,
+            src_chain: ticket.src_chain,
+            dst_chain: ticket.dst_chain,
+            action: ticket.action.into(),
+            token: ticket.token,
+            amount: ticket.amount,
+            sender: ticket.sender,
+            receiver: ticket.receiver,
+            memo: ticket.memo,
+        }
+    }
+}
+
+impl From<ticket::Model> for Ticket {
+    fn from(model: ticket::Model) -> Self {
+        Ticket {
+            ticket_id: model.ticket_id,
+            ticket_seq: model.ticket_seq.unwrap_or_default() as u64,
+            ticket_type: model.ticket_type.into(),
+            ticket_time: model.ticket_time as u64,
+            src_chain: model.src_chain,
+            dst_chain: model.dst_chain,
+            action: model.action.into(),
+            token: model.token,
+            amount: model.amount,
+            sender: model.sender,
+            receiver: model.receiver,
+            memo: model.memo,
+        }
+    }
 }
 
 impl core::fmt::Display for Ticket {
@@ -355,45 +446,6 @@ impl core::fmt::Display for Ticket {
         )
     }
 }
-
-impl From<Ticket> for ticket::Model {
-    fn from(ticket: Ticket) -> Self {
-        ticket::Model {
-            ticket_id: ticket.ticket_id,
-            seq: ticket.ticket_seq as i64,
-            ticket_type: ticket.ticket_type.into(),
-            ticket_time: ticket.ticket_time as i64,
-            src_chain: ticket.src_chain,
-            dst_chain: ticket.dst_chain,
-            action: ticket.action.into(),
-            token: ticket.token,
-            amount: ticket.amount,
-            sender: ticket.sender,
-            receiver: ticket.receiver,
-            memo: ticket.memo,
-        }
-    }
-}
-
-impl From<ticket::Model> for Ticket {
-    fn from(model: ticket::Model) -> Self {
-        Ticket {
-            ticket_id: model.ticket_id,
-            ticket_seq: model.seq as u64,
-            ticket_type: model.ticket_type.into(),
-            ticket_time: model.ticket_time as u64,
-            src_chain: model.src_chain,
-            dst_chain: model.dst_chain,
-            action: model.action.into(),
-            token: model.token,
-            amount: model.amount,
-            sender: model.sender,
-            receiver: model.receiver,
-            memo: model.memo,
-        }
-    }
-}
-
 #[derive(
     CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Hash,
 )]
@@ -595,6 +647,7 @@ impl Chain {
 impl From<Chain> for chain_meta::Model {
     fn from(chain: Chain) -> Self {
         chain_meta::Model {
+   
             chain_id: chain.chain_id,
             canister_id: chain.canister_id,
             chain_type: chain.chain_type.into(),

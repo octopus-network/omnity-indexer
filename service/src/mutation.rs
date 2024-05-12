@@ -1,8 +1,12 @@
 use ::entity::chain_meta;
+use ::entity::chain_meta::Entity as ChainMeta;
 use ::entity::ticket;
+use ::entity::ticket::Entity as Ticket;
 use ::entity::token_meta;
+use ::entity::token_meta::Entity as TokenMeta;
 use ::entity::{notes, notes::Entity as Note};
 
+use sea_orm::sea_query::OnConflict;
 use sea_orm::*;
 
 pub struct Mutation;
@@ -69,11 +73,31 @@ impl Mutation {
             fee_token: Set(form_data.fee_token.to_owned()),
         };
         // let res = ChainMeta::insert(active_model).exec(db).await?;
-
-        let res = active_model.save(db).await?;
-        println!("save_chain result: {:?}", res);
+        // let res = active_model.save(db).await?;
+        let on_conflict = OnConflict::column(chain_meta::Column::ChainId)
+            .do_nothing()
+            .to_owned();
+        let insert_result = ChainMeta::insert(active_model.clone())
+            .on_conflict(on_conflict)
+            .exec(db)
+            .await;
+        match insert_result {
+            Ok(ret) => {
+                println!("insert chain result : {:?}", ret);
+            }
+            Err(e) => {
+                println!("insert chain error: {:?}, need to update chain", e);
+                let res = ChainMeta::update(active_model)
+                    .filter(chain_meta::Column::ChainId.eq(form_data.chain_id.to_owned()))
+                    .exec(db)
+                    .await
+                    .map(|chain| chain);
+                println!("update chain result : {:?}", res);
+            }
+        }
         Ok(chain_meta::Model { ..form_data })
     }
+
     pub async fn save_token(
         db: &DbConn,
         form_data: token_meta::Model,
@@ -89,8 +113,29 @@ impl Mutation {
             dst_chains: Set(form_data.dst_chains.to_owned()),
         };
         // let res = TokenMeta::insert(active_model).exec(db).await?;
-        let res = active_model.save(db).await?;
-        println!("save_token result: {:?}", res);
+        // let res = active_model.save(db).await?;
+        let on_conflict = OnConflict::column(token_meta::Column::TokenId)
+            .do_nothing()
+            .to_owned();
+        let insert_result = TokenMeta::insert(active_model.clone())
+            .on_conflict(on_conflict)
+            .exec(db)
+            .await;
+        match insert_result {
+            Ok(ret) => {
+                println!("insert token result : {:?}", ret);
+            }
+            Err(e) => {
+                println!("insert token error: {:?}, need to update token", e);
+                let res = TokenMeta::update(active_model)
+                    .filter(token_meta::Column::TokenId.eq(form_data.token_id.to_owned()))
+                    .exec(db)
+                    .await
+                    .map(|token| token);
+                println!("update token result : {:?}", res);
+            }
+        }
+
         Ok(token_meta::Model { ..form_data })
     }
     pub async fn save_ticket(
@@ -99,7 +144,7 @@ impl Mutation {
     ) -> Result<ticket::Model, DbErr> {
         let active_model = ticket::ActiveModel {
             ticket_id: Set(form_data.ticket_id.to_owned()),
-            seq: Set(form_data.seq.to_owned()),
+            ticket_seq: Set(form_data.ticket_seq.to_owned()),
             ticket_type: Set(form_data.ticket_type.to_owned()),
             ticket_time: Set(form_data.ticket_time.to_owned()),
             src_chain: Set(form_data.src_chain.to_owned()),
@@ -111,10 +156,28 @@ impl Mutation {
             receiver: Set(form_data.receiver.to_owned()),
             memo: Set(form_data.memo.to_owned()),
         };
-        // let res = Ticket::insert(active_model).exec(db).await?;
+        let on_conflict = OnConflict::column(ticket::Column::TicketId)
+            .do_nothing()
+            .to_owned();
+        let insert_result = Ticket::insert(active_model.clone())
+            .on_conflict(on_conflict)
+            .exec(db)
+            .await;
+        match insert_result {
+            Ok(ret) => {
+                println!("insert ticket result : {:?}", ret);
+            }
+            Err(e) => {
+                println!("insert ticket error: {:?}, need to update ticket", e);
+                let res = Ticket::update(active_model)
+                    .filter(ticket::Column::TicketId.eq(form_data.ticket_id.to_owned()))
+                    .exec(db)
+                    .await
+                    .map(|ticket| ticket);
+                println!("update ticket result : {:?}", res);
+            }
+        }
 
-        let res = active_model.save(db).await?;
-        println!("save_ticket result: {:?}", res);
         Ok(ticket::Model { ..form_data })
     }
 }

@@ -110,11 +110,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .primary_key(),
                     )
-                    .col(
-                        ColumnDef::new(Ticket::Seq)
-                            .big_unsigned()
-                        
-                    )
+                    .col(ColumnDef::new(Ticket::TicketSeq).big_unsigned())
                     .col(ColumnDef::new(Ticket::TicketType).not_null().enumeration(
                         Alias::new("ticket_type"),
                         [TicketType::Normal, TicketType::Resubmit],
@@ -166,6 +162,7 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 enum ChainMeta {
     Table,
+
     ChainId,
     CanisterId,
     ChainType,
@@ -178,6 +175,7 @@ enum ChainMeta {
 #[derive(DeriveIden)]
 enum TokenMeta {
     Table,
+
     TokenId,
     Name,
     Symbol,
@@ -191,8 +189,9 @@ enum TokenMeta {
 #[derive(DeriveIden)]
 enum Ticket {
     Table,
+
     TicketId,
-    Seq,
+    TicketSeq,
     TicketType,
     TicketTime,
     SrcChain,

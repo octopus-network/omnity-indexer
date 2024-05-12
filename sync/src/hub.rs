@@ -1,6 +1,6 @@
 use crate::{
     get_effective_canister_id,
-    types::{self, ChainMeta, Ticket, TokenMeta},
+    types::{self, ChainMeta, OmnityTicket, Ticket, TokenMeta},
     with_agent, with_agent_as,
 };
 use candid::{Decode, Encode};
@@ -92,7 +92,8 @@ pub async fn sync_chains(db: &DbConn) {
         println!("chain size: {:?}", chain_size);
 
         let mut offset = 0u64;
-        let limit = 10u64;
+        //TODO: add env var for limit
+        let limit = 2u64;
 
         while offset < chain_size {
             let args = Encode!(&offset, &limit).unwrap();
@@ -132,7 +133,7 @@ pub async fn sync_tokens(db: &DbConn) {
         println!("token size: {:?}", token_size);
 
         let mut offset = 0u64;
-        let limit = 10u64;
+        let limit = 3u64;
 
         while offset < token_size {
             let args = Encode!(&offset, &limit).unwrap();
@@ -164,7 +165,7 @@ pub async fn sync_tickets(db: &DbConn) {
 
         let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
         let ret = agent
-            .query(&canister_id, "get_ticket_size")
+            .query(&canister_id, "get_tickets_size")
             .with_arg(args)
             .call()
             .await?;
@@ -172,23 +173,56 @@ pub async fn sync_tickets(db: &DbConn) {
         println!("ticket size: {:?}", ticket_size);
 
         //get latest ticket seq from  postgresql database
-        let latest_ticket = Query::get_latest_tickets(db).await?.map(|t| t.seq);
-        let offset = latest_ticket.unwrap_or_default() as u64;
-        let tickets_to_fetch = ticket_size.saturating_sub(offset);
+        let latest_ticket_seq = Query::get_latest_tickets(db).await?.map(|t| {
+            println!("latest ticket : {:?}", t);
+            t.ticket_seq
+        });
+        let offset = match latest_ticket_seq {
+            Some(t) => {
+                println!("latest ticket seq: {:?}", t);
+                // the latest ticket seq may be Some or may be None
+                t.map_or(0u64, |t| (t + 1) as u64)
+            }
+            None => {
+                println!("no tickets found");
+                0u64
+            }
+        };
 
-        let mut limit = 10u64;
+        let tickets_to_fetch = ticket_size.saturating_sub(offset);
+        println!("need to fetch tickets size: {:?}", tickets_to_fetch);
+
+        let mut limit = 2u64;
         for next_offset in (offset..ticket_size).step_by(limit as usize) {
-            limit = std::cmp::min(limit, tickets_to_fetch - next_offset);
+            println!("next_offset: {:?}", next_offset);
+            limit = std::cmp::min(limit, ticket_size - next_offset);
             let args = Encode!(&next_offset, &limit).unwrap();
             let ret = agent
                 .query(&canister_id, "get_tickets")
                 .with_arg(args)
                 .call()
                 .await?;
-            let new_tickets = Decode!(&ret, Result<Vec<Ticket>, OmnityError>)?.unwrap();
+            let new_tickets =
+                Decode!(&ret, Result<Vec<(u64, OmnityTicket)>, OmnityError>)?.unwrap();
             println!("synced tickets {:?} ", new_tickets);
-            for ticket in new_tickets.iter() {
-                Mutation::save_ticket(db, ticket.clone().into()).await?;
+            for (seq, ticket) in new_tickets.iter() {
+                let ticket_modle = Ticket::new(
+                    ticket.ticket_id.to_owned(),
+                    *seq,
+                    ticket.ticket_type.to_owned(),
+                    ticket.ticket_time,
+                    ticket.src_chain.to_owned(),
+                    ticket.dst_chain.to_owned(),
+                    ticket.action.to_owned(),
+                    ticket.token.to_owned(),
+                    ticket.amount.to_owned(),
+                    ticket.sender.to_owned(),
+                    ticket.receiver.to_owned(),
+                    ticket.memo.to_owned(),
+                )
+                .into();
+
+                Mutation::save_ticket(db, ticket_modle).await?;
             }
             if new_tickets.len() < limit as usize {
                 break;

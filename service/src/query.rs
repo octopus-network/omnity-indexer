@@ -42,7 +42,8 @@ impl Query {
     }
     pub async fn get_latest_tickets(db: &DbConn) -> Result<Option<ticket::Model>, DbErr> {
         Ticket::find()
-            .order_by_desc(ticket::Column::Seq)
+            .filter(ticket::Column::TicketSeq.is_not_null())
+            .order_by_desc(ticket::Column::TicketSeq)
             .one(db)
             .await
     }
