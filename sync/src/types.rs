@@ -77,7 +77,6 @@ impl Into<Chain> for ChainMeta {
 impl From<ChainMeta> for chain_meta::Model {
     fn from(chain: ChainMeta) -> Self {
         chain_meta::Model {
-         
             chain_id: chain.chain_id,
             canister_id: chain.canister_id,
             chain_type: chain.chain_type.into(),
@@ -146,7 +145,6 @@ impl Into<Token> for TokenMeta {
 impl From<TokenMeta> for token_meta::Model {
     fn from(token_meta: TokenMeta) -> Self {
         token_meta::Model {
-      
             token_id: token_meta.token_id,
             name: token_meta.name,
             symbol: token_meta.symbol,
@@ -335,6 +333,46 @@ pub struct OmnityTicket {
     pub sender: Option<Account>,
     pub receiver: Account,
     pub memo: Option<Vec<u8>>,
+    pub status: TicketStatus,
+}
+#[derive(
+    CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
+pub enum TicketStatus {
+    #[default]
+    Unknown,
+    WaitingForConfirmBySrc,
+    WaitingForConfirmByDest,
+    Finalized,
+}
+
+impl From<TicketStatus> for sea_orm_active_enums::TicketStatus {
+    fn from(status: TicketStatus) -> Self {
+        match status {
+            TicketStatus::Unknown => sea_orm_active_enums::TicketStatus::Unknown,
+            TicketStatus::WaitingForConfirmBySrc => {
+                sea_orm_active_enums::TicketStatus::WaitingForConfirmBySrc
+            }
+            TicketStatus::WaitingForConfirmByDest => {
+                sea_orm_active_enums::TicketStatus::WaitingForConfirmByDest
+            }
+            TicketStatus::Finalized => sea_orm_active_enums::TicketStatus::Finalized,
+        }
+    }
+}
+impl From<sea_orm_active_enums::TicketStatus> for TicketStatus {
+    fn from(status: sea_orm_active_enums::TicketStatus) -> Self {
+        match status {
+            sea_orm_active_enums::TicketStatus::Unknown => TicketStatus::Unknown,
+            sea_orm_active_enums::TicketStatus::WaitingForConfirmBySrc => {
+                TicketStatus::WaitingForConfirmBySrc
+            }
+            sea_orm_active_enums::TicketStatus::WaitingForConfirmByDest => {
+                TicketStatus::WaitingForConfirmByDest
+            }
+            sea_orm_active_enums::TicketStatus::Finalized => TicketStatus::Finalized,
+        }
+    }
 }
 
 #[derive(
@@ -342,7 +380,7 @@ pub struct OmnityTicket {
 )]
 pub struct Ticket {
     pub ticket_id: TicketId,
-    pub ticket_seq: u64,
+    pub ticket_seq: Option<u64>,
     pub ticket_type: TicketType,
     pub ticket_time: Timestamp,
     pub src_chain: ChainId,
@@ -353,12 +391,13 @@ pub struct Ticket {
     pub sender: Option<Account>,
     pub receiver: Account,
     pub memo: Option<Vec<u8>>,
+    pub status: TicketStatus,
 }
 
 impl Ticket {
     pub fn new(
         ticket_id: TicketId,
-        ticket_seq: u64,
+        ticket_seq: Option<u64>,
         ticket_type: TicketType,
         ticket_time: Timestamp,
         src_chain: ChainId,
@@ -369,6 +408,7 @@ impl Ticket {
         sender: Option<Account>,
         receiver: Account,
         memo: Option<Vec<u8>>,
+        status: TicketStatus,
     ) -> Self {
         Self {
             ticket_id,
@@ -383,6 +423,25 @@ impl Ticket {
             sender,
             receiver,
             memo,
+            status,
+        }
+    }
+
+    pub fn from_omnity_ticket(seq: u64, omnity_ticket: OmnityTicket) -> Self {
+        Self {
+            ticket_id: omnity_ticket.ticket_id.to_owned(),
+            ticket_seq: Some(seq),
+            ticket_type: omnity_ticket.ticket_type.to_owned(),
+            ticket_time: omnity_ticket.ticket_time,
+            src_chain: omnity_ticket.src_chain.to_owned(),
+            dst_chain: omnity_ticket.dst_chain.to_owned(),
+            action: omnity_ticket.action.to_owned(),
+            token: omnity_ticket.token.to_owned(),
+            amount: omnity_ticket.amount.to_owned(),
+            sender: omnity_ticket.sender.to_owned(),
+            receiver: omnity_ticket.receiver.to_owned(),
+            memo: omnity_ticket.memo.to_owned(),
+            status: omnity_ticket.status.to_owned(),
         }
     }
 }
@@ -390,9 +449,8 @@ impl Ticket {
 impl From<Ticket> for ticket::Model {
     fn from(ticket: Ticket) -> Self {
         ticket::Model {
-       
             ticket_id: ticket.ticket_id,
-            ticket_seq: Some(ticket.ticket_seq as i64),
+            ticket_seq: ticket.ticket_seq.map(|seq| seq as i64),
             ticket_type: ticket.ticket_type.into(),
             ticket_time: ticket.ticket_time as i64,
             src_chain: ticket.src_chain,
@@ -403,6 +461,7 @@ impl From<Ticket> for ticket::Model {
             sender: ticket.sender,
             receiver: ticket.receiver,
             memo: ticket.memo,
+            status: ticket.status.into(),
         }
     }
 }
@@ -411,7 +470,7 @@ impl From<ticket::Model> for Ticket {
     fn from(model: ticket::Model) -> Self {
         Ticket {
             ticket_id: model.ticket_id,
-            ticket_seq: model.ticket_seq.unwrap_or_default() as u64,
+            ticket_seq: model.ticket_seq.map(|seq| seq as u64),
             ticket_type: model.ticket_type.into(),
             ticket_time: model.ticket_time as u64,
             src_chain: model.src_chain,
@@ -422,6 +481,7 @@ impl From<ticket::Model> for Ticket {
             sender: model.sender,
             receiver: model.receiver,
             memo: model.memo,
+            status: model.status.into(),
         }
     }
 }
@@ -430,9 +490,9 @@ impl core::fmt::Display for Ticket {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(
             f,
-            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
+            "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?} \nstatus:{:?}",
             self.ticket_id,
-            self.ticket_seq,
+            // self.ticket_seq,
             self.ticket_type,
             self.ticket_time,
             self.src_chain,
@@ -443,6 +503,7 @@ impl core::fmt::Display for Ticket {
             self.sender,
             self.receiver,
             self.memo,
+            self.status,
         )
     }
 }
@@ -647,7 +708,6 @@ impl Chain {
 impl From<Chain> for chain_meta::Model {
     fn from(chain: Chain) -> Self {
         chain_meta::Model {
-   
             chain_id: chain.chain_id,
             canister_id: chain.canister_id,
             chain_type: chain.chain_type.into(),
@@ -761,6 +821,8 @@ pub struct TxCondition {
 }
 
 use candid::Principal;
+
+use crate::entity;
 pub type CanisterId = Principal;
 
 #[derive(CandidType, Serialize, Debug)]

@@ -1,5 +1,5 @@
 [workspace]
-members = ["sync", "service", "entity", "migration"]
+members = ["sync", "migration"]
 resolver = "2"
 [workspace.package]
 authors = ["Boern <boern.x@gmail.com>"]

@@ -19,6 +19,18 @@ pub enum ChainType {
     SettlementChain,
 }
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "ticket_status")]
+pub enum TicketStatus {
+    #[sea_orm(string_value = "Finalized")]
+    Finalized,
+    #[sea_orm(string_value = "Unknown")]
+    Unknown,
+    #[sea_orm(string_value = "WaitingForConfirmByDest")]
+    WaitingForConfirmByDest,
+    #[sea_orm(string_value = "WaitingForConfirmBySrc")]
+    WaitingForConfirmBySrc,
+}
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "ticket_type")]
 pub enum TicketType {
     #[sea_orm(string_value = "Normal")]

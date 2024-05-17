@@ -39,6 +39,19 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
+        manager
+            .create_type(
+                Type::create()
+                    .as_enum(Alias::new("ticket_status"))
+                    .values([
+                        TicketStatus::Unknown,
+                        TicketStatus::WaitingForConfirmBySrc,
+                        TicketStatus::WaitingForConfirmByDest,
+                        TicketStatus::Finalized,
+                    ])
+                    .to_owned(),
+            )
+            .await?;
         // Create ChainMeta table
         manager
             .create_table(
@@ -127,6 +140,15 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Ticket::Sender).string().null())
                     .col(ColumnDef::new(Ticket::Receiver).string().not_null())
                     .col(ColumnDef::new(Ticket::Memo).binary().null())
+                    .col(ColumnDef::new(Ticket::Status).not_null().enumeration(
+                        Alias::new("ticket_status"),
+                        [
+                            TicketStatus::Unknown,
+                            TicketStatus::WaitingForConfirmBySrc,
+                            TicketStatus::WaitingForConfirmByDest,
+                            TicketStatus::Finalized,
+                        ],
+                    ))
                     .to_owned(),
             )
             .await
@@ -152,6 +174,7 @@ impl MigrationTrait for Migration {
                         SeaRc::new(ChainState::Type) as DynIden,
                         SeaRc::new(TicketType::Type) as DynIden,
                         SeaRc::new(TxAction::Type) as DynIden,
+                        SeaRc::new(TicketStatus::Type) as DynIden,
                     ])
                     .to_owned(),
             )
@@ -162,7 +185,6 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 enum ChainMeta {
     Table,
-
     ChainId,
     CanisterId,
     ChainType,
@@ -175,7 +197,6 @@ enum ChainMeta {
 #[derive(DeriveIden)]
 enum TokenMeta {
     Table,
-
     TokenId,
     Name,
     Symbol,
@@ -189,7 +210,6 @@ enum TokenMeta {
 #[derive(DeriveIden)]
 enum Ticket {
     Table,
-
     TicketId,
     TicketSeq,
     TicketType,
@@ -202,6 +222,7 @@ enum Ticket {
     Sender,
     Receiver,
     Memo,
+    Status,
 }
 
 #[derive(Iden, EnumIter)]
@@ -242,4 +263,18 @@ pub enum TxAction {
     Transfer,
     #[iden = "Redeem"]
     Redeem,
+}
+
+#[derive(Iden, EnumIter)]
+pub enum TicketStatus {
+    #[iden = "ticket_status"]
+    Type,
+    #[iden = "Unknown"]
+    Unknown,
+    #[iden = "WaitingForConfirmBySrc"]
+    WaitingForConfirmBySrc,
+    #[iden = "WaitingForConfirmByDest"]
+    WaitingForConfirmByDest,
+    #[iden = "Finalized"]
+    Finalized,
 }

@@ -1,10 +1,9 @@
 pub mod customs;
+pub mod entity;
 pub mod hub;
 pub mod routes;
+pub mod service;
 pub mod types;
 pub mod universal;
 pub mod utils;
-
 pub use utils::*;
-
-

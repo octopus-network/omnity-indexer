@@ -1,20 +1,27 @@
+use config::{Config, ConfigError};
+
 use ic_agent::agent::http_transport::ReqwestTransport;
 use ic_agent::identity::{Prime256v1Identity, Secp256k1Identity};
 use ic_agent::{export::Principal, identity::BasicIdentity, Agent, Identity};
+use ic_btc_interface::Txid;
 use ic_identity_hsm::HardwareIdentity;
 use ic_utils::interfaces::{management_canister::builders::MemoryAllocation, ManagementCanister};
-use omnity_indexer_service::sea_orm::DatabaseConnection;
+use lazy_static::lazy_static;
+use log::debug;
 use ring::signature::Ed25519KeyPair;
-use sea_orm::ConnectOptions;
-use std::sync::Arc;
-use std::time::Duration;
+use sea_orm::DatabaseConnection;
+use sea_orm::{ConnectOptions, DbConn};
+use serde::Deserialize;
+
+use std::sync::{Arc, RwLock};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::{convert::TryFrom, error::Error, future::Future, path::Path};
 
 const HSM_PKCS11_LIBRARY_PATH: &str = "HSM_PKCS11_LIBRARY_PATH";
 const HSM_SLOT_INDEX: &str = "HSM_SLOT_INDEX";
 const HSM_KEY_ID: &str = "HSM_KEY_ID";
 const HSM_PIN: &str = "HSM_PIN";
-const LOCAL_NET: &str = "http://127.0.0.1:4943";
+// const LOCAL_NET: &str = "http://127.0.0.1:4943";
 
 pub fn get_effective_canister_id() -> Principal {
     Principal::from_text("rwlgt-iiaaa-aaaaa-aaaaa-cai").unwrap()
@@ -99,7 +106,20 @@ Sks4xGbA/ZbazsrMl4v446U5UIVxCGGaKw==
 }
 
 pub async fn create_agent(identity: impl Identity + 'static) -> Result<Agent, String> {
-    let network = std::env::var("DFX_NETWORK").unwrap_or_else(|_| LOCAL_NET.to_string());
+    // let network = std::env::var("DFX_NETWORK").unwrap_or_else(|_| LOCAL_NET.to_string());
+    let network = match std::env::var("DFX_NETWORK") {
+        Ok(network) => {
+            debug!("get network from env var :{}", network);
+            network
+        }
+        Err(_) => {
+            let network = read_config(|c| c.dfx_network.to_owned());
+            debug!("get network from  config file :{network:?}");
+
+            network
+        }
+    };
+
     Agent::builder()
         .with_transport(ReqwestTransport::create(network).unwrap())
         .with_identity(identity)
@@ -112,17 +132,21 @@ where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent) -> R,
 {
-    //TODO: add env var for identity
-    let agent_identity = match std::env::var("DFX_IDENTITY") {
+    let identity = match std::env::var("DFX_IDENTITY") {
         Ok(identity) => {
-            let pem_file = Path::new(&identity);
-            let identity = Secp256k1Identity::from_pem_file(pem_file)
-                .expect("Could not create an identity from PEM file.");
-            println!("create secp256k1 identity:{identity:?}");
-            Box::new(identity)
+            debug!("get identity from env var :{}", identity);
+            identity
         }
-        Err(_) => create_identity().expect("Could not create an identity."),
+        Err(_) => {
+            let identity = read_config(|c| c.dfx_identity.to_owned());
+            debug!("get identity from  config file :{identity:?}");
+
+            identity
+        }
     };
+    let pem_file = Path::new(&identity);
+    let agent_identity = Secp256k1Identity::from_pem_file(pem_file)
+        .expect("Could not create an identity from PEM file.");
 
     with_agent_as(agent_identity, f).await
 }
@@ -133,21 +157,6 @@ where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent) -> R,
 {
-    // let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
-    // runtime.block_on(async {
-    //     let agent = create_agent(agent_identity)
-    //         .await
-    //         .expect("Could not create an agent.");
-    //     agent
-    //         .fetch_root_key()
-    //         .await
-    //         .expect("could not fetch root key");
-    //     match f(agent).await {
-    //         Ok(_) => {}
-    //         Err(e) => panic!("{:?}", e),
-    //     };
-    // })
-
     let agent = create_agent(agent_identity)
         .await
         .expect("Could not create an agent.");
@@ -280,14 +289,15 @@ impl Database {
             .acquire_timeout(Duration::from_secs(8))
             .idle_timeout(Duration::from_secs(8))
             .max_lifetime(Duration::from_secs(8))
-            .sqlx_logging(true)
+            .sqlx_logging(false)
             .sqlx_logging_level(log::LevelFilter::Info);
         // .set_schema_search_path("omnity"); // Setting default PostgreSQL schema
 
-        let connection = omnity_indexer_service::sea_orm::Database::connect(opt)
+        let connection = sea_orm::Database::connect(opt)
             .await
             .expect("Could not connect to database");
         assert!(connection.ping().await.is_ok());
+        println!("Connected to database !");
 
         Database {
             connection: Arc::new(connection),
@@ -297,4 +307,76 @@ impl Database {
     pub fn get_connection(&self) -> Arc<DatabaseConnection> {
         self.connection.clone()
     }
+}
+
+pub fn get_timestamp() -> u64 {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    since_the_epoch.as_nanos() as u64
+}
+
+pub fn random_txid() -> Txid {
+    let txid: [u8; 32] = rand::random();
+    txid.into()
+}
+
+#[derive(Debug, Deserialize, Default)]
+#[allow(unused)]
+pub struct Settings {
+    pub database_url: String,
+    pub dfx_identity: String,
+    pub dfx_network: String,
+    pub omnity_hub_canister_id: String,
+    pub omnity_customs_bitcoin_canister_id: String,
+    pub omnity_routes_icp_canister_id: String,
+    pub log_config: String,
+}
+impl Settings {
+    pub fn new(config_path: &str) -> Result<Self, ConfigError> {
+        let config = Config::builder()
+            .add_source(config::File::with_name(config_path))
+            .build()?;
+        config.try_deserialize()
+    }
+}
+
+lazy_static! {
+    static ref CONFIG: RwLock<Settings> = RwLock::new(Settings::default());
+}
+
+pub fn mutate_config<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut Settings) -> R,
+{
+    f(&mut CONFIG.write().unwrap())
+}
+
+pub fn read_config<F, R>(f: F) -> R
+where
+    F: FnOnce(&Settings) -> R,
+{
+    f(&CONFIG.read().unwrap())
+}
+
+/// Replaces the current state.
+pub fn set_config(setting: Settings) {
+    *CONFIG.write().unwrap() = setting;
+}
+
+pub fn spawn_sync_task<F, Fut>(db: &Database, sync_fn: F) -> tokio::task::JoinHandle<()>
+where
+    F: Fn(&DbConn) -> Fut + Send + 'static,
+    Fut: Future<Output = ()> + Send + 'static,
+{
+    let db_conn = db.get_connection();
+
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(5));
+        loop {
+            sync_fn(&db_conn).await;
+            interval.tick().await;
+        }
+    })
 }
