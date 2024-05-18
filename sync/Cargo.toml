@@ -1,14 +1,16 @@
 [package]
 name = "omnity-indexer-sync"
-authors = ["Boern <boern.x@gmail.com>"]
-version = "0.1.0"
-edition = "2021"
-publish = false
-
+authors = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+publish = { workspace = true }
+default-run = "omnity_indexer_sync"
 [lib]
 name = "omnity_indexer_sync"
 path = "src/lib.rs"
-
+[[bin]]
+name = "omnity_indexer_sync"
+path = "src/main.rs"
 
 [dependencies]
 candid = "0.10.1"
@@ -33,12 +35,12 @@ sea-orm = { version = "0.12", features = [
     "sqlx-postgres",
 ] }
 
-migration = { path = "../migration" }
+# migration = { path = "../migration" }
 ciborium = "0.2.1"
 thiserror = "1"
 futures = "0.3"
 ic-btc-interface = { git = "https://github.com/dfinity/bitcoin-canister", rev = "9b239d1d67253eb14a35be6061e3967d5ec9db9d" }
-clap = "4.5.4"
+clap = { version = "4.5.4", features = ["derive","cargo"] }
 config = "0.14"
 rand = "0.7.3"
 lazy_static = "1.4"

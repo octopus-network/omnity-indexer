@@ -1,6 +1,4 @@
-mod mutation;
-mod query;
-
-pub use mutation::*;
-pub use query::*;
+mod dao;
+mod dataflow;
+pub use dao::*;
 pub use sea_orm;

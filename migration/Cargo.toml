@@ -1,8 +1,10 @@
 [package]
 name = "migration"
-version = "0.1.0"
-edition = "2021"
-publish = false
+authors = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+publish = { workspace = true }
+
 
 [lib]
 name = "migration"

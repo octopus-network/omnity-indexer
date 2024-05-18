@@ -5,9 +5,9 @@ use ic_agent::identity::{Prime256v1Identity, Secp256k1Identity};
 use ic_agent::{export::Principal, identity::BasicIdentity, Agent, Identity};
 use ic_btc_interface::Txid;
 use ic_identity_hsm::HardwareIdentity;
-use ic_utils::interfaces::{management_canister::builders::MemoryAllocation, ManagementCanister};
+
 use lazy_static::lazy_static;
-use log::debug;
+use log::{debug, info};
 use ring::signature::Ed25519KeyPair;
 use sea_orm::DatabaseConnection;
 use sea_orm::{ConnectOptions, DbConn};
@@ -15,7 +15,7 @@ use serde::Deserialize;
 
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::{convert::TryFrom, error::Error, future::Future, path::Path};
+use std::{error::Error, future::Future, path::Path};
 
 const HSM_PKCS11_LIBRARY_PATH: &str = "HSM_PKCS11_LIBRARY_PATH";
 const HSM_SLOT_INDEX: &str = "HSM_SLOT_INDEX";
@@ -170,112 +170,6 @@ where
     };
 }
 
-pub async fn create_universal_canister(agent: &Agent) -> Result<Principal, Box<dyn Error>> {
-    let canister_env = std::env::var("IC_UNIVERSAL_CANISTER_PATH")
-        .expect("Need to specify the IC_UNIVERSAL_CANISTER_PATH environment variable.");
-
-    let canister_path = Path::new(&canister_env);
-
-    let canister_wasm = if !canister_path.exists() {
-        panic!("Could not find the universal canister WASM file.");
-    } else {
-        std::fs::read(canister_path).expect("Could not read file.")
-    };
-
-    let ic00 = ManagementCanister::create(agent);
-
-    let (canister_id,) = ic00
-        .create_canister()
-        .as_provisional_create_with_amount(None)
-        .with_effective_canister_id(get_effective_canister_id())
-        .call_and_wait()
-        .await?;
-
-    ic00.install_code(&canister_id, &canister_wasm)
-        .with_raw_arg(vec![])
-        .call_and_wait()
-        .await?;
-
-    Ok(canister_id)
-}
-
-pub fn get_wallet_wasm_from_env() -> Vec<u8> {
-    let canister_env = std::env::var("IC_WALLET_CANISTER_PATH")
-        .expect("Need to specify the IC_WALLET_CANISTER_PATH environment variable.");
-
-    let canister_path = Path::new(&canister_env);
-
-    if !canister_path.exists() {
-        panic!("Could not find the wallet canister WASM file.");
-    } else {
-        std::fs::read(canister_path).expect("Could not read file.")
-    }
-}
-
-pub async fn create_wallet_canister(
-    agent: &Agent,
-    cycles: Option<u128>,
-) -> Result<Principal, Box<dyn Error>> {
-    let canister_wasm = get_wallet_wasm_from_env();
-
-    let ic00 = ManagementCanister::create(agent);
-
-    let (canister_id,) = ic00
-        .create_canister()
-        .as_provisional_create_with_amount(cycles)
-        .with_effective_canister_id(get_effective_canister_id())
-        .with_memory_allocation(
-            MemoryAllocation::try_from(8000000000_u64)
-                .expect("Memory allocation must be between 0 and 2^48 (i.e 256TB), inclusively."),
-        )
-        .call_and_wait()
-        .await?;
-
-    ic00.install_code(&canister_id, &canister_wasm)
-        .with_raw_arg(vec![])
-        .call_and_wait()
-        .await?;
-
-    Ok(canister_id)
-}
-
-pub async fn with_universal_canister<F, R>(f: F)
-where
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent(|agent| async move {
-        let canister_id = create_universal_canister(&agent).await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
-
-pub async fn with_universal_canister_as<I, F, R>(identity: I, f: F)
-where
-    I: Identity + 'static,
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent_as(identity, |agent| async move {
-        let canister_id = create_universal_canister(&agent).await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
-
-pub async fn with_wallet_canister<F, R>(cycles: Option<u128>, f: F)
-where
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent(|agent| async move {
-        let canister_id = create_wallet_canister(&agent, cycles).await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
-
 pub struct Database {
     pub connection: Arc<DatabaseConnection>, //
 }
@@ -297,7 +191,7 @@ impl Database {
             .await
             .expect("Could not connect to database");
         assert!(connection.ping().await.is_ok());
-        println!("Connected to database !");
+        info!("Connected to database !");
 
         Database {
             connection: Arc::new(connection),

@@ -1,15 +1,16 @@
-mod omnity_hub {
+mod omnity_indexer_sync_test {
 
     use std::str::FromStr;
     use std::sync::Once;
 
     use dotenvy::dotenv;
     use ic_btc_interface::Txid;
+    use log::debug;
     use omnity_indexer_sync::service::Query;
 
-    use crate::omnity_hub::bitcoin::FinalizedStatus;
-    use crate::omnity_hub::bitcoin::GenerateTicketArgs;
     use omnity_indexer_sync::customs::bitcoin;
+    use omnity_indexer_sync::customs::bitcoin::FinalizedStatus;
+    use omnity_indexer_sync::customs::bitcoin::GenerateTicketArgs;
     use omnity_indexer_sync::hub;
     use omnity_indexer_sync::routes::icp;
     use omnity_indexer_sync::{get_timestamp, random_txid};
@@ -21,7 +22,7 @@ mod omnity_hub {
     const TOKEN_ID: &str = "Bitcoin-runes-HOPE•YOU•GET•RICH";
     static INIT: Once = Once::new();
     pub fn init_logger() {
-        std::env::set_var("RUST_LOG", "info");
+        std::env::set_var("RUST_LOG", "debug");
         INIT.call_once(|| {
             let _ = env_logger::builder().is_test(true).try_init();
         });
@@ -79,7 +80,7 @@ mod omnity_hub {
                 .await
                 .unwrap()
         });
-        println!("finally ticket model:{:?}", ticket_model);
+        debug!("finally ticket model:{:?}", ticket_model);
     }
     #[ignore]
     #[test]
@@ -125,6 +126,6 @@ mod omnity_hub {
                 .await
                 .unwrap()
         });
-        println!("finally ticket model:{:?}", ticket_model);
+        debug!("finally ticket model:{:?}", ticket_model);
     }
 }
