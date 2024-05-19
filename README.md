@@ -39,7 +39,7 @@ dfx deploy icp_mock --mode reinstall -y
 ```
 ### Create the omnity indexer schema 
 ```bash
-# Run omnity postgresql as docker 
+# run omnity postgresql as docker 
 docker run --name omnity-postgres -p 5432:5432  -e POSTGRES_PASSWORD=open-sesame -d postgres:12
 
 # enter the pg docker 
@@ -54,9 +54,16 @@ CREATE DATABASE omnity ENCODING = 'UTF8';
 
 #### Create or drop the schema
 ```bash
+# install sea orm cli
+cargo install sea-orm-cli
+
 # clone and cd omnity-indexer 
+
 # create the schema
 sea-orm-cli migrate up -u postgres://postgres:open-sesame@localhost/omnity
+
+# generate entity
+#sea-orm-cli generate entity -o sync/src/entity
 # drop the schema
 #sea-orm-cli migrate down -u postgres://postgres:open-sesame@localhost/omnity
 

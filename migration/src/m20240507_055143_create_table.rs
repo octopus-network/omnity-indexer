@@ -151,10 +151,26 @@ impl MigrationTrait for Migration {
                     ))
                     .to_owned(),
             )
+            .await?;
+
+        // create index
+        manager
+            .create_index(
+                Index::create()
+                    .if_not_exists()
+                    .name("idx-ticket_seq")
+                    .table(Ticket::Table)
+                    .col(Ticket::TicketSeq)
+                    .to_owned(),
+            )
             .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        // drop index
+        manager
+            .drop_index(Index::drop().name("idx-ticket_seq").to_owned())
+            .await?;
         // Drop tables
         manager
             .drop_table(Table::drop().table(Ticket::Table).to_owned())
@@ -165,6 +181,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(Table::drop().table(ChainMeta::Table).to_owned())
             .await?;
+        // drop emun
         manager
             .drop_type(
                 Type::drop()

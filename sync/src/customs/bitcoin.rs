@@ -219,6 +219,7 @@ pub async fn mock_finalized_release_token(ticket_id: TicketId, status: Finalized
 
 // sync tickets that transfered from customs to routes
 pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) {
+     //TODO: hanle execption
     with_omnity_bitcoin_canister(|agent, canister_id| async move {
         info!("{:?} syncing tickets from bitcoin custom ... ", chrono::Utc::now());
 
@@ -273,6 +274,7 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) {
 
 // sync tickets status that transfered from routes to customs
 pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) {
+     //TODO: hanle execption
     with_omnity_bitcoin_canister(|agent, canister_id| async move {
         info!(
             "{:?} syncing release token status from bitcoin ... ",

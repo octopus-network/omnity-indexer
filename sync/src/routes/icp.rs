@@ -85,6 +85,7 @@ pub async fn mock_finalized_mint_token(ticket_id: TicketId, block_index: u64) {
 }
 
 pub async fn sync_ticket_status_from_icp_route(db: &DbConn) {
+     //TODO: hanle execption
     with_omnity_icp_route_canister(|agent, canister_id| async move {
         info!(
             "{:?} syncing mint token status from icp route ... ",

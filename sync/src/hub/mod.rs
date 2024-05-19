@@ -62,6 +62,7 @@ pub async fn create_omnity_hub_canister() -> Result<Principal, Box<dyn Error>> {
 
 //full synchronization for chains
 pub async fn sync_chains(db: &DbConn) {
+    //TODO: hanle execption
     with_omnity_hub_canister(|agent, canister_id| async move {
         info!("{:?} syncing chains ... ", chrono::Utc::now());
         let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
@@ -99,6 +100,7 @@ pub async fn sync_chains(db: &DbConn) {
 
 //full synchronization for tokens
 pub async fn sync_tokens(db: &DbConn) {
+    //TODO: handle execption
     with_omnity_hub_canister(|agent, canister_id| async move {
         info!("{:?} syncing tokens ... ", chrono::Utc::now());
 
@@ -137,6 +139,7 @@ pub async fn sync_tokens(db: &DbConn) {
 }
 
 pub async fn send_tickets(ticket: types::Ticket) {
+    //TODO: handle execption
     with_omnity_hub_canister(|agent, canister_id| async move {
         info!("{:?} send tickets to hub... ", chrono::Utc::now());
 
@@ -156,6 +159,7 @@ pub async fn send_tickets(ticket: types::Ticket) {
 
 //increment synchronization for tickets
 pub async fn sync_tickets(db: &DbConn) {
+    //TODO: handle execption
     with_omnity_hub_canister(|agent, canister_id| async move {
         info!("{:?} syncing tickets from hub ... ", chrono::Utc::now());
 
