@@ -4,17 +4,14 @@ use crate::{types::TicketId, with_agent, with_agent_as};
 use candid::{Decode, Encode};
 use ic_agent::{export::Principal, Agent, Identity};
 use log::info;
-use tokio::task::JoinHandle;
 
 use crate::service::{Mutation, Query};
 
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
-use std::{error::Error, future::Future, time::Duration};
-use tokio::{task, time};
+use std::{error::Error, future::Future};
 
 const ROUTE_CHAIN_ID: &str = "eICP";
-const TICKET_SYNC_INTERVAL: u64 = 3;
 
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MintTokenStatus {
@@ -22,7 +19,7 @@ pub enum MintTokenStatus {
     Unknown,
 }
 
-pub async fn with_omnity_icp_route_canister<F, R>(f: F)
+pub async fn with_omnity_icp_route_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
 where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent, Principal) -> R,
@@ -31,10 +28,13 @@ where
         let canister_id = create_omnity_icp_route_canister().await?;
         f(agent, canister_id).await
     })
-    .await;
+    .await
 }
 
-pub async fn with_omnity_icp_route_canister_as<I, F, R>(identity: I, f: F)
+pub async fn with_omnity_icp_route_canister_as<I, F, R>(
+    identity: I,
+    f: F,
+) -> Result<(), Box<dyn Error>>
 where
     I: Identity + 'static,
     R: Future<Output = Result<(), Box<dyn Error>>>,
@@ -44,7 +44,7 @@ where
         let canister_id = create_omnity_icp_route_canister().await?;
         f(agent, canister_id).await
     })
-    .await;
+    .await
 }
 
 pub async fn create_omnity_icp_route_canister() -> Result<Principal, Box<dyn Error>> {
@@ -63,13 +63,16 @@ pub async fn create_omnity_icp_route_canister() -> Result<Principal, Box<dyn Err
 }
 
 //This function only used for mock test
-pub async fn mock_finalized_mint_token(ticket_id: TicketId, block_index: u64) {
+pub async fn mock_finalized_mint_token(
+    ticket_id: TicketId,
+    block_index: u64,
+) -> Result<(), Box<dyn Error>> {
     with_omnity_icp_route_canister(|agent, canister_id| async move {
         info!(
             "{:?} mock finalized mint token on icp route ... ",
             chrono::Utc::now()
         );
-        let args = Encode!(&ticket_id, &block_index).unwrap();
+        let args = Encode!(&ticket_id, &block_index)?;
 
         let ret = agent
             .update(&canister_id, "mock_finalized_mint_token")
@@ -84,8 +87,7 @@ pub async fn mock_finalized_mint_token(ticket_id: TicketId, block_index: u64) {
     .await
 }
 
-pub async fn sync_ticket_status_from_icp_route(db: &DbConn) {
-     //TODO: hanle execption
+pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
     with_omnity_icp_route_canister(|agent, canister_id| async move {
         info!(
             "{:?} syncing mint token status from icp route ... ",
@@ -97,7 +99,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) {
 
         //step2: get mint_token_status by ticket id
         for unconfirmed_ticket in unconfirmed_tickets {
-            let args = Encode!(&unconfirmed_ticket.ticket_id).unwrap();
+            let args = Encode!(&unconfirmed_ticket.ticket_id)?;
             let ret = agent
                 .query(&canister_id, "mint_token_status")
                 .with_arg(args)
@@ -140,23 +142,8 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) {
 }
 
 //TODO: nothing to do from icp redeem to customs
-pub async fn sync_redeem_tickets(_db: &DbConn) {
+pub async fn sync_redeem_tickets(_db: &DbConn) -> Result<(), Box<dyn Error>> {
     with_omnity_icp_route_canister(|_agent, _canister_id| async move { Ok(()) }).await
-}
-
-pub async fn sync_ticket_status_from_icp(db: &DbConn) -> JoinHandle<()> {
-    let sync_ticket_status = task::spawn({
-        let db_conn_ticket_status = db.clone();
-        async move {
-            let mut interval = time::interval(Duration::from_secs(TICKET_SYNC_INTERVAL));
-            loop {
-                sync_ticket_status_from_icp_route(&db_conn_ticket_status).await;
-                interval.tick().await;
-            }
-        }
-    });
-    sync_ticket_status
-   
 }
 
 #[cfg(test)]
@@ -204,9 +191,9 @@ mod tests {
             // save to db
             let _ = Mutation::save_ticket(&db.get_connection(), ticket.into()).await;
 
-            mock_finalized_mint_token(ticket_id.to_owned(), 1000).await;
+            let _ = mock_finalized_mint_token(ticket_id.to_owned(), 1000).await;
 
-            sync_ticket_status_from_icp_route(&db.get_connection()).await;
+            let _ = sync_ticket_status_from_icp_route(&db.get_connection()).await;
         });
     }
 }

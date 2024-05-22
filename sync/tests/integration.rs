@@ -46,11 +46,11 @@ mod omnity_indexer_sync_test {
                 txid: txid.to_string(),
             };
 
-            bitcoin::gen_bitcoin_ticket(args).await;
+            let _ = bitcoin::gen_bitcoin_ticket(args).await;
             //step2: sync ticket from bitcoin custom
-            bitcoin::sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
+            let _ = bitcoin::sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
             //mock remove ticket from pending tickets
-            bitcoin::mock_finalized_ticket(txid.to_string()).await;
+            let _ = bitcoin::mock_finalized_ticket(txid.to_string()).await;
             //step3: mock,send ticket from custom to hub
             let ticket = types::Ticket {
                 ticket_id: txid.to_string(),
@@ -68,13 +68,13 @@ mod omnity_indexer_sync_test {
                 status: types::TicketStatus::WaitingForConfirmByDest,
             };
             //step4: mock send ticket from custom to hub
-            hub::send_tickets(ticket.to_owned()).await;
+            let _ = hub::send_tickets(ticket.to_owned()).await;
             //step5: sync ticket form hub
-            hub::sync_tickets(&db.get_connection()).await;
+            let _ = hub::sync_tickets(&db.get_connection()).await;
             //step6: mock finalized mint token on route
-            icp::mock_finalized_mint_token(ticket.ticket_id.to_owned(), 100).await;
+            let _ = icp::mock_finalized_mint_token(ticket.ticket_id.to_owned(), 100).await;
             //step7: sync ticket status from route
-            icp::sync_ticket_status_from_icp_route(&db.get_connection()).await;
+            let _ = icp::sync_ticket_status_from_icp_route(&db.get_connection()).await;
             //step8: check ticket status
             Query::get_ticket_by_id(&db.get_connection(), ticket.ticket_id.to_owned())
                 .await
@@ -112,15 +112,16 @@ mod omnity_indexer_sync_test {
                 status: types::TicketStatus::WaitingForConfirmByDest,
             };
             //step4: mock send ticket from route to hub
-            hub::send_tickets(ticket.to_owned()).await;
+            let _ = hub::send_tickets(ticket.to_owned()).await;
             //step5: sync ticket form hub
-            hub::sync_tickets(&db.get_connection()).await;
+            let _ = hub::sync_tickets(&db.get_connection()).await;
             //step6: mock finalized release token on bitcoin custom
             let txid = Txid::from_str(&ticket.ticket_id.to_owned()).unwrap();
             let status = FinalizedStatus::Confirmed(txid);
-            bitcoin::mock_finalized_release_token(ticket.ticket_id.to_owned(), status).await;
+            let _ =
+                bitcoin::mock_finalized_release_token(ticket.ticket_id.to_owned(), status).await;
             //step7: sync ticket status from route
-            bitcoin::sync_ticket_status_from_bitcoin(&db.get_connection()).await;
+            let _ = bitcoin::sync_ticket_status_from_bitcoin(&db.get_connection()).await;
             //step8: check ticket status
             Query::get_ticket_by_id(&db.get_connection(), ticket.ticket_id.to_owned())
                 .await

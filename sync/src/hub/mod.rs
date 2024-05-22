@@ -9,18 +9,15 @@ use ic_agent::{export::Principal, Agent, Identity};
 use crate::service::{Mutation, Query};
 use log::info;
 use sea_orm::DbConn;
-use std::{error::Error, future::Future, time::Duration};
-use tokio::{
-    task::{self, JoinHandle},
-    time,
-};
+use std::{error::Error, future::Future};
+
 use types::Error as OmnityError;
 const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_SYNC_INTERVAL: u64 = 5;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
 
-pub async fn with_omnity_hub_canister<F, R>(f: F)
+pub async fn with_omnity_hub_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
 where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent, Principal) -> R,
@@ -29,10 +26,10 @@ where
         let canister_id = create_omnity_hub_canister().await?;
         f(agent, canister_id).await
     })
-    .await;
+    .await
 }
 
-pub async fn with_omnity_hub_canister_as<I, F, R>(identity: I, f: F)
+pub async fn with_omnity_hub_canister_as<I, F, R>(identity: I, f: F) -> Result<(), Box<dyn Error>>
 where
     I: Identity + 'static,
     R: Future<Output = Result<(), Box<dyn Error>>>,
@@ -42,7 +39,7 @@ where
         let canister_id = create_omnity_hub_canister().await?;
         f(agent, canister_id).await
     })
-    .await;
+    .await
 }
 
 pub async fn create_omnity_hub_canister() -> Result<Principal, Box<dyn Error>> {
@@ -61,8 +58,7 @@ pub async fn create_omnity_hub_canister() -> Result<Principal, Box<dyn Error>> {
 }
 
 //full synchronization for chains
-pub async fn sync_chains(db: &DbConn) {
-    //TODO: hanle execption
+pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
     with_omnity_hub_canister(|agent, canister_id| async move {
         info!("{:?} syncing chains ... ", chrono::Utc::now());
         let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
@@ -71,19 +67,18 @@ pub async fn sync_chains(db: &DbConn) {
             .with_arg(args)
             .call()
             .await?;
-        let chain_size = Decode!(&ret, Result<u64, OmnityError>)?.unwrap();
+        let chain_size = Decode!(&ret, Result<u64, OmnityError>)??;
         info!("chain size: {:?}", chain_size);
 
         let mut from_seq = 0u64;
         while from_seq < chain_size {
-            let args = Encode!(&from_seq, &FETCH_LIMIT).unwrap();
+            let args = Encode!(&from_seq, &FETCH_LIMIT)?;
             let ret = agent
                 .query(&canister_id, "get_chain_metas")
                 .with_arg(args)
                 .call()
                 .await?;
-            let chains: Vec<ChainMeta> =
-                Decode!(&ret, Result<Vec<ChainMeta>, OmnityError>)?.unwrap();
+            let chains: Vec<ChainMeta> = Decode!(&ret, Result<Vec<ChainMeta>, OmnityError>)??;
             info!("sync chains from offset: {}", from_seq);
             for chain in chains.iter() {
                 Mutation::save_chain(db, chain.clone().into()).await?;
@@ -99,8 +94,7 @@ pub async fn sync_chains(db: &DbConn) {
 }
 
 //full synchronization for tokens
-pub async fn sync_tokens(db: &DbConn) {
-    //TODO: handle execption
+pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
     with_omnity_hub_canister(|agent, canister_id| async move {
         info!("{:?} syncing tokens ... ", chrono::Utc::now());
 
@@ -110,19 +104,18 @@ pub async fn sync_tokens(db: &DbConn) {
             .with_arg(args)
             .call()
             .await?;
-        let token_size = Decode!(&ret, Result<u64, OmnityError>)?.unwrap();
+        let token_size = Decode!(&ret, Result<u64, OmnityError>)??;
         info!("total token size: {:?}", token_size);
 
         let mut offset = 0u64;
         while offset < token_size {
-            let args = Encode!(&offset, &FETCH_LIMIT).unwrap();
+            let args = Encode!(&offset, &FETCH_LIMIT)?;
             let ret = agent
                 .query(&canister_id, "get_token_metas")
                 .with_arg(args)
                 .call()
                 .await?;
-            let tokens: Vec<TokenMeta> =
-                Decode!(&ret, Result<Vec<TokenMeta>, OmnityError>)?.unwrap();
+            let tokens: Vec<TokenMeta> = Decode!(&ret, Result<Vec<TokenMeta>, OmnityError>)??;
             info!("total tokens from offset: {} ", offset);
             for token in tokens.iter() {
                 Mutation::save_token(db, token.clone().into()).await?;
@@ -138,8 +131,7 @@ pub async fn sync_tokens(db: &DbConn) {
     .await
 }
 
-pub async fn send_tickets(ticket: types::Ticket) {
-    //TODO: handle execption
+pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
     with_omnity_hub_canister(|agent, canister_id| async move {
         info!("{:?} send tickets to hub... ", chrono::Utc::now());
 
@@ -149,7 +141,7 @@ pub async fn send_tickets(ticket: types::Ticket) {
             .with_arg(args)
             .call_and_wait()
             .await?;
-        let ret = Decode!(&ret, Result<(), OmnityError>)?.unwrap();
+        let ret = Decode!(&ret, Result<(), OmnityError>)??;
         info!("send ticket result: {:?}", ret);
 
         Ok(())
@@ -158,8 +150,7 @@ pub async fn send_tickets(ticket: types::Ticket) {
 }
 
 //increment synchronization for tickets
-pub async fn sync_tickets(db: &DbConn) {
-    //TODO: handle execption
+pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
     with_omnity_hub_canister(|agent, canister_id| async move {
         info!("{:?} syncing tickets from hub ... ", chrono::Utc::now());
 
@@ -169,7 +160,7 @@ pub async fn sync_tickets(db: &DbConn) {
             .with_arg(args)
             .call()
             .await?;
-        let ticket_size = Decode!(&ret, Result<u64, OmnityError>)?.unwrap();
+        let ticket_size = Decode!(&ret, Result<u64, OmnityError>)??;
         info!("total ticket size: {:?}", ticket_size);
 
         //get latest ticket seq from  postgresql database
@@ -196,14 +187,13 @@ pub async fn sync_tickets(db: &DbConn) {
         for next_offset in (offset..ticket_size).step_by(limit as usize) {
             info!("next_offset: {:?}", next_offset);
             limit = std::cmp::min(limit, ticket_size - next_offset);
-            let args = Encode!(&next_offset, &limit).unwrap();
+            let args = Encode!(&next_offset, &limit)?;
             let ret = agent
                 .query(&canister_id, "sync_tickets")
                 .with_arg(args)
                 .call()
                 .await?;
-            let new_tickets =
-                Decode!(&ret, Result<Vec<(u64, OmnityTicket)>, OmnityError>)?.unwrap();
+            let new_tickets = Decode!(&ret, Result<Vec<(u64, OmnityTicket)>, OmnityError>)??;
             // info!("synced tickets {:?} ", new_tickets);
             for (seq, ticket) in new_tickets.iter() {
                 let ticket_modle = Ticket::from_omnity_ticket(*seq, ticket.clone()).into();
@@ -216,49 +206,6 @@ pub async fn sync_tickets(db: &DbConn) {
         Ok(())
     })
     .await
-}
-
-pub async fn sync_chains_from_hub(db_conn: &DbConn) -> JoinHandle<()> {
-    let sync_chains_task = task::spawn({
-        let db_conn_chains = db_conn.clone();
-        async move {
-            let mut interval = time::interval(Duration::from_secs(CHAIN_SYNC_INTERVAL));
-            loop {
-                sync_chains(&db_conn_chains).await;
-                interval.tick().await;
-            }
-        }
-    });
-    sync_chains_task
-}
-
-pub async fn sync_tokens_from_hub(db_conn: &DbConn) -> JoinHandle<()> {
-    let sync_tokens_task = task::spawn({
-        let db_conn_tokens = db_conn.clone();
-        async move {
-            let mut interval = time::interval(Duration::from_secs(TOKEN_SYNC_INTERVAL));
-            loop {
-                sync_tokens(&db_conn_tokens).await;
-                interval.tick().await;
-            }
-        }
-    });
-    sync_tokens_task
-}
-
-pub async fn sync_tickets_from_hub(db_conn: &DbConn) -> JoinHandle<()> {
-    let sync_tickets_task = task::spawn({
-        let db_conn_tickets = db_conn.clone();
-        async move {
-            let mut interval = time::interval(Duration::from_secs(TICKET_SYNC_INTERVAL));
-            loop {
-                sync_tickets(&db_conn_tickets).await;
-                interval.tick().await;
-            }
-        }
-    });
-
-    sync_tickets_task
 }
 
 #[cfg(test)]
@@ -288,7 +235,8 @@ mod tests {
         let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
         let chains = runtime.block_on(async {
             let db = Database::new(db_url).await;
-            sync_chains(&db.get_connection()).await;
+            let ret = sync_chains(&db.get_connection()).await;
+            info!("sync_chains result{:?}", ret);
             Query::get_all_chains(&db.get_connection()).await.unwrap()
         });
 
@@ -306,7 +254,8 @@ mod tests {
         let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
         let tokens = runtime.block_on(async {
             let db = Database::new(db_url).await;
-            sync_tokens(&db.get_connection()).await;
+            let ret = sync_tokens(&db.get_connection()).await;
+            info!("sync_tokens result{:?}", ret);
             Query::get_all_tokens(&db.get_connection()).await.unwrap()
         });
 
@@ -325,7 +274,8 @@ mod tests {
         let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
         let tickets = runtime.block_on(async {
             let db = Database::new(db_url).await;
-            sync_tickets(&db.get_connection()).await;
+            let ret = sync_tickets(&db.get_connection()).await;
+            info!("sync_tickets result{:?}", ret);
             Query::get_all_tickets(&db.get_connection()).await.unwrap()
         });
 
@@ -360,9 +310,11 @@ mod tests {
                 memo: None,
                 status: types::TicketStatus::WaitingForConfirmByDest,
             };
-            send_tickets(ticket.to_owned()).await;
+            let ret = send_tickets(ticket.to_owned()).await;
+            info!("send_tickets result{:?}", ret);
             let db = Database::new(db_url).await;
-            sync_tickets(&db.get_connection()).await;
+            let ret = sync_tickets(&db.get_connection()).await;
+            info!("sync_tickets result{:?}", ret);
             Query::get_ticket_by_id(&db.get_connection(), ticket.ticket_id.to_owned())
                 .await
                 .unwrap()

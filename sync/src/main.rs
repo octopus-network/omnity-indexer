@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let db_url = read_config(|c| c.database_url.to_owned());
             let db = Database::new(db_url).await;
 
-            execute_sync_tasks(&db.get_connection()).await;
+            execute_sync_tasks(db.get_connection()).await;
         }
         None => {}
     }

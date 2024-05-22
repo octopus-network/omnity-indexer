@@ -7,7 +7,7 @@ use ic_btc_interface::Txid;
 use ic_identity_hsm::HardwareIdentity;
 
 use lazy_static::lazy_static;
-use log::{debug, info};
+use log::{debug, error, info};
 use ring::signature::Ed25519KeyPair;
 use sea_orm::DatabaseConnection;
 use sea_orm::{ConnectOptions, DbConn};
@@ -127,7 +127,7 @@ pub async fn create_agent(identity: impl Identity + 'static) -> Result<Agent, St
         .map_err(|e| format!("{:?}", e))
 }
 
-pub async fn with_agent<F, R>(f: F)
+pub async fn with_agent<F, R>(f: F) -> Result<(), Box<dyn Error>>
 where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent) -> R,
@@ -145,29 +145,22 @@ where
         }
     };
     let pem_file = Path::new(&identity);
-    let agent_identity = Secp256k1Identity::from_pem_file(pem_file)
-        .expect("Could not create an identity from PEM file.");
+    let agent_identity = Secp256k1Identity::from_pem_file(pem_file)?;
 
-    with_agent_as(agent_identity, f).await
+    with_agent_as(agent_identity, f).await?;
+    Ok(())
 }
 
-pub async fn with_agent_as<I, F, R>(agent_identity: I, f: F)
+pub async fn with_agent_as<I, F, R>(agent_identity: I, f: F) -> Result<(), Box<dyn Error>>
 where
     I: Identity + 'static,
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent) -> R,
 {
-    let agent = create_agent(agent_identity)
-        .await
-        .expect("Could not create an agent.");
-    agent
-        .fetch_root_key()
-        .await
-        .expect("could not fetch root key");
-    match f(agent).await {
-        Ok(_) => {}
-        Err(e) => panic!("{:?}", e),
-    };
+    let agent = create_agent(agent_identity).await?;
+    agent.fetch_root_key().await?;
+
+    f(agent).await
 }
 
 pub struct Database {
@@ -259,17 +252,21 @@ pub fn set_config(setting: Settings) {
     *CONFIG.write().unwrap() = setting;
 }
 
-pub fn spawn_sync_task<F, Fut>(db: &Database, sync_fn: F) -> tokio::task::JoinHandle<()>
+pub fn spawn_sync_task<F, Fut>(
+    db_conn: Arc<DbConn>,
+    interval: u64,
+    sync_fn: F,
+) -> tokio::task::JoinHandle<()>
 where
-    F: Fn(&DbConn) -> Fut + Send + 'static,
-    Fut: Future<Output = ()> + Send + 'static,
+    F: Fn(Arc<DbConn>) -> Fut + Send + Sync + 'static,
+    Fut: Future<Output = Result<(), Box<dyn Error>>> + Send + 'static,
 {
-    let db_conn = db.get_connection();
-
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(5));
+        let mut interval = tokio::time::interval(Duration::from_secs(interval));
         loop {
-            sync_fn(&db_conn).await;
+            sync_fn(db_conn.clone()).await.unwrap_or_else(|e| {
+                error!("sync task error: {}", e);
+            });
             interval.tick().await;
         }
     })
