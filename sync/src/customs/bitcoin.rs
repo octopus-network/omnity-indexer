@@ -317,6 +317,7 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) {
     .await
 }
 
+
 pub async fn sync_pending_tickets_from_bitcion(db_conn: &DbConn) -> JoinHandle<()>{
     let sync_pending_tickets = task::spawn({
         let db_conn_ticket_status = db_conn.clone();

@@ -69,7 +69,8 @@ sea-orm-cli migrate up -u postgres://postgres:open-sesame@localhost/omnity
 
 ```
 
-#### Build and run the omnity 
+### Build and run the omnity indexer sync
+
 
 ```bash
 cargo build --release -p omnity-indexer-sync

@@ -333,7 +333,6 @@ pub struct OmnityTicket {
     pub sender: Option<Account>,
     pub receiver: Account,
     pub memo: Option<Vec<u8>>,
-    pub status: TicketStatus,
 }
 #[derive(
     CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash,
@@ -441,7 +440,7 @@ impl Ticket {
             sender: omnity_ticket.sender.to_owned(),
             receiver: omnity_ticket.receiver.to_owned(),
             memo: omnity_ticket.memo.to_owned(),
-            status: omnity_ticket.status.to_owned(),
+            status: TicketStatus::WaitingForConfirmByDest,
         }
     }
 }
@@ -490,9 +489,9 @@ impl core::fmt::Display for Ticket {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(
             f,
-            "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?} \nstatus:{:?}",
+            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?} \nstatus:{:?}",
             self.ticket_id,
-            // self.ticket_seq,
+            self.ticket_seq,
             self.ticket_type,
             self.ticket_time,
             self.src_chain,

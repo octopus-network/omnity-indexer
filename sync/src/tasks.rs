@@ -1,4 +1,3 @@
-
 use crate::{customs::bitcoin, hub, routes::icp};
 use sea_orm::DbConn;
 use std::time::Duration;
@@ -40,16 +39,7 @@ pub async fn execute_sync_tasks(db_conn: &DbConn) {
             }
         }
     });
-    let sync_pending_tickets_from_bitcion = task::spawn({
-        let db_conn_pending_ticket = db_conn.clone();
-        async move {
-            let mut interval = time::interval(Duration::from_secs(TICKET_SYNC_INTERVAL));
-            loop {
-                bitcoin::sync_pending_tickets_from_bitcoin(&db_conn_pending_ticket).await;
-                interval.tick().await;
-            }
-        }
-    });
+
     let sync_ticket_status_from_bitcoin = task::spawn({
         let db_conn_ticket_status = db_conn.clone();
 
@@ -75,7 +65,6 @@ pub async fn execute_sync_tasks(db_conn: &DbConn) {
         sync_chains_task,
         sync_tokens_task,
         sync_tickets_task,
-        sync_pending_tickets_from_bitcion,
         sync_ticket_status_from_bitcoin,
         sync_ticket_status_from_icp
     );
