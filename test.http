@@ -1,0 +1,4 @@
+GET http://localhost:8080/api/rest/tickets/paginated?limit=3&offset=0
+
+###
+GET http://localhost:8080/api/rest/ticket/28b47548-55dc-4e89-b41d-76bc0247828f

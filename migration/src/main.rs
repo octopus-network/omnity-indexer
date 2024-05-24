@@ -8,7 +8,7 @@ async fn main() {
     #[cfg(debug_assertions)]
     dotenv().ok();
 
-    let fallback = "postgres://postgres:open-sesame@localhost/omnity";
+    let fallback = "postgres://postgres:omnity_go@localhost:5432/omnity";
 
     match std::env::var("DATABASE_URL") {
         Ok(val) => {

@@ -3,12 +3,19 @@
         {
             "previewLimit": 50,
             "server": "localhost",
-            "port": 5432,
             "driver": "PostgreSQL",
-            "name": "omnity",
-            "database": "omnity",
+            "name": "Hasura",
+            "database": "postgres",
             "username": "postgres",
-            "password": "open-sesame"
+            "password": "omnity-go",
+            "connectString": "postgres://postgres:omnity_go@localhost:5432/postgres"
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "Omnity",
+            "connectString": "postgres://postgres:omnity_go@localhost:5432/omnity"
         }
     ]
 }

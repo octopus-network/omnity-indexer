@@ -7,10 +7,10 @@ use ic_btc_interface::Txid;
 use ic_identity_hsm::HardwareIdentity;
 
 use lazy_static::lazy_static;
-use log::{debug, error, info};
+use log::{debug, info};
 use ring::signature::Ed25519KeyPair;
+use sea_orm::ConnectOptions;
 use sea_orm::DatabaseConnection;
-use sea_orm::{ConnectOptions, DbConn};
 use serde::Deserialize;
 
 use std::sync::{Arc, RwLock};
@@ -250,24 +250,4 @@ where
 /// Replaces the current state.
 pub fn set_config(setting: Settings) {
     *CONFIG.write().unwrap() = setting;
-}
-
-pub fn spawn_sync_task<F, Fut>(
-    db_conn: Arc<DbConn>,
-    interval: u64,
-    sync_fn: F,
-) -> tokio::task::JoinHandle<()>
-where
-    F: Fn(Arc<DbConn>) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<(), Box<dyn Error>>> + Send + 'static,
-{
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_secs(interval));
-        loop {
-            sync_fn(db_conn.clone()).await.unwrap_or_else(|e| {
-                error!("sync task error: {}", e);
-            });
-            interval.tick().await;
-        }
-    })
 }

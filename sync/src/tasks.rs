@@ -1,12 +1,35 @@
-use crate::spawn_sync_task;
 use crate::{customs::bitcoin, hub, routes::icp};
+use futures::Future;
+use log::error;
 use sea_orm::DbConn;
 
+use std::error::Error;
 use std::sync::Arc;
+use std::time::Duration;
 
 use crate::hub::CHAIN_SYNC_INTERVAL;
 use crate::hub::TICKET_SYNC_INTERVAL;
 use crate::hub::TOKEN_SYNC_INTERVAL;
+
+pub fn spawn_sync_task<F, Fut>(
+    db_conn: Arc<DbConn>,
+    interval: u64,
+    sync_fn: F,
+) -> tokio::task::JoinHandle<()>
+where
+    F: Fn(Arc<DbConn>) -> Fut + Send + Sync + 'static,
+    Fut: Future<Output = Result<(), Box<dyn Error>>> + Send + 'static,
+{
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(interval));
+        loop {
+            sync_fn(db_conn.clone()).await.unwrap_or_else(|e| {
+                error!("sync task error: {}", e);
+            });
+            interval.tick().await;
+        }
+    })
+}
 
 pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
     let sync_chains_task =

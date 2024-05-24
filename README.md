@@ -37,35 +37,37 @@ dfx deploy icp_mock --mode reinstall -y
 ./scripts/hub_test.sh
 
 ```
-### Create the omnity indexer schema 
+### Run PostgreSql and Hasura in docker
 ```bash
-# run omnity postgresql as docker 
-docker run --name omnity-postgres -p 5432:5432  -e POSTGRES_PASSWORD=open-sesame -d postgres:12
+docker compose up -d
+# check docker status
+docker compose ps -a
+```
 
-# enter the pg docker 
-docker exec -it omnity-postgres bash
+### Create or drop the schema
+```bash  
+# enter docker
+docker compose exec -it postgres bash
 
 # connect to pg 
 psql -U postgres
 
 # create omnity db
 CREATE DATABASE omnity ENCODING = 'UTF8';
-```
 
-#### Create or drop the schema
-```bash
+# exit docker 
 # install sea orm cli
 cargo install sea-orm-cli
 
 # clone and cd omnity-indexer 
 
 # create the schema
-sea-orm-cli migrate up -u postgres://postgres:open-sesame@localhost/omnity
+sea-orm-cli migrate up -u postgres://postgres:omnity_go@localhost/omnity
 
 # generate entity
 #sea-orm-cli generate entity -o sync/src/entity
 # drop the schema
-#sea-orm-cli migrate down -u postgres://postgres:open-sesame@localhost/omnity
+#sea-orm-cli migrate down -u postgres://postgres:omnity_go@localhost/omnity
 
 ```
 
@@ -83,3 +85,5 @@ cargo build --release -p omnity-indexer-sync
 # open other terminal and watch log
 tail -f logs/omnity-indexer.log
 ```
+
+### Hasura
