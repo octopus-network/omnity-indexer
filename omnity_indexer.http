@@ -33,4 +33,4 @@ GET http://{{host}}/api/rest/tickets/token/Bitcoin-runes-HOPE•YOU•GET•RICH
 GET http://{{host}}/api/rest/tickets/address/address_on_Bitcoin
 
 ### query tickets by chain id and address
-GET http://localhost:8080/api/rest/tickets/Bitcoin/address/address_on_Bitcoin
+GET http://{{host}}/api/rest/tickets/Bitcoin/address/address_on_Bitcoin
