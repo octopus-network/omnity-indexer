@@ -1,4 +1,36 @@
-GET http://localhost:8080/api/rest/tickets/paginated?limit=3&offset=0
+# @hostname = localhost
+@hostname = 34.92.238.72
+@port = 8080
+@host = {{hostname}}:{{port}}
 
+### query chain
+GET http://{{host}}/api/rest/chain_meta
+### 	
+GET http://{{host}}/api/rest/chain_meta/eICP
 ###
-GET http://localhost:8080/api/rest/ticket/28b47548-55dc-4e89-b41d-76bc0247828f
+GET http://{{host}}/api/rest/chain_meta/canister/bkyz2-fmaaa-aaaaa-qaaaq-cai
+
+
+### query token
+GET http://{{host}}/api/rest/token_meta
+###
+GET http://{{host}}/api/rest/token_meta/LICP
+
+
+### quety ticket by id
+GET http://{{host}}/api/rest/ticket/28b47548-55dc-4e89-b41d-76bc024782e8f
+
+### query tickets with pagination
+GET http://{{host}}/api/rest/tickets/paginated?limit=3&offset=0
+
+### query tickets by chain
+GET http://{{host}}/api/rest/tickets/chain/Bitcoin
+
+### query tickets by token
+GET http://{{host}}/api/rest/tickets/token/Bitcoin-runes-HOPE•YOU•GET•RICH
+
+### query tickets by address
+GET http://{{host}}/api/rest/tickets/address/address_on_Bitcoin
+
+### query tickets by chain id and address
+GET http://localhost:8080/api/rest/tickets/Bitcoin/address/address_on_Bitcoin
