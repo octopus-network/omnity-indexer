@@ -86,4 +86,7 @@ cargo build --release -p omnity-indexer-sync
 tail -f logs/omnity-indexer.log
 ```
 
-### Hasura
+### Hasura  
+
+1. Open browser and access http://localhost:8080/console
+2. Config datasource and API service 
