@@ -13,6 +13,7 @@ use sea_orm::ConnectOptions;
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
 
+use anyhow::{Error as AnyError, Result};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::{error::Error, future::Future, path::Path};
@@ -132,20 +133,22 @@ where
     R: Future<Output = Result<(), Box<dyn Error>>>,
     F: FnOnce(Agent) -> R,
 {
-    let identity = match std::env::var("DFX_IDENTITY") {
+    let agent_identity = match std::env::var("DFX_IDENTITY") {
         Ok(identity) => {
             debug!("get identity from env var :{}", identity);
-            identity
+            let agent_identity = Secp256k1Identity::from_pem(identity.as_bytes())?;
+            agent_identity
         }
         Err(_) => {
-            let identity = read_config(|c| c.dfx_identity.to_owned());
+            let identity = read_config(|c| c.dfx_identity.to_owned())
+                .ok_or_else(|| AnyError::msg("Cannot find identity file"))?;
             debug!("get identity from  config file :{identity:?}");
 
-            identity
+            let pem_file = Path::new(&identity);
+            let agent_identity = Secp256k1Identity::from_pem_file(pem_file)?;
+            agent_identity
         }
     };
-    let pem_file = Path::new(&identity);
-    let agent_identity = Secp256k1Identity::from_pem_file(pem_file)?;
 
     with_agent_as(agent_identity, f).await?;
     Ok(())
@@ -213,7 +216,7 @@ pub fn random_txid() -> Txid {
 #[allow(unused)]
 pub struct Settings {
     pub database_url: String,
-    pub dfx_identity: String,
+    pub dfx_identity: Option<String>,
     pub dfx_network: String,
     pub omnity_hub_canister_id: String,
     pub omnity_customs_bitcoin_canister_id: String,

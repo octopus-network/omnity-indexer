@@ -11,7 +11,7 @@ database_url = 'postgres://postgres:open-sesame@localhost:5432/omnity'
 dfx_network = 'http://127.0.0.1:4943'
 log_config = './log4rs.yaml'
 # dfx env vars
-dfx_identity = './test.pem'
+# dfx_identity = './test.pem'
 omnity_hub_canister_id = 'bkyz2-fmaaa-aaaaa-qaaaq-cai'
 omnity_customs_bitcoin_canister_id = 'be2us-64aaa-aaaaa-qaabq-cai'
 omnity_routes_icp_canister_id = 'br5f7-7uaaa-aaaaa-qaaca-cai'
