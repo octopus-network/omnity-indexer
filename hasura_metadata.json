@@ -1,0 +1,300 @@
+{
+  "resource_version": 44,
+  "metadata": {
+    "version": 3,
+    "sources": [
+      {
+        "name": "Omnity",
+        "kind": "postgres",
+        "tables": [
+          {
+            "table": {
+              "name": "chain_meta",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "seaql_migrations",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "ticket",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "token_meta",
+              "schema": "public"
+            }
+          }
+        ],
+        "configuration": {
+          "connection_info": {
+            "database_url": {
+              "from_env": "OMNITY_DATABASE_URL"
+            },
+            "isolation_level": "read-committed",
+            "use_prepared_statements": false
+          }
+        }
+      }
+    ],
+    "query_collections": [
+      {
+        "name": "allowed-queries",
+        "definition": {
+          "queries": [
+            {
+              "name": "chain_meta_by_pk",
+              "query": "query chain_meta_by_pk($chain_id: String!) {\n  chain_meta_by_pk(chain_id: $chain_id) {\n    canister_id\n    chain_id\n    chain_state\n    chain_type\n    contract_address\n    counterparties\n    fee_token\n  }\n}\n"
+            },
+            {
+              "name": "chain_meta",
+              "query": "query chain_meta {\n  chain_meta {\n    canister_id\n    chain_id\n    chain_state\n    chain_type\n    contract_address\n    counterparties\n    fee_token\n  }\n}\n"
+            },
+            {
+              "name": "token_meta_by_pk",
+              "query": "query token_meta_by_pk($token_id: String!) {\n  token_meta_by_pk(token_id: $token_id) {\n    decimals\n    dst_chains\n    icon\n    issue_chain\n    metadata\n    name\n    symbol\n    token_id\n  }\n}\n"
+            },
+            {
+              "name": "token_meta",
+              "query": "query token_meta {\n  token_meta {\n    decimals\n    dst_chains\n    icon\n    issue_chain\n    metadata\n    name\n    symbol\n    token_id\n  }\n}\n"
+            },
+            {
+              "name": "chain_meta_by_canister",
+              "query": "query ChainByCanister($canister_id: String) {\n  chain_meta(where: {canister_id: {_eq: $canister_id}}) {\n    canister_id\n    chain_id\n    chain_state\n    chain_type\n    contract_address\n    counterparties\n    fee_token\n  }\n}"
+            },
+            {
+              "name": "ticket_by_id",
+              "query": "query ticket_by_pk($ticket_id: String!) {\n  ticket_by_pk(ticket_id: $ticket_id) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
+              "name": "ticket_by_address",
+              "query": "query TicketByAddress($address: String) {\n  ticket(where: {_or: [{sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
+              "name": "ticket_by_chain",
+              "query": "query TicketByChain($chain_id: String) {\n  ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}]}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
+              "name": "tickets_pagination",
+              "query": "query TicketsPagination($limit: Int, $offset: Int) {\n  ticket(limit: $limit, offset: $offset, order_by: {ticket_seq: asc}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
+              "name": "ticket_by_token",
+              "query": "query TicketByToken($token_id: String) {\n  ticket(where: {token: {_eq: $token_id}}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
+              "name": "filtered_tickets_by_chain_and_address_pagination",
+              "query": "query FilteredTicketsAndPagination($chain_id: String!, $address: String!, $limit: Int, $offset: Int) {\n  ticket_aggregate(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    aggregate {\n      count\n    }\n  }\n  ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}, limit: $limit, offset: $offset) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
+              "name": "filter_ticket_by_chain_id_or_address",
+              "query": "query FilteredTickets($chain_id: String!, $address: String!) {\n  ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
+              "name": "filtered_tickets_by_chain_and_address_with_aggregate_alase",
+              "query": "query FilteredTickets($chain_id: String!, $address: String!, $limit: Int, $offset: Int) {\n  total: ticket_aggregate(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    aggregate {\n      count\n    }\n  }\n  ticket: ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}, limit: $limit, offset: $offset) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            }
+          ]
+        }
+      }
+    ],
+    "allowlist": [
+      {
+        "collection": "allowed-queries",
+        "scope": {
+          "global": true
+        }
+      }
+    ],
+    "rest_endpoints": [
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "chain_meta"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "chain_meta",
+        "url": "chain_meta"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "chain_meta_by_pk"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "chain_meta_by_pk",
+        "url": "chain_meta/:chain_id"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "chain_meta_by_canister"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "chain_meta_by_canister",
+        "url": "chain_meta/canister/:canister_id"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "ticket_by_id"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "ticket_by_id",
+        "url": "ticket/:ticket_id"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "filtered_tickets_by_chain_and_address_with_aggregate_alase"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "filtered_tickets_by_chain_and_address_with_aggregate_alase",
+        "url": "tickets/:chain_id/address/:address"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "ticket_by_address"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "ticket_by_address",
+        "url": "tickets/address/:address"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "ticket_by_chain"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "ticket_by_chain",
+        "url": "tickets/chain/:chain_id"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "tickets_pagination"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "tickets_pagination",
+        "url": "tickets/paginated"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "ticket_by_token"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "ticket_by_token",
+        "url": "tickets/token/:token_id"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "filter_ticket_by_chain_id_or_address"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "filter_ticket_by_chain_id_or_address",
+        "url": "tickets0/:chain_id/address/:address"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "filtered_tickets_by_chain_and_address_pagination"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "filtered_tickets_by_chain_and_address_pagination",
+        "url": "tickets2/:chain_id/address/:address"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "token_meta"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "token_meta",
+        "url": "token_meta"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "token_meta_by_pk"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "token_meta_by_pk",
+        "url": "token_meta/:token_id"
+      }
+    ]
+  }
+}

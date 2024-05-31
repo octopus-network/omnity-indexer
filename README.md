@@ -12,7 +12,7 @@ Omnity Indexer is made up of three main parts: Synchronizer, Index database and 
  
 3. API service, responsible for retrieving data from the index database, and providing a variety of interface access methods, such as restful, graphql and so on. 
 
-## Local env test
+## Local deployment
 
 ### Deploy omnity ic canisters
 ```bash
@@ -90,3 +90,54 @@ tail -f logs/omnity-indexer.log
 
 1. Open browser and access http://localhost:8080/console
 2. Config datasource and API service 
+
+## Testnet or Mainnet deployment
+
+### Deploy or upgrade omnity ic canisters
+
+### Create the omnity indexer schema
+
+```bash  
+# create omnity db
+psql -U postgres -h hostname/ip -p 5432 -c "CREATE DATABASE omnity ENCODING = 'UTF8';"
+
+# import omnity db objects
+psql -U postgres -h hostname/ip -p 5432 -d omnity < omnity.sql
+
+```
+
+### Update config.toml
+```toml
+# use your config env
+database_url = 'postgres://postgres:open-sesame@localhost:5432/omnity'
+dfx_network = 'http://127.0.0.1:4943'
+log_config = './log4rs.yaml'
+# dfx env vars
+dfx_identity = './test.pem'
+omnity_hub_canister_id = 'bkyz2-fmaaa-aaaaa-qaaaq-cai'
+omnity_customs_bitcoin_canister_id = 'be2us-64aaa-aaaaa-qaabq-cai'
+omnity_routes_icp_canister_id = 'br5f7-7uaaa-aaaaa-qaaca-cai'
+
+```
+
+### Build and run the omnity indexer sync
+
+```bash
+# first, install rust and compile the omnity indexer sync
+cargo build --lock --release -p omnity-indexer-sync
+
+# start sync
+./target/release/omnity_indexer_sync -c ~/config.toml start
+
+# optional,open other terminal and watch log
+tail -f logs/omnity-indexer.log
+```
+
+### Config Hasura  
+1. Deploy Hasura
+1. Open browser and access hasura console，eg: http://localhost:8080/console 
+2. Config database for omnity indexer
+3. Import Hasura metadata:
+   Navigate to the location: `SETTING -> METADATA -> Export metadata`
+   Select `hasura_metadata.json` and import it
+4. Open file `omnity_indexer.http` ,modify @host and test api service.
