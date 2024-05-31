@@ -24,16 +24,7 @@ Omnity Indexer is made up of three main parts: Synchronizer, Index database and 
 git clone git@github.com:octopus-network/omnity.git
 cd omnity ; git checkout boern/dev
 
-# deploy the hub canister. Note: use your identity
-dfx deploy omnity_hub --argument '(variant { Init = record { admin = principal "rv3oc-smtnf-i2ert-ryxod-7uj7v-j7z3q-qfa5c-bhz35-szt3n-k3zks-fqe"} })' --mode reinstall --yes
-
-# deploy the bitcoin custom canister
-dfx deploy bitcoin_mock --argument '(null)' --mode reinstall -y
-
-# deploy the icp route canister
-dfx deploy icp_mock --mode reinstall -y
-
-# feed test data
+# deploy the omnity canisters. Note: use your identity
 ./scripts/hub_test.sh
 
 ```
