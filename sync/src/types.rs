@@ -26,6 +26,8 @@ pub type TicketId = String;
 pub enum Proposal {
     AddChain(ChainMeta),
     AddToken(TokenMeta),
+    UpdateChain(ChainMeta),
+    UpdateToken(TokenMeta),
     ToggleChainState(ToggleState),
     UpdateFee(Factor),
 }
@@ -227,6 +229,8 @@ pub struct Subscribers {
 pub enum Directive {
     AddChain(Chain),
     AddToken(Token),
+    UpdateChain(Chain),
+    UpdateToken(Token),
     ToggleChainState(ToggleState),
     UpdateFee(Factor),
 }
@@ -238,6 +242,8 @@ impl Directive {
             Self::AddToken(_) => Topic::AddToken,
             Self::ToggleChainState(_) => Topic::ToggleChainState,
             Self::UpdateFee(_) => Topic::UpdateFee,
+            Self::UpdateChain(_) => Topic::UpdateChain,
+            Self::UpdateToken(_) => Topic::UpdateToken,
         }
     }
 }
@@ -251,6 +257,8 @@ impl core::fmt::Display for Directive {
                 write!(f, "ToggleChainState({})", toggle_state)
             }
             Directive::UpdateFee(factor) => write!(f, "UpdateFee({})", factor),
+            Directive::UpdateChain(chain) => write!(f, "UpdateChain({})", chain),
+            Directive::UpdateToken(token) => write!(f, "UpdateToken({})", token),
         }
     }
 }
@@ -288,8 +296,24 @@ impl DireMap {
 pub enum Topic {
     AddChain,
     AddToken,
+    UpdateChain,
+    UpdateToken,
     ToggleChainState,
     UpdateFee,
+}
+impl core::fmt::Display for Topic {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Topic::AddChain => write!(f, "AddChain"),
+            Topic::AddToken => write!(f, "AddToken"),
+            Topic::ToggleChainState => {
+                write!(f, "ToggleChainState", )
+            }
+            Topic::UpdateFee => write!(f, "UpdateFee"),
+            Topic::UpdateChain => write!(f, "UpdateChain"),
+            Topic::UpdateToken => write!(f, "UpdateToken"),
+        }
+    }
 }
 
 #[derive(
