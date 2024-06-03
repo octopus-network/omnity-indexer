@@ -4,7 +4,6 @@ use entity::sea_orm_active_enums;
 use entity::ticket;
 use entity::token_meta;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use serde_json::json;
 use sha2::Digest;
 use std::collections::BTreeSet;
@@ -307,7 +306,7 @@ impl core::fmt::Display for Topic {
             Topic::AddChain => write!(f, "AddChain"),
             Topic::AddToken => write!(f, "AddToken"),
             Topic::ToggleChainState => {
-                write!(f, "ToggleChainState", )
+                write!(f, "ToggleChainState",)
             }
             Topic::UpdateFee => write!(f, "UpdateFee"),
             Topic::UpdateChain => write!(f, "UpdateChain"),

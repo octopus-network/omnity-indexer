@@ -230,6 +230,20 @@ impl Settings {
             .build()?;
         config.try_deserialize()
     }
+
+    pub fn get(&self, field: &str) -> Result<String, String> {
+        match field.to_lowercase().as_str() {
+            "database_url" => Ok(self.database_url.to_owned()),
+            "dfx_identity" => Ok(self.dfx_identity.to_owned().unwrap()),
+            "dfx_network" => Ok(self.dfx_network.to_owned()),
+            "omnity_hub_canister_id" => Ok(self.omnity_hub_canister_id.to_owned()),
+            "omnity_customs_bitcoin_canister_id" => {
+                Ok(self.omnity_customs_bitcoin_canister_id.to_owned())
+            }
+            "omnity_routes_icp_canister_id" => Ok(self.omnity_routes_icp_canister_id.to_owned()),
+            _ => Err(format!("Invalid field name to get '{}'", field)),
+        }
+    }
 }
 
 lazy_static! {
@@ -253,4 +267,50 @@ where
 /// Replaces the current state.
 pub fn set_config(setting: Settings) {
     *CONFIG.write().unwrap() = setting;
+}
+
+pub async fn with_omnity_canister<F, R>(canister: &str, f: F) -> Result<(), Box<dyn Error>>
+where
+    R: Future<Output = Result<(), Box<dyn Error>>>,
+    F: FnOnce(Agent, Principal) -> R,
+{
+    with_agent(|agent| async move {
+        let canister_id = create_omnity_canister(canister).await?;
+        f(agent, canister_id).await
+    })
+    .await
+}
+
+pub async fn with_omnity_bitcoin_canister_as<I, F, R>(
+    identity: I,
+    canister: &str,
+    f: F,
+) -> Result<(), Box<dyn Error>>
+where
+    I: Identity + 'static,
+    R: Future<Output = Result<(), Box<dyn Error>>>,
+    F: FnOnce(Agent, Principal) -> R,
+{
+    with_agent_as(identity, |agent| async move {
+        let canister_id = create_omnity_canister(canister).await?;
+        f(agent, canister_id).await
+    })
+    .await
+}
+
+pub async fn create_omnity_canister(canister: &str) -> Result<Principal, Box<dyn Error>> {
+    match std::env::var(canister) {
+        Ok(canister_id) => {
+            info!(
+                "Getting {} canister id from env var: {}",
+                canister, canister_id
+            );
+            Ok(Principal::from_text(canister_id)?)
+        }
+        Err(_) => {
+            let canister_id = read_config(|c| c.get(canister))?;
+            info!("Getting {canister:?} canister id from config file: {canister_id:?}");
+            Ok(Principal::from_text(canister_id)?)
+        }
+    }
 }

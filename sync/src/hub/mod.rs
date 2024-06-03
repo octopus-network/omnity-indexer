@@ -1,15 +1,13 @@
 use crate::{
-    read_config,
     types::{self, ChainMeta, OmnityTicket, Ticket, TokenMeta},
-    with_agent, with_agent_as,
+    with_omnity_canister,
 };
 use candid::{Decode, Encode};
-use ic_agent::{export::Principal, Agent, Identity};
 
 use crate::service::{Mutation, Query};
 use log::info;
 use sea_orm::DbConn;
-use std::{error::Error, future::Future};
+use std::error::Error;
 
 use types::Error as OmnityError;
 const FETCH_LIMIT: u64 = 50;
@@ -17,49 +15,49 @@ pub const CHAIN_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_SYNC_INTERVAL: u64 = 5;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
 
-pub async fn with_omnity_hub_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
-where
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent(|agent| async move {
-        let canister_id = create_omnity_hub_canister().await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
+// pub async fn with_omnity_hub_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
+// where
+//     R: Future<Output = Result<(), Box<dyn Error>>>,
+//     F: FnOnce(Agent, Principal) -> R,
+// {
+//     with_agent(|agent| async move {
+//         let canister_id = create_omnity_hub_canister().await?;
+//         f(agent, canister_id).await
+//     })
+//     .await
+// }
 
-pub async fn with_omnity_hub_canister_as<I, F, R>(identity: I, f: F) -> Result<(), Box<dyn Error>>
-where
-    I: Identity + 'static,
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent_as(identity, |agent| async move {
-        let canister_id = create_omnity_hub_canister().await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
+// pub async fn with_omnity_hub_canister_as<I, F, R>(identity: I, f: F) -> Result<(), Box<dyn Error>>
+// where
+//     I: Identity + 'static,
+//     R: Future<Output = Result<(), Box<dyn Error>>>,
+//     F: FnOnce(Agent, Principal) -> R,
+// {
+//     with_agent_as(identity, |agent| async move {
+//         let canister_id = create_omnity_hub_canister().await?;
+//         f(agent, canister_id).await
+//     })
+//     .await
+// }
 
-pub async fn create_omnity_hub_canister() -> Result<Principal, Box<dyn Error>> {
-    match std::env::var("OMNITY_HUB_CANISTER_ID") {
-        Ok(hub_canister_id) => {
-            info!("get hub canister id from env var :{}", hub_canister_id);
-            Ok(Principal::from_text(hub_canister_id)?)
-        }
+// pub async fn create_omnity_hub_canister() -> Result<Principal, Box<dyn Error>> {
+//     match std::env::var("OMNITY_HUB_CANISTER_ID") {
+//         Ok(hub_canister_id) => {
+//             info!("get hub canister id from env var :{}", hub_canister_id);
+//             Ok(Principal::from_text(hub_canister_id)?)
+//         }
 
-        Err(_) => {
-            let hub_canister_id = read_config(|c| c.omnity_hub_canister_id.to_owned());
-            info!("get hub canister id from  config file :{hub_canister_id:?}");
-            Ok(Principal::from_text(hub_canister_id)?)
-        }
-    }
-}
+//         Err(_) => {
+//             let hub_canister_id = read_config(|c| c.omnity_hub_canister_id.to_owned());
+//             info!("get hub canister id from  config file :{hub_canister_id:?}");
+//             Ok(Principal::from_text(hub_canister_id)?)
+//         }
+//     }
+// }
 
 //full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
-    with_omnity_hub_canister(|agent, canister_id| async move {
+    with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
         info!("{:?} syncing chains ... ", chrono::Utc::now());
         let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
         let ret = agent
@@ -95,7 +93,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 //full synchronization for tokens
 pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
-    with_omnity_hub_canister(|agent, canister_id| async move {
+    with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
         info!("{:?} syncing tokens ... ", chrono::Utc::now());
 
         let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
@@ -132,7 +130,7 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 }
 
 pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
-    with_omnity_hub_canister(|agent, canister_id| async move {
+    with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
         info!("{:?} send tickets to hub... ", chrono::Utc::now());
 
         let args: Vec<u8> = Encode!(&ticket)?;
@@ -151,7 +149,7 @@ pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
 
 //increment synchronization for tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
-    with_omnity_hub_canister(|agent, canister_id| async move {
+    with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
         info!("{:?} syncing tickets from hub ... ", chrono::Utc::now());
 
         let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;

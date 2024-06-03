@@ -1,25 +1,22 @@
 use crate::{
-    read_config, types::{ Ticket, TicketId, TicketStatus, TicketType, TxAction}, with_agent, with_agent_as
+    types::{Ticket, TicketId, TicketStatus, TicketType, TxAction},
+    with_omnity_canister,
 };
 use candid::{CandidType, Decode, Encode};
-use ic_agent::{export::Principal, Agent, Identity};
 use ic_btc_interface::Txid;
 
-use log::info;
 use crate::service::{Mutation, Query};
+use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::{
     error::Error,
     fmt::{self, Display, Formatter},
-    future::Future,
     str::FromStr,
 };
 
-
 const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
 const FETCH_LIMIT: u64 = 50;
-
 
 #[derive(CandidType, Deserialize)]
 pub struct GetGenTicketReqsArgs {
@@ -123,158 +120,184 @@ pub enum FinalizedStatus {
     Confirmed(Txid),
 }
 
+// pub async fn with_omnity_bitcoin_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
+// where
+//     R: Future<Output = Result<(), Box<dyn Error>>>,
+//     F: FnOnce(Agent, Principal) -> R,
+// {
+//     with_agent(|agent| async move {
+//         let canister_id = create_omnity_bitcoin_canister().await?;
+//         f(agent, canister_id).await
+//     })
+//     .await
+// }
 
-pub async fn with_omnity_bitcoin_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
-where
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent(|agent| async move {
-        let canister_id = create_omnity_bitcoin_canister().await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
+// pub async fn with_omnity_bitcoin_canister_as<I, F, R>(identity: I, f: F) -> Result<(), Box<dyn Error>>
+// where
+//     I: Identity + 'static,
+//     R: Future<Output = Result<(), Box<dyn Error>>>,
+//     F: FnOnce(Agent, Principal) -> R,
+// {
+//     with_agent_as(identity, |agent| async move {
+//         let canister_id = create_omnity_bitcoin_canister().await?;
+//         f(agent, canister_id).await
+//     })
+//     .await
+// }
 
-pub async fn with_omnity_bitcoin_canister_as<I, F, R>(identity: I, f: F) -> Result<(), Box<dyn Error>>
-where
-    I: Identity + 'static,
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent_as(identity, |agent| async move {
-        let canister_id = create_omnity_bitcoin_canister().await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
+// pub async fn create_omnity_bitcoin_canister() -> Result<Principal, Box<dyn Error>> {
 
-pub async fn create_omnity_bitcoin_canister() -> Result<Principal, Box<dyn Error>> {
-   
-    match std::env::var("OMNITY_CUSTOMS_BITCOIN_CANISTER_ID") {
-        Ok(bitcoin_canister_id) => {
-            info!("get bitcoin canister id from env var :{}", bitcoin_canister_id);
-            Ok(Principal::from_text(bitcoin_canister_id)?)
-        }
+//     match std::env::var("OMNITY_CUSTOMS_BITCOIN_CANISTER_ID") {
+//         Ok(bitcoin_canister_id) => {
+//             info!("get bitcoin canister id from env var :{}", bitcoin_canister_id);
+//             Ok(Principal::from_text(bitcoin_canister_id)?)
+//         }
 
-        Err(_) => {
-            let bitcoin_canister_id = read_config(|c| c.omnity_customs_bitcoin_canister_id.to_owned());
-            info!("get bitcoin canister id from  config file :{bitcoin_canister_id:?}");
-            Ok(Principal::from_text(bitcoin_canister_id)?)
-        }
-    }
-}
-
+//         Err(_) => {
+//             let bitcoin_canister_id = read_config(|c| c.omnity_customs_bitcoin_canister_id.to_owned());
+//             info!("get bitcoin canister id from  config file :{bitcoin_canister_id:?}");
+//             Ok(Principal::from_text(bitcoin_canister_id)?)
+//         }
+//     }
+// }
 
 // mock: generate ticket from customs
-pub async fn gen_bitcoin_ticket(args: GenerateTicketArgs)  -> Result<(), Box<dyn Error>>{
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!("{:?} generate ticket on bitcion customs ... ", chrono::Utc::now());
-        let args: Vec<u8> = Encode!(&args)?;
-         let ret = agent
-            .update(&canister_id, "generate_ticket")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
-        info!(" mock generate ticket on bitcion customs ret: {:?}  ", ret);
+pub async fn gen_bitcoin_ticket(args: GenerateTicketArgs) -> Result<(), Box<dyn Error>> {
+    with_omnity_canister(
+        "OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+        |agent, canister_id| async move {
+            info!(
+                "{:?} generate ticket on bitcion customs ... ",
+                chrono::Utc::now()
+            );
+            let args: Vec<u8> = Encode!(&args)?;
+            let ret = agent
+                .update(&canister_id, "generate_ticket")
+                .with_arg(args)
+                .call_and_wait()
+                .await?;
+            info!(" mock generate ticket on bitcion customs ret: {:?}  ", ret);
 
-        Ok(())
-    })
+            Ok(())
+        },
+    )
     .await
 }
 
 // mock: finalizd release token
-pub async fn mock_finalized_ticket(ticket_id: TicketId)  -> Result<(), Box<dyn Error>>{
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!("{:?} mock finalized ticket on bitcion customs ... ", chrono::Utc::now());
-        let args: Vec<u8> = Encode!(&ticket_id)?;
-         agent
-            .update(&canister_id, "mock_finalized_ticket")
-            .with_arg(args)
-            .call()
-            .await?;
-       
-        Ok(())
-    })
+pub async fn mock_finalized_ticket(ticket_id: TicketId) -> Result<(), Box<dyn Error>> {
+    with_omnity_canister(
+        "OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+        |agent, canister_id| async move {
+            info!(
+                "{:?} mock finalized ticket on bitcion customs ... ",
+                chrono::Utc::now()
+            );
+            let args: Vec<u8> = Encode!(&ticket_id)?;
+            agent
+                .update(&canister_id, "mock_finalized_ticket")
+                .with_arg(args)
+                .call()
+                .await?;
+
+            Ok(())
+        },
+    )
     .await
 }
 // mock: finalizd release token
-pub async fn mock_finalized_release_token(ticket_id: TicketId, status: FinalizedStatus) -> Result<(), Box<dyn Error>> {
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!("{:?} mock finalized release token on bitcion customs ... ", chrono::Utc::now());
-        let args: Vec<u8> = Encode!(&ticket_id,&status)?;
-         let ret =agent
-            .update(&canister_id, "mock_finalized_release_token")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
-        let ret = Decode!(&ret, ())?;
-        info!("mock finalized release token ret: {:?}  ", ret);
+pub async fn mock_finalized_release_token(
+    ticket_id: TicketId,
+    status: FinalizedStatus,
+) -> Result<(), Box<dyn Error>> {
+    with_omnity_canister(
+        "OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+        |agent, canister_id| async move {
+            info!(
+                "{:?} mock finalized release token on bitcion customs ... ",
+                chrono::Utc::now()
+            );
+            let args: Vec<u8> = Encode!(&ticket_id, &status)?;
+            let ret = agent
+                .update(&canister_id, "mock_finalized_release_token")
+                .with_arg(args)
+                .call_and_wait()
+                .await?;
+            let ret = Decode!(&ret, ())?;
+            info!("mock finalized release token ret: {:?}  ", ret);
 
-        Ok(())
-    })
+            Ok(())
+        },
+    )
     .await
 }
 
 // sync tickets that transfered from customs to routes
 pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
-    
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!("{:?} syncing tickets from bitcoin custom ... ", chrono::Utc::now());
+    with_omnity_canister(
+        "OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+        |agent, canister_id| async move {
+            info!(
+                "{:?} syncing tickets from bitcoin custom ... ",
+                chrono::Utc::now()
+            );
 
-        let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
-        let ret = agent
-            .query(&canister_id, "get_pending_gen_ticket_size")
-            .with_arg(args)
-            .call()
-            .await?;
-        let ticket_size = Decode!(&ret, u64)?;
-        info!("pending ticket size: {:?}", ticket_size);
-
-        let mut offset = 0u64;
-        let limit = FETCH_LIMIT;
-        while offset < ticket_size {
-            let args = Encode!(&offset, &limit)?;
+            let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
             let ret = agent
-                .query(&canister_id, "get_pending_gen_tickets")
+                .query(&canister_id, "get_pending_gen_ticket_size")
                 .with_arg(args)
                 .call()
                 .await?;
-            let pending_tickets: Vec<GenTicketRequest> = Decode!(&ret, Vec<GenTicketRequest>)?;
-            info!("need to sync pending tickets {}: {:?}", offset, pending_tickets);
-            for pending_ticket in pending_tickets.iter() {
-                let ticket_modle = Ticket::new(
-                    pending_ticket.txid.to_string(),
-                    None,
-                    TicketType::Normal,
-                    pending_ticket.received_at,
-                    CUSTOMS_CHAIN_ID.to_owned(),
-                    pending_ticket.target_chain_id.to_owned(),
-                    TxAction::Transfer,
-                    pending_ticket.token_id.to_string(),
-                    pending_ticket.amount.to_string(),
-                    None,
-                    pending_ticket.receiver.to_owned(),
-                    None,
-                    TicketStatus::WaitingForConfirmByDest,
-                )
-                .into();
-                Mutation::save_ticket(db, ticket_modle).await?;
+            let ticket_size = Decode!(&ret, u64)?;
+            info!("pending ticket size: {:?}", ticket_size);
+
+            let mut offset = 0u64;
+            let limit = FETCH_LIMIT;
+            while offset < ticket_size {
+                let args = Encode!(&offset, &limit)?;
+                let ret = agent
+                    .query(&canister_id, "get_pending_gen_tickets")
+                    .with_arg(args)
+                    .call()
+                    .await?;
+                let pending_tickets: Vec<GenTicketRequest> = Decode!(&ret, Vec<GenTicketRequest>)?;
+                info!(
+                    "need to sync pending tickets {}: {:?}",
+                    offset, pending_tickets
+                );
+                for pending_ticket in pending_tickets.iter() {
+                    let ticket_modle = Ticket::new(
+                        pending_ticket.txid.to_string(),
+                        None,
+                        TicketType::Normal,
+                        pending_ticket.received_at,
+                        CUSTOMS_CHAIN_ID.to_owned(),
+                        pending_ticket.target_chain_id.to_owned(),
+                        TxAction::Transfer,
+                        pending_ticket.token_id.to_string(),
+                        pending_ticket.amount.to_string(),
+                        None,
+                        pending_ticket.receiver.to_owned(),
+                        None,
+                        TicketStatus::WaitingForConfirmByDest,
+                    )
+                    .into();
+                    Mutation::save_ticket(db, ticket_modle).await?;
+                }
+                offset += pending_tickets.len() as u64;
+                if pending_tickets.is_empty() {
+                    break;
+                }
             }
-            offset += pending_tickets.len() as u64;
-            if pending_tickets.is_empty() {
-                break;
-            }
-        }
-        Ok(())
-    })
+            Ok(())
+        },
+    )
     .await
 }
 
 // sync tickets status that transfered from routes to customs
-pub async fn sync_ticket_status_from_bitcoin(db: &DbConn)  -> Result<(), Box<dyn Error>>{
-
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
+pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
+    with_omnity_canister("OMNITY_CUSTOMS_BITCOIN_CANISTER_ID", |agent, canister_id| async move {
         info!(
             "{:?} syncing release token status from bitcoin ... ",
             chrono::Utc::now()
@@ -294,7 +317,6 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn)  -> Result<(), Box<dyn
                 .await?;
             let mint_token_status: ReleaseTokenStatus = Decode!(&ret, ReleaseTokenStatus)?;
             if matches!(mint_token_status, ReleaseTokenStatus::Confirmed(ref s) if s.eq(&unconfirmed_ticket.ticket_id)) {
-                
                 //step3: update ticket status to finalized
                 let ticket_modle =
                     Mutation::update_ticket_status(db, unconfirmed_ticket, crate::entity::sea_orm_active_enums::TicketStatus::Finalized)
@@ -316,18 +338,16 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn)  -> Result<(), Box<dyn
     .await
 }
 
-
-
 #[cfg(test)]
 mod tests {
 
     use std::sync::Once;
 
-    use crate::{get_timestamp, random_txid, types, Database};
-    use dotenvy::dotenv;
+    use super::*;
     use crate::entity::sea_orm_active_enums;
     use crate::service::Query;
-    use super::*;
+    use crate::{get_timestamp, random_txid, types, Database};
+    use dotenvy::dotenv;
     const RUNE_ID: &str = "40000:846";
     const TOKEN_ID: &str = "Bitcoin-runes-HOPE•YOU•GET•RICH";
     static INIT: Once = Once::new();
@@ -353,15 +373,16 @@ mod tests {
                 receiver: String::from("cosmos1fwaeqe84kaymymmqv0wyj75hzsdq4gfqm5xvvv"),
                 rune_id: RUNE_ID.into(),
                 amount: 1000,
-                txid:txid.to_string(),
+                txid: txid.to_string(),
             };
-            let _=gen_bitcoin_ticket(args).await;
-            
-            let _=sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
-            Query::get_ticket_by_id(&db.get_connection(),txid.to_string()).await.unwrap()
+            let _ = gen_bitcoin_ticket(args).await;
+
+            let _ = sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
+            Query::get_ticket_by_id(&db.get_connection(), txid.to_string())
+                .await
+                .unwrap()
         });
         info!("synced pending ticket from bitcoin custom: {:#?}", ticket);
-      
     }
     #[ignore]
     #[test]
@@ -378,19 +399,26 @@ mod tests {
                 receiver: String::from("cosmos1fwaeqe84kaymymmqv0wyj75hzsdq4gfqm5xvvv"),
                 rune_id: RUNE_ID.into(),
                 amount: 1000,
-                txid:txid.to_string(),
+                txid: txid.to_string(),
             };
-            let _=gen_bitcoin_ticket(args).await;
-            let _= sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
-            let ticket = Query::get_ticket_by_id(&db.get_connection(),txid.to_string()).await.unwrap().unwrap();
+            let _ = gen_bitcoin_ticket(args).await;
+            let _ = sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
+            let ticket = Query::get_ticket_by_id(&db.get_connection(), txid.to_string())
+                .await
+                .unwrap()
+                .unwrap();
             info!("synced pending ticket from bitcoin: {:#?}", ticket);
-             //mock remove ticket from pending tickets
-             let _= mock_finalized_ticket(txid.to_string()).await;
-             let _= sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
-            let updated_ticket = Mutation::update_ticket_status(&db.get_connection(),ticket.to_owned(),sea_orm_active_enums::TicketStatus::Finalized).await;
+            //mock remove ticket from pending tickets
+            let _ = mock_finalized_ticket(txid.to_string()).await;
+            let _ = sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
+            let updated_ticket = Mutation::update_ticket_status(
+                &db.get_connection(),
+                ticket.to_owned(),
+                sea_orm_active_enums::TicketStatus::Finalized,
+            )
+            .await;
             info!("updated ticket status:{:#?}", updated_ticket);
         });
-      
     }
     #[ignore]
     #[test]
@@ -403,7 +431,7 @@ mod tests {
             let db = Database::new(db_url).await;
             let txid = random_txid();
             let ticket = types::Ticket {
-                ticket_id:txid.to_string(),
+                ticket_id: txid.to_string(),
                 ticket_seq: None,
                 ticket_type: TicketType::Normal,
                 ticket_time: get_timestamp(),
@@ -412,20 +440,20 @@ mod tests {
                 action: TxAction::Redeem,
                 token: TOKEN_ID.into(),
                 amount: 1000.to_string(),
-                sender: Some( String::from("cosmos1fwaeqe84kaymymmqv0wyj75hzsdq4gfqm5xvvv")),
+                sender: Some(String::from(
+                    "cosmos1fwaeqe84kaymymmqv0wyj75hzsdq4gfqm5xvvv",
+                )),
                 receiver: "bc1qmh0chcr9f73a3ynt90k0w8qsqlydr4a6espnj6".to_owned(),
                 memo: None,
                 status: TicketStatus::WaitingForConfirmByDest,
             };
             // save to db
-            let _ =Mutation::save_ticket(&db.get_connection(), ticket.into()).await;
+            let _ = Mutation::save_ticket(&db.get_connection(), ticket.into()).await;
             let finalized_status = FinalizedStatus::Confirmed(txid.to_owned());
             // mock finalize the ticket by release token
-            let _=mock_finalized_release_token(txid.to_string(),finalized_status).await;
-          
-            let _= sync_ticket_status_from_bitcoin(&db.get_connection()).await;
-         
+            let _ = mock_finalized_release_token(txid.to_string(), finalized_status).await;
+
+            let _ = sync_ticket_status_from_bitcoin(&db.get_connection()).await;
         });
-      
     }
 }

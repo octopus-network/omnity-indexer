@@ -1,5 +1,4 @@
 use clap::{Parser, Subcommand};
-use log4rs;
 use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
 
 use std::env;
