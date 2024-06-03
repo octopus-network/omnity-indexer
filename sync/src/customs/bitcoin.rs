@@ -120,47 +120,6 @@ pub enum FinalizedStatus {
     Confirmed(Txid),
 }
 
-// pub async fn with_omnity_bitcoin_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
-// where
-//     R: Future<Output = Result<(), Box<dyn Error>>>,
-//     F: FnOnce(Agent, Principal) -> R,
-// {
-//     with_agent(|agent| async move {
-//         let canister_id = create_omnity_bitcoin_canister().await?;
-//         f(agent, canister_id).await
-//     })
-//     .await
-// }
-
-// pub async fn with_omnity_bitcoin_canister_as<I, F, R>(identity: I, f: F) -> Result<(), Box<dyn Error>>
-// where
-//     I: Identity + 'static,
-//     R: Future<Output = Result<(), Box<dyn Error>>>,
-//     F: FnOnce(Agent, Principal) -> R,
-// {
-//     with_agent_as(identity, |agent| async move {
-//         let canister_id = create_omnity_bitcoin_canister().await?;
-//         f(agent, canister_id).await
-//     })
-//     .await
-// }
-
-// pub async fn create_omnity_bitcoin_canister() -> Result<Principal, Box<dyn Error>> {
-
-//     match std::env::var("OMNITY_CUSTOMS_BITCOIN_CANISTER_ID") {
-//         Ok(bitcoin_canister_id) => {
-//             info!("get bitcoin canister id from env var :{}", bitcoin_canister_id);
-//             Ok(Principal::from_text(bitcoin_canister_id)?)
-//         }
-
-//         Err(_) => {
-//             let bitcoin_canister_id = read_config(|c| c.omnity_customs_bitcoin_canister_id.to_owned());
-//             info!("get bitcoin canister id from  config file :{bitcoin_canister_id:?}");
-//             Ok(Principal::from_text(bitcoin_canister_id)?)
-//         }
-//     }
-// }
-
 // mock: generate ticket from customs
 pub async fn gen_bitcoin_ticket(args: GenerateTicketArgs) -> Result<(), Box<dyn Error>> {
     with_omnity_canister(

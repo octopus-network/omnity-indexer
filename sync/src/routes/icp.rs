@@ -17,49 +17,6 @@ pub enum MintTokenStatus {
     Unknown,
 }
 
-// pub async fn with_omnity_icp_route_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
-// where
-//     R: Future<Output = Result<(), Box<dyn Error>>>,
-//     F: FnOnce(Agent, Principal) -> R,
-// {
-//     with_agent(|agent| async move {
-//         let canister_id = create_omnity_icp_route_canister().await?;
-//         f(agent, canister_id).await
-//     })
-//     .await
-// }
-
-// pub async fn with_omnity_icp_route_canister_as<I, F, R>(
-//     identity: I,
-//     f: F,
-// ) -> Result<(), Box<dyn Error>>
-// where
-//     I: Identity + 'static,
-//     R: Future<Output = Result<(), Box<dyn Error>>>,
-//     F: FnOnce(Agent, Principal) -> R,
-// {
-//     with_agent_as(identity, |agent| async move {
-//         let canister_id = create_omnity_icp_route_canister().await?;
-//         f(agent, canister_id).await
-//     })
-//     .await
-// }
-
-// pub async fn create_omnity_icp_route_canister() -> Result<Principal, Box<dyn Error>> {
-//     match std::env::var("OMNITY_ROUTES_ICP_CANISTER_ID") {
-//         Ok(icp_canister_id) => {
-//             info!("get icp canister id from env var :{}", icp_canister_id);
-//             Ok(Principal::from_text(icp_canister_id)?)
-//         }
-
-//         Err(_) => {
-//             let icp_canister_id = read_config(|c| c.omnity_routes_icp_canister_id.to_owned());
-//             info!("get icp canister id from  config file :{icp_canister_id:?}");
-//             Ok(Principal::from_text(icp_canister_id)?)
-//         }
-//     }
-// }
-
 //This function only used for mock test
 pub async fn mock_finalized_mint_token(
     ticket_id: TicketId,

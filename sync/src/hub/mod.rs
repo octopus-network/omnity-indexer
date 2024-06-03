@@ -15,46 +15,6 @@ pub const CHAIN_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_SYNC_INTERVAL: u64 = 5;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
 
-// pub async fn with_omnity_hub_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
-// where
-//     R: Future<Output = Result<(), Box<dyn Error>>>,
-//     F: FnOnce(Agent, Principal) -> R,
-// {
-//     with_agent(|agent| async move {
-//         let canister_id = create_omnity_hub_canister().await?;
-//         f(agent, canister_id).await
-//     })
-//     .await
-// }
-
-// pub async fn with_omnity_hub_canister_as<I, F, R>(identity: I, f: F) -> Result<(), Box<dyn Error>>
-// where
-//     I: Identity + 'static,
-//     R: Future<Output = Result<(), Box<dyn Error>>>,
-//     F: FnOnce(Agent, Principal) -> R,
-// {
-//     with_agent_as(identity, |agent| async move {
-//         let canister_id = create_omnity_hub_canister().await?;
-//         f(agent, canister_id).await
-//     })
-//     .await
-// }
-
-// pub async fn create_omnity_hub_canister() -> Result<Principal, Box<dyn Error>> {
-//     match std::env::var("OMNITY_HUB_CANISTER_ID") {
-//         Ok(hub_canister_id) => {
-//             info!("get hub canister id from env var :{}", hub_canister_id);
-//             Ok(Principal::from_text(hub_canister_id)?)
-//         }
-
-//         Err(_) => {
-//             let hub_canister_id = read_config(|c| c.omnity_hub_canister_id.to_owned());
-//             info!("get hub canister id from  config file :{hub_canister_id:?}");
-//             Ok(Principal::from_text(hub_canister_id)?)
-//         }
-//     }
-// }
-
 //full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
     with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
