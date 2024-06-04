@@ -7,15 +7,15 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "chain_meta")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
-    pub chain_id: String,
-    #[sea_orm(column_type = "Text")]
-    pub canister_id: String,
-    pub chain_type: ChainType,
-    pub chain_state: ChainState,
-    pub contract_address: Option<String>,
-    pub counterparties: Option<Json>,
-    pub fee_token: Option<String>,
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub chain_id: String,
+	#[sea_orm(column_type = "Text")]
+	pub canister_id: String,
+	pub chain_type: ChainType,
+	pub chain_state: ChainState,
+	pub contract_address: Option<String>,
+	pub counterparties: Option<Json>,
+	pub fee_token: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

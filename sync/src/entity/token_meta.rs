@@ -5,16 +5,16 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "token_meta")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
-    pub token_id: String,
-    pub name: String,
-    pub symbol: String,
-    pub issue_chain: String,
-    pub decimals: i16,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub icon: Option<String>,
-    pub metadata: Json,
-    pub dst_chains: Json,
+	#[sea_orm(primary_key, auto_increment = false)]
+	pub token_id: String,
+	pub name: String,
+	pub symbol: String,
+	pub issue_chain: String,
+	pub decimals: i16,
+	#[sea_orm(column_type = "Text", nullable)]
+	pub icon: Option<String>,
+	pub metadata: Json,
+	pub dst_chains: Json,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
