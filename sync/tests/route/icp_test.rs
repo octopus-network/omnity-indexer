@@ -1,18 +1,25 @@
 #[cfg(test)]
 mod tests {
-    use std::sync::Once;
-    use super::*;
-    use crate::{get_timestamp, random_txid, types, Database};
     use dotenvy::dotenv;
+    use omnity_indexer_sync::{
+        get_timestamp,
+        icp::{mock_finalized_mint_token, sync_ticket_status_from_icp_route, ROUTE_CHAIN_ID},
+        random_txid, types, Database, Mutation,
+    };
+    use std::sync::Once;
+
     static INIT: Once = Once::new();
+
     pub fn init_logger() {
         std::env::set_var("RUST_LOG", "info");
         INIT.call_once(|| {
             let _ = env_logger::builder().is_test(true).try_init();
         });
     }
+
     // const RUNE_ID: &str = "40000:846";
     const TOKEN_ID: &str = "Bitcoin-runes-HOPE•YOU•GET•RICH";
+
     #[ignore]
     #[test]
     fn test_finalized_token_and_sync_ticket() {

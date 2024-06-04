@@ -9,7 +9,7 @@ use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-const ROUTE_CHAIN_ID: &str = "eICP";
+pub const ROUTE_CHAIN_ID: &str = "eICP";
 
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MintTokenStatus {

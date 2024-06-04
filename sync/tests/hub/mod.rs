@@ -1,12 +1,14 @@
-#[cfg(test)]
-mod tests {
-    use crate::{get_timestamp, random_txid, Database};
+mod hub_tests {
     use dotenvy::dotenv;
-
-    use super::*;
     use log::info;
+    use omnity_indexer_sync::{
+        get_timestamp, random_txid, send_tickets, service::Query, sync_chains, sync_tickets,
+        sync_tokens, types, Database,
+    };
     use std::sync::Once;
+
     static INIT: Once = Once::new();
+
     pub fn init_logger() {
         std::env::set_var("RUST_LOG", "info");
         INIT.call_once(|| {

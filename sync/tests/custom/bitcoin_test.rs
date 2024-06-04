@@ -1,13 +1,27 @@
 #[cfg(test)]
 mod tests {
-    use std::sync::Once;
-    use super::*;
-    use crate::entity::sea_orm_active_enums;
-    use crate::{get_timestamp, random_txid, types, Database};
     use dotenvy::dotenv;
+    use log::info;
+    use omnity_indexer_sync::customs::bitcoin::{
+        gen_bitcoin_ticket, mock_finalized_release_token, mock_finalized_ticket,
+        sync_pending_tickets_from_bitcoin, sync_ticket_status_from_bitcoin, FinalizedStatus,
+        GenerateTicketArgs, CUSTOMS_CHAIN_ID,
+    };
+    use omnity_indexer_sync::{
+        entity::sea_orm_active_enums,
+        get_timestamp, random_txid,
+        service::Query,
+        types,
+        types::{TicketStatus, TicketType, TxAction},
+        Database, Mutation,
+    };
+    use std::sync::Once;
+
     const RUNE_ID: &str = "40000:846";
     const TOKEN_ID: &str = "Bitcoin-runes-HOPE•YOU•GET•RICH";
+
     static INIT: Once = Once::new();
+
     pub fn init_logger() {
         std::env::set_var("RUST_LOG", "info");
         INIT.call_once(|| {

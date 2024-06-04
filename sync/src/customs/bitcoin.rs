@@ -15,7 +15,7 @@ use std::{
     str::FromStr,
 };
 
-const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
+pub const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
 const FETCH_LIMIT: u64 = 50;
 
 #[derive(CandidType, Deserialize)]
