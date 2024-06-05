@@ -1,5 +1,3 @@
-
-
 # Omnity indexer
 
 ## Architecture
@@ -16,9 +14,6 @@ Omnity Indexer is made up of three main parts: Synchronizer, Index database and 
 
 ### Deploy omnity ic canisters
 ```bash
-# open new terminal and start dfx local net
- dfx start --clean
-
 # open new terminal or tab
 # clone omnity canister repo
 git clone git@github.com:octopus-network/omnity.git
@@ -26,7 +21,6 @@ cd omnity ; git checkout boern/dev
 
 # deploy the omnity canisters. Note: use your identity
 ./scripts/hub_test.sh
-
 ```
 ### Run PostgreSql and Hasura in docker
 ```bash
@@ -114,7 +108,7 @@ loggers:
 ### Update config.toml
 ```toml
 # use your config env
-database_url = 'postgres://postgres:open-sesame@localhost:5432/omnity'
+database_url = 'postgres://postgres:omnity_go@localhost:5432/omnity'
 dfx_network = 'http://127.0.0.1:4943'
 log_config = './log4rs.yaml'
 # dfx env vars
@@ -160,7 +154,7 @@ export DFX_IDENTITY=your identity file
 ### Update config.toml
 ```toml
 # use your config env
-database_url = 'postgres://postgres:open-sesame@localhost:5432/omnity'
+database_url = 'postgres://postgres:omnity_go@localhost:5432/omnity'
 dfx_network = 'http://127.0.0.1:4943'
 log_config = './log4rs.yaml'
 # dfx env vars
