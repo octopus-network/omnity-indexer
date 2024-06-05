@@ -1,4 +1,7 @@
+use crate::types;
+use crate::types::*;
 use anyhow::{Error as AnyError, Result};
+use candid::{Decode, Encode};
 use config::{Config, ConfigError};
 use ic_agent::identity::Secp256k1Identity;
 use ic_agent::{agent::http_transport::ReqwestTransport, export::Principal, Agent, Identity};
@@ -217,5 +220,86 @@ pub async fn create_omnity_canister(canister: &str) -> Result<Principal, Box<dyn
 			info!("Getting {canister:?} canister id from config file: {canister_id:?}");
 			Ok(Principal::from_text(canister_id)?)
 		}
+	}
+}
+
+pub enum ReturnType {
+	U64(u64),
+	VecChainMeta(Vec<ChainMeta>),
+	Non(()),
+}
+
+impl ReturnType {
+	pub fn convert_to_u64(&self) -> u64 {
+		match self {
+			Self::U64(u) => return *u,
+			_ => return 0,
+		}
+	}
+	pub fn convert_to_vec_chain_meta(&self) -> Vec<ChainMeta> {
+		match self {
+			Self::VecChainMeta(v) => return v.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
+}
+pub enum Arg {
+	V(Vec<u8>),
+	T(types::Ticket),
+	U(u64),
+	S(String),
+}
+
+impl Arg {
+	pub async fn query_method(
+		self,
+		agent: Agent,
+		canister_id: Principal,
+		method: &str,
+		log_one: &str,
+		log_two: &str,
+		args_two: Option<u64>,
+		re_type: &str,
+	) -> Result<ReturnType, Box<dyn Error>> {
+		info!("{:?} {:?}", chrono::Utc::now(), log_one);
+
+		let encoded_args: Vec<u8> = match args_two {
+			Some(arg) => match self {
+				Arg::V(v) => Encode!(&v, &arg)?,
+				Arg::T(t) => Encode!(&t, &arg)?,
+				Arg::U(u) => Encode!(&u, &arg)?,
+				Arg::S(s) => Encode!(&s, &arg)?,
+			},
+			None => match self {
+				Arg::V(v) => Encode!(&v)?,
+				Arg::T(t) => Encode!(&t)?,
+				Arg::U(u) => Encode!(&u)?,
+				Arg::S(s) => Encode!(&s)?,
+			},
+		};
+		let return_output: Vec<u8> = agent
+			.query(&canister_id, method)
+			.with_arg(encoded_args)
+			.call()
+			.await?;
+
+		match re_type {
+			"u64" => {
+				let decoded_return_output = Decode!(&return_output, Result<u64, ()>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::U64(decoded_return_output));
+			}
+			"Vec<ChainMeta>" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<Vec<ChainMeta>, ()>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecChainMeta(decoded_return_output));
+			}
+			_ => {
+				let decoded_return_output = Decode!(&return_output, Result<(), ()>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::Non(()));
+			}
+		};
 	}
 }

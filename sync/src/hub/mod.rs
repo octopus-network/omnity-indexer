@@ -1,15 +1,14 @@
+use crate::service::{Mutation, Query};
 use crate::{
 	types::{self, ChainMeta, OmnityTicket, Ticket, TokenMeta},
-	with_omnity_canister,
+	with_omnity_canister, Arg, ReturnType,
 };
 use candid::{Decode, Encode};
-
-use crate::service::{Mutation, Query};
 use log::info;
 use sea_orm::DbConn;
 use std::error::Error;
-
 use types::Error as OmnityError;
+
 const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_SYNC_INTERVAL: u64 = 5;
@@ -18,26 +17,52 @@ pub const TICKET_SYNC_INTERVAL: u64 = 3;
 //full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		info!("{:?} syncing chains ... ", chrono::Utc::now());
-		let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
-		let ret = agent
-			.query(&canister_id, "get_chain_size")
-			.with_arg(args)
-			.call()
-			.await?;
-		let chain_size = Decode!(&ret, Result<u64, OmnityError>)??;
-		info!("chain size: {:?}", chain_size);
+		let chain_size = Arg::query_method(
+			Arg::V(Vec::<u8>::new()),
+			agent.clone(),
+			canister_id,
+			"get_chain_size",
+			"syncing chains ...",
+			"chain size: ",
+			None,
+			"u64",
+		)
+		.await?
+		.convert_to_u64();
+
+		// info!("{:?} syncing chains ... ", chrono::Utc::now());
+		// let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
+		// let ret = agent
+		// 	.query(&canister_id, "get_chain_size")
+		// 	.with_arg(args)
+		// 	.call()
+		// 	.await?;
+		// let chain_size = Decode!(&ret, Result<u64, OmnityError>)??;
+		// info!("chain size: {:?}", chain_size);
 
 		let mut from_seq = 0u64;
 		while from_seq < chain_size {
-			let args = Encode!(&from_seq, &FETCH_LIMIT)?;
-			let ret = agent
-				.query(&canister_id, "get_chain_metas")
-				.with_arg(args)
-				.call()
-				.await?;
-			let chains: Vec<ChainMeta> = Decode!(&ret, Result<Vec<ChainMeta>, OmnityError>)??;
-			info!("sync chains from offset: {}", from_seq);
+			let chains = Arg::U(from_seq)
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"get_chain_metas",
+					"syncing chains metadata ...",
+					"sync chains from offset: ",
+					Some(FETCH_LIMIT),
+					"Vec<ChainMeta>",
+				)
+				.await?
+				.convert_to_vec_chain_meta();
+
+			// let args = Encode!(&from_seq, &FETCH_LIMIT)?;
+			// let ret = agent
+			// 	.query(&canister_id, "get_chain_metas")
+			// 	.with_arg(args)
+			// 	.call()
+			// 	.await?;
+			// let chains: Vec<ChainMeta> = Decode!(&ret, Result<Vec<ChainMeta>, OmnityError>)??;
+			// info!("sync chains from offset: {}", from_seq);
 			for chain in chains.iter() {
 				Mutation::save_chain(db, chain.clone().into()).await?;
 			}
