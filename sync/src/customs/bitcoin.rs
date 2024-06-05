@@ -1,431 +1,301 @@
 use crate::{
-    read_config, types::{ Ticket, TicketId, TicketStatus, TicketType, TxAction}, with_agent, with_agent_as
+	types::{Ticket, TicketId, TicketStatus, TicketType, TxAction},
+	with_omnity_canister,
 };
 use candid::{CandidType, Decode, Encode};
-use ic_agent::{export::Principal, Agent, Identity};
 use ic_btc_interface::Txid;
 
-use log::info;
 use crate::service::{Mutation, Query};
+use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::{
-    error::Error,
-    fmt::{self, Display, Formatter},
-    future::Future,
-    str::FromStr,
+	error::Error,
+	fmt::{self, Display, Formatter},
+	str::FromStr,
 };
 
-
-const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
+pub const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
 const FETCH_LIMIT: u64 = 50;
-
 
 #[derive(CandidType, Deserialize)]
 pub struct GetGenTicketReqsArgs {
-    pub start_txid: Option<Txid>,
-    pub max_count: u64,
+	pub start_txid: Option<Txid>,
+	pub max_count: u64,
 }
 
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GenTicketRequest {
-    pub address: String,
-    pub target_chain_id: String,
-    pub receiver: String,
-    pub token_id: String,
-    pub rune_id: RuneId,
-    pub amount: u128,
-    pub txid: Txid,
-    pub received_at: u64,
+	pub address: String,
+	pub target_chain_id: String,
+	pub receiver: String,
+	pub token_id: String,
+	pub rune_id: RuneId,
+	pub amount: u128,
+	pub txid: Txid,
+	pub received_at: u64,
 }
 
 #[derive(
-    candid::CandidType,
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Copy,
-    Default,
-    Serialize,
-    Deserialize,
+	candid::CandidType,
+	Clone,
+	Debug,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Copy,
+	Default,
+	Serialize,
+	Deserialize,
 )]
 pub struct RuneId {
-    pub block: u64,
-    pub tx: u32,
+	pub block: u64,
+	pub tx: u32,
 }
 impl Display for RuneId {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}:{}", self.block, self.tx,)
-    }
+	fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+		write!(f, "{}:{}", self.block, self.tx,)
+	}
 }
 
 impl FromStr for RuneId {
-    type Err = ParseRuneIdError;
+	type Err = ParseRuneIdError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (height, index) = s.split_once(':').ok_or_else(|| ParseRuneIdError)?;
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		let (height, index) = s.split_once(':').ok_or_else(|| ParseRuneIdError)?;
 
-        Ok(Self {
-            block: height.parse().map_err(|_| ParseRuneIdError)?,
-            tx: index.parse().map_err(|_| ParseRuneIdError)?,
-        })
-    }
+		Ok(Self {
+			block: height.parse().map_err(|_| ParseRuneIdError)?,
+			tx: index.parse().map_err(|_| ParseRuneIdError)?,
+		})
+	}
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseRuneIdError;
 
 impl fmt::Display for ParseRuneIdError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "provided rune_id was not valid".fmt(f)
-    }
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		"provided rune_id was not valid".fmt(f)
+	}
 }
 
 impl Error for ParseRuneIdError {
-    fn description(&self) -> &str {
-        "failed to parse rune_id"
-    }
+	fn description(&self) -> &str {
+		"failed to parse rune_id"
+	}
 }
 
 /// The status of a release_token request.
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Deserialize)]
 pub enum ReleaseTokenStatus {
-    /// The custom has no data for this request.
-    /// The request id is either invalid or too old.
-    Unknown,
-    /// The request is in the batch queue.
-    Pending,
-    /// Waiting for a signature on a transaction satisfy this request.
-    Signing,
-    /// Sending the transaction satisfying this request.
-    Sending(String),
-    /// Awaiting for confirmations on the transaction satisfying this request.
-    Submitted(String),
-    /// Confirmed a transaction satisfying this request.
-    Confirmed(String),
+	/// The custom has no data for this request.
+	/// The request id is either invalid or too old.
+	Unknown,
+	/// The request is in the batch queue.
+	Pending,
+	/// Waiting for a signature on a transaction satisfy this request.
+	Signing,
+	/// Sending the transaction satisfying this request.
+	Sending(String),
+	/// Awaiting for confirmations on the transaction satisfying this request.
+	Submitted(String),
+	/// Confirmed a transaction satisfying this request.
+	Confirmed(String),
 }
 
 #[derive(CandidType, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct GenerateTicketArgs {
-    pub target_chain_id: String,
-    pub receiver: String,
-    pub rune_id: String,
-    pub amount: u128,
-    pub txid: String,
+	pub target_chain_id: String,
+	pub receiver: String,
+	pub rune_id: String,
+	pub amount: u128,
+	pub txid: String,
 }
 
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FinalizedStatus {
-    /// The transaction that release token got enough confirmations.
-    Confirmed(Txid),
+	/// The transaction that release token got enough confirmations.
+	Confirmed(Txid),
 }
-
-
-pub async fn with_omnity_bitcoin_canister<F, R>(f: F) -> Result<(), Box<dyn Error>>
-where
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent(|agent| async move {
-        let canister_id = create_omnity_bitcoin_canister().await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
-
-pub async fn with_omnity_bitcoin_canister_as<I, F, R>(identity: I, f: F) -> Result<(), Box<dyn Error>>
-where
-    I: Identity + 'static,
-    R: Future<Output = Result<(), Box<dyn Error>>>,
-    F: FnOnce(Agent, Principal) -> R,
-{
-    with_agent_as(identity, |agent| async move {
-        let canister_id = create_omnity_bitcoin_canister().await?;
-        f(agent, canister_id).await
-    })
-    .await
-}
-
-pub async fn create_omnity_bitcoin_canister() -> Result<Principal, Box<dyn Error>> {
-   
-    match std::env::var("OMNITY_CUSTOMS_BITCOIN_CANISTER_ID") {
-        Ok(bitcoin_canister_id) => {
-            info!("get bitcoin canister id from env var :{}", bitcoin_canister_id);
-            Ok(Principal::from_text(bitcoin_canister_id)?)
-        }
-
-        Err(_) => {
-            let bitcoin_canister_id = read_config(|c| c.omnity_customs_bitcoin_canister_id.to_owned());
-            info!("get bitcoin canister id from  config file :{bitcoin_canister_id:?}");
-            Ok(Principal::from_text(bitcoin_canister_id)?)
-        }
-    }
-}
-
 
 // mock: generate ticket from customs
-pub async fn gen_bitcoin_ticket(args: GenerateTicketArgs)  -> Result<(), Box<dyn Error>>{
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!("{:?} generate ticket on bitcion customs ... ", chrono::Utc::now());
-        let args: Vec<u8> = Encode!(&args)?;
-         let ret = agent
-            .update(&canister_id, "generate_ticket")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
-        info!(" mock generate ticket on bitcion customs ret: {:?}  ", ret);
+pub async fn gen_bitcoin_ticket(args: GenerateTicketArgs) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister(
+		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+		|agent, canister_id| async move {
+			info!(
+				"{:?} generate ticket on bitcion customs ... ",
+				chrono::Utc::now()
+			);
+			let args: Vec<u8> = Encode!(&args)?;
+			let ret = agent
+				.update(&canister_id, "generate_ticket")
+				.with_arg(args)
+				.call_and_wait()
+				.await?;
+			info!(" mock generate ticket on bitcion customs ret: {:?}  ", ret);
 
-        Ok(())
-    })
-    .await
+			Ok(())
+		},
+	)
+	.await
 }
 
 // mock: finalizd release token
-pub async fn mock_finalized_ticket(ticket_id: TicketId)  -> Result<(), Box<dyn Error>>{
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!("{:?} mock finalized ticket on bitcion customs ... ", chrono::Utc::now());
-        let args: Vec<u8> = Encode!(&ticket_id)?;
-         agent
-            .update(&canister_id, "mock_finalized_ticket")
-            .with_arg(args)
-            .call()
-            .await?;
-       
-        Ok(())
-    })
-    .await
+pub async fn mock_finalized_ticket(ticket_id: TicketId) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister(
+		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+		|agent, canister_id| async move {
+			info!(
+				"{:?} mock finalized ticket on bitcion customs ... ",
+				chrono::Utc::now()
+			);
+			let args: Vec<u8> = Encode!(&ticket_id)?;
+			agent
+				.update(&canister_id, "mock_finalized_ticket")
+				.with_arg(args)
+				.call()
+				.await?;
+
+			Ok(())
+		},
+	)
+	.await
 }
 // mock: finalizd release token
-pub async fn mock_finalized_release_token(ticket_id: TicketId, status: FinalizedStatus) -> Result<(), Box<dyn Error>> {
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!("{:?} mock finalized release token on bitcion customs ... ", chrono::Utc::now());
-        let args: Vec<u8> = Encode!(&ticket_id,&status)?;
-         let ret =agent
-            .update(&canister_id, "mock_finalized_release_token")
-            .with_arg(args)
-            .call_and_wait()
-            .await?;
-        let ret = Decode!(&ret, ())?;
-        info!("mock finalized release token ret: {:?}  ", ret);
+pub async fn mock_finalized_release_token(
+	ticket_id: TicketId,
+	status: FinalizedStatus,
+) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister(
+		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+		|agent, canister_id| async move {
+			info!(
+				"{:?} mock finalized release token on bitcion customs ... ",
+				chrono::Utc::now()
+			);
+			let args: Vec<u8> = Encode!(&ticket_id, &status)?;
+			let ret = agent
+				.update(&canister_id, "mock_finalized_release_token")
+				.with_arg(args)
+				.call_and_wait()
+				.await?;
+			let ret = Decode!(&ret, ())?;
+			info!("mock finalized release token ret: {:?}  ", ret);
 
-        Ok(())
-    })
-    .await
+			Ok(())
+		},
+	)
+	.await
 }
 
 // sync tickets that transfered from customs to routes
 pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
-    
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!("{:?} syncing tickets from bitcoin custom ... ", chrono::Utc::now());
+	with_omnity_canister(
+		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+		|agent, canister_id| async move {
+			info!(
+				"{:?} syncing tickets from bitcoin custom ... ",
+				chrono::Utc::now()
+			);
 
-        let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
-        let ret = agent
-            .query(&canister_id, "get_pending_gen_ticket_size")
-            .with_arg(args)
-            .call()
-            .await?;
-        let ticket_size = Decode!(&ret, u64)?;
-        info!("pending ticket size: {:?}", ticket_size);
+			let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
+			let ret = agent
+				.query(&canister_id, "get_pending_gen_ticket_size")
+				.with_arg(args)
+				.call()
+				.await?;
+			let ticket_size = Decode!(&ret, u64)?;
+			info!("pending ticket size: {:?}", ticket_size);
 
-        let mut offset = 0u64;
-        let limit = FETCH_LIMIT;
-        while offset < ticket_size {
-            let args = Encode!(&offset, &limit)?;
-            let ret = agent
-                .query(&canister_id, "get_pending_gen_tickets")
-                .with_arg(args)
-                .call()
-                .await?;
-            let pending_tickets: Vec<GenTicketRequest> = Decode!(&ret, Vec<GenTicketRequest>)?;
-            info!("need to sync pending tickets {}: {:?}", offset, pending_tickets);
-            for pending_ticket in pending_tickets.iter() {
-                let ticket_modle = Ticket::new(
-                    pending_ticket.txid.to_string(),
-                    None,
-                    TicketType::Normal,
-                    pending_ticket.received_at,
-                    CUSTOMS_CHAIN_ID.to_owned(),
-                    pending_ticket.target_chain_id.to_owned(),
-                    TxAction::Transfer,
-                    pending_ticket.token_id.to_string(),
-                    pending_ticket.amount.to_string(),
-                    None,
-                    pending_ticket.receiver.to_owned(),
-                    None,
-                    TicketStatus::WaitingForConfirmByDest,
-                )
-                .into();
-                Mutation::save_ticket(db, ticket_modle).await?;
-            }
-            offset += pending_tickets.len() as u64;
-            if pending_tickets.is_empty() {
-                break;
-            }
-        }
-        Ok(())
-    })
-    .await
+			let mut offset = 0u64;
+			let limit = FETCH_LIMIT;
+			while offset < ticket_size {
+				let args = Encode!(&offset, &limit)?;
+				let ret = agent
+					.query(&canister_id, "get_pending_gen_tickets")
+					.with_arg(args)
+					.call()
+					.await?;
+				let pending_tickets: Vec<GenTicketRequest> = Decode!(&ret, Vec<GenTicketRequest>)?;
+				info!(
+					"need to sync pending tickets {}: {:?}",
+					offset, pending_tickets
+				);
+				for pending_ticket in pending_tickets.iter() {
+					let ticket_modle = Ticket::new(
+						pending_ticket.txid.to_string(),
+						None,
+						TicketType::Normal,
+						pending_ticket.received_at,
+						CUSTOMS_CHAIN_ID.to_owned(),
+						pending_ticket.target_chain_id.to_owned(),
+						TxAction::Transfer,
+						pending_ticket.token_id.to_string(),
+						pending_ticket.amount.to_string(),
+						None,
+						pending_ticket.receiver.to_owned(),
+						None,
+						TicketStatus::WaitingForConfirmByDest,
+					)
+					.into();
+					Mutation::save_ticket(db, ticket_modle).await?;
+				}
+				offset += pending_tickets.len() as u64;
+				if pending_tickets.is_empty() {
+					break;
+				}
+			}
+			Ok(())
+		},
+	)
+	.await
 }
 
 // sync tickets status that transfered from routes to customs
-pub async fn sync_ticket_status_from_bitcoin(db: &DbConn)  -> Result<(), Box<dyn Error>>{
+pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("OMNITY_CUSTOMS_BITCOIN_CANISTER_ID", |agent, canister_id| async move {
+		info!(
+			"{:?} syncing release token status from bitcoin ... ",
+			chrono::Utc::now()
+		);
+		//step1: get ticket that dest is bitcion and status is waiting for comformation by dst
+		let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, CUSTOMS_CHAIN_ID.to_owned()).await?;
 
-    with_omnity_bitcoin_canister(|agent, canister_id| async move {
-        info!(
-            "{:?} syncing release token status from bitcoin ... ",
-            chrono::Utc::now()
-        );
-        //step1: get ticket that dest is bitcion and status is waiting for comformation by dst
-        let unconfirmed_tickets =
-            Query::get_unconfirmed_tickets(db, CUSTOMS_CHAIN_ID.to_owned()).await?;
+		//step2: get release_token_status by ticket id
+		for unconfirmed_ticket in unconfirmed_tickets {
+			info!("unconfirmed ticket({:?}) ", unconfirmed_ticket);
+			let args = Encode!(&unconfirmed_ticket.ticket_id)?;
+			let ret = agent
+				.query(&canister_id, "release_token_status")
+				.with_arg(args)
+				.call()
+				.await?;
+			let mint_token_status: ReleaseTokenStatus = Decode!(&ret, ReleaseTokenStatus)?;
+			if matches!(mint_token_status, ReleaseTokenStatus::Confirmed(ref s) if s.eq(&unconfirmed_ticket.ticket_id))
+			{
+				//step3: update ticket status to finalized
+				let ticket_modle = Mutation::update_ticket_status(
+					db,
+					unconfirmed_ticket,
+					crate::entity::sea_orm_active_enums::TicketStatus::Finalized,
+				)
+				.await?;
+				info!(
+					"ticket id({:?}) finally status:{:?} ",
+					ticket_modle.ticket_id, ticket_modle.status
+				);
+			} else {
+				info!(
+					"ticket id({:?}) current status {:?}",
+					unconfirmed_ticket.ticket_id, mint_token_status
+				);
+			}
+		}
 
-        //step2: get release_token_status by ticket id
-        for unconfirmed_ticket in unconfirmed_tickets {
-            info!("unconfirmed ticket({:?}) ", unconfirmed_ticket);
-            let args = Encode!(&unconfirmed_ticket.ticket_id)?;
-            let ret = agent
-                .query(&canister_id, "release_token_status")
-                .with_arg(args)
-                .call()
-                .await?;
-            let mint_token_status: ReleaseTokenStatus = Decode!(&ret, ReleaseTokenStatus)?;
-            if matches!(mint_token_status, ReleaseTokenStatus::Confirmed(ref s) if s.eq(&unconfirmed_ticket.ticket_id)) {
-                
-                //step3: update ticket status to finalized
-                let ticket_modle =
-                    Mutation::update_ticket_status(db, unconfirmed_ticket, crate::entity::sea_orm_active_enums::TicketStatus::Finalized)
-                        .await?;
-                info!(
-                    "ticket id({:?}) finally status:{:?} ",
-                    ticket_modle.ticket_id, ticket_modle.status
-                );
-            } else {
-                info!(
-                    "ticket id({:?}) current status {:?}",
-                    unconfirmed_ticket.ticket_id, mint_token_status
-                );
-            }
-        }
-
-        Ok(())
-    })
-    .await
-}
-
-
-
-#[cfg(test)]
-mod tests {
-
-    use std::sync::Once;
-
-    use crate::{get_timestamp, random_txid, types, Database};
-    use dotenvy::dotenv;
-    use crate::entity::sea_orm_active_enums;
-    use crate::service::Query;
-    use super::*;
-    const RUNE_ID: &str = "40000:846";
-    const TOKEN_ID: &str = "Bitcoin-runes-HOPE•YOU•GET•RICH";
-    static INIT: Once = Once::new();
-    pub fn init_logger() {
-        std::env::set_var("RUST_LOG", "info");
-        INIT.call_once(|| {
-            let _ = env_logger::builder().is_test(true).try_init();
-        });
-    }
-
-    #[ignore]
-    #[test]
-    fn test_generate_and_sync_ticket() {
-        dotenv().ok();
-        init_logger();
-        let db_url = std::env::var("DATABASE_URL").unwrap();
-        let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
-        let ticket = runtime.block_on(async {
-            let txid = random_txid();
-            let db = Database::new(db_url).await;
-            let args = GenerateTicketArgs {
-                target_chain_id: "eICP".to_owned(),
-                receiver: String::from("cosmos1fwaeqe84kaymymmqv0wyj75hzsdq4gfqm5xvvv"),
-                rune_id: RUNE_ID.into(),
-                amount: 1000,
-                txid:txid.to_string(),
-            };
-            let _=gen_bitcoin_ticket(args).await;
-            
-            let _=sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
-            Query::get_ticket_by_id(&db.get_connection(),txid.to_string()).await.unwrap()
-        });
-        info!("synced pending ticket from bitcoin custom: {:#?}", ticket);
-      
-    }
-    #[ignore]
-    #[test]
-    fn test_finalized_and_sync_ticket() {
-        dotenv().ok();
-        init_logger();
-        let db_url = std::env::var("DATABASE_URL").unwrap();
-        let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
-        runtime.block_on(async {
-            let txid = random_txid();
-            let db = Database::new(db_url).await;
-            let args = GenerateTicketArgs {
-                target_chain_id: "eICP".to_owned(),
-                receiver: String::from("cosmos1fwaeqe84kaymymmqv0wyj75hzsdq4gfqm5xvvv"),
-                rune_id: RUNE_ID.into(),
-                amount: 1000,
-                txid:txid.to_string(),
-            };
-            let _=gen_bitcoin_ticket(args).await;
-            let _= sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
-            let ticket = Query::get_ticket_by_id(&db.get_connection(),txid.to_string()).await.unwrap().unwrap();
-            info!("synced pending ticket from bitcoin: {:#?}", ticket);
-             //mock remove ticket from pending tickets
-             let _= mock_finalized_ticket(txid.to_string()).await;
-             let _= sync_pending_tickets_from_bitcoin(&db.get_connection()).await;
-            let updated_ticket = Mutation::update_ticket_status(&db.get_connection(),ticket.to_owned(),sea_orm_active_enums::TicketStatus::Finalized).await;
-            info!("updated ticket status:{:#?}", updated_ticket);
-        });
-      
-    }
-    #[ignore]
-    #[test]
-    fn test_finalized_token_and_sync_ticket() {
-        dotenv().ok();
-        init_logger();
-        let db_url = std::env::var("DATABASE_URL").unwrap();
-        let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
-        runtime.block_on(async {
-            let db = Database::new(db_url).await;
-            let txid = random_txid();
-            let ticket = types::Ticket {
-                ticket_id:txid.to_string(),
-                ticket_seq: None,
-                ticket_type: TicketType::Normal,
-                ticket_time: get_timestamp(),
-                src_chain: "eICP".to_owned(),
-                dst_chain: CUSTOMS_CHAIN_ID.to_owned(),
-                action: TxAction::Redeem,
-                token: TOKEN_ID.into(),
-                amount: 1000.to_string(),
-                sender: Some( String::from("cosmos1fwaeqe84kaymymmqv0wyj75hzsdq4gfqm5xvvv")),
-                receiver: "bc1qmh0chcr9f73a3ynt90k0w8qsqlydr4a6espnj6".to_owned(),
-                memo: None,
-                status: TicketStatus::WaitingForConfirmByDest,
-            };
-            // save to db
-            let _ =Mutation::save_ticket(&db.get_connection(), ticket.into()).await;
-            let finalized_status = FinalizedStatus::Confirmed(txid.to_owned());
-            // mock finalize the ticket by release token
-            let _=mock_finalized_release_token(txid.to_string(),finalized_status).await;
-          
-            let _= sync_ticket_status_from_bitcoin(&db.get_connection()).await;
-         
-        });
-      
-    }
+		Ok(())
+	})
+	.await
 }
