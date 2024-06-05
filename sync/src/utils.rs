@@ -1,17 +1,12 @@
+use anyhow::{Error as AnyError, Result};
 use config::{Config, ConfigError};
-
-use ic_agent::agent::http_transport::ReqwestTransport;
 use ic_agent::identity::Secp256k1Identity;
-use ic_agent::{export::Principal, Agent, Identity};
+use ic_agent::{agent::http_transport::ReqwestTransport, export::Principal, Agent, Identity};
 use ic_btc_interface::Txid;
-
 use lazy_static::lazy_static;
 use log::{debug, info};
-use sea_orm::ConnectOptions;
-use sea_orm::DatabaseConnection;
+use sea_orm::{ConnectOptions, DatabaseConnection};
 use serde::Deserialize;
-
-use anyhow::{Error as AnyError, Result};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::{error::Error, future::Future, path::Path};
