@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::hub::CHAIN_SYNC_INTERVAL;
+use crate::hub::DIRECTIVE_SYNC_INTERVAL;
 use crate::hub::TICKET_SYNC_INTERVAL;
 use crate::hub::TOKEN_SYNC_INTERVAL;
 
@@ -48,6 +49,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { hub::sync_tickets(&db_conn).await },
 	);
 
+	let sync_directives_task = spawn_sync_task(
+		db_conn.clone(),
+		DIRECTIVE_SYNC_INTERVAL,
+		|db_conn| async move { hub::sync_directives(&db_conn).await },
+	);
+
 	let sync_ticket_status_from_bitcoin = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
@@ -63,6 +70,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_chains_task,
 		sync_tokens_task,
 		sync_tickets_task,
+		sync_directives_task,
 		sync_ticket_status_from_bitcoin,
 		sync_ticket_status_from_icp
 	);

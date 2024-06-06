@@ -1,5 +1,5 @@
 use crate::{
-	types::{self, ChainMeta, OmnityTicket, Ticket, TokenMeta},
+	types::{self, ChainMeta, Directive, OmnityTicket, Ticket, TokenMeta},
 	with_omnity_canister,
 };
 use candid::{Decode, Encode};
@@ -14,6 +14,7 @@ const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_SYNC_INTERVAL: u64 = 5;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
+pub const DIRECTIVE_SYNC_INTERVAL: u64 = 5;
 
 //full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
@@ -161,6 +162,45 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				break;
 			}
 		}
+		Ok(())
+	})
+	.await
+}
+
+pub async fn sync_directives(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		info!("{:?} syncing directives ...", chrono::Utc::now());
+
+		let args = Encode!(&Vec::<u8>::new())?;
+		let ret = agent
+			.query(&canister_id, "get_directive_size")
+			.with_arg(args)
+			.call()
+			.await?;
+		let directive_size = Decode!(&ret, Result<u64, OmnityError>)??;
+		info!("directive size: {:?}", directive_size);
+
+		let mut offset = 0_u64;
+		while offset < directive_size {
+			let args = Encode!(&offset, &FETCH_LIMIT)?;
+			let ret = agent
+				.query(&canister_id, "get_directives")
+				.with_arg(args)
+				.call()
+				.await?;
+			let directives: Vec<Directive> = Decode!(&ret, Result<Vec<Directive>, OmnityError>)??;
+			info!("current directives: {:?}", directives);
+
+			for directive in directives.iter() {
+				// Mutation::save_directive(db, directive.clone().into).await?;
+			}
+
+			offset += directives.len() as u64;
+			if directives.is_empty() {
+				break;
+			}
+		}
+
 		Ok(())
 	})
 	.await
