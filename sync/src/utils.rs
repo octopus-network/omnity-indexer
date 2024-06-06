@@ -1,5 +1,5 @@
-use crate::types;
 use crate::types::*;
+use crate::{icp::MintTokenStatus, types, Error as OmnityError};
 use anyhow::{Error as AnyError, Result};
 use candid::{Decode, Encode};
 use config::{Config, ConfigError};
@@ -228,6 +228,7 @@ pub enum ReturnType {
 	VecChainMeta(Vec<ChainMeta>),
 	VecTokenMeta(Vec<TokenMeta>),
 	VecOmnityTicket(Vec<(u64, OmnityTicket)>),
+	MintTokenStatus(MintTokenStatus),
 	Non(()),
 }
 
@@ -256,12 +257,18 @@ impl ReturnType {
 			_ => return Vec::new(),
 		}
 	}
+	pub fn convert_to_mint_token_status(&self) -> MintTokenStatus {
+		match self {
+			Self::MintTokenStatus(m) => return m.clone(),
+			_ => return MintTokenStatus::Unknown,
+		}
+	}
 }
 pub enum Arg {
 	V(Vec<u8>),
 	T(types::Ticket),
 	U(u64),
-	S(String),
+	TI(TicketId),
 }
 
 impl Arg {
@@ -282,13 +289,13 @@ impl Arg {
 				Arg::V(v) => Encode!(&v, &arg)?,
 				Arg::T(t) => Encode!(&t, &arg)?,
 				Arg::U(u) => Encode!(&u, &arg)?,
-				Arg::S(s) => Encode!(&s, &arg)?,
+				Arg::TI(ti) => Encode!(&ti, &arg)?,
 			},
 			None => match self {
 				Arg::V(v) => Encode!(&v)?,
 				Arg::T(t) => Encode!(&t)?,
 				Arg::U(u) => Encode!(&u)?,
-				Arg::S(s) => Encode!(&s)?,
+				Arg::TI(ti) => Encode!(&ti)?,
 			},
 		};
 		let return_output: Vec<u8> = agent
@@ -299,30 +306,40 @@ impl Arg {
 
 		match re_type {
 			"u64" => {
-				let decoded_return_output = Decode!(&return_output, Result<u64, ()>)?.unwrap();
+				let decoded_return_output =
+					Decode!(&return_output, Result<u64, OmnityError>)?.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::U64(decoded_return_output));
 			}
 			"Vec<ChainMeta>" => {
 				let decoded_return_output =
-					Decode!(&return_output, Result<Vec<ChainMeta>, ()>)?.unwrap();
+					Decode!(&return_output, Result<Vec<ChainMeta>, OmnityError>)?.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::VecChainMeta(decoded_return_output));
 			}
 			"Vec<TokenMeta>" => {
 				let decoded_return_output =
-					Decode!(&return_output, Result<Vec<TokenMeta>, ()>)?.unwrap();
+					Decode!(&return_output, Result<Vec<TokenMeta>, OmnityError>)?.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::VecTokenMeta(decoded_return_output));
 			}
 			"Vec<(u64, OmnityTicket)>" => {
-				let decoded_return_output =
-					Decode!(&return_output, Result<Vec<(u64, OmnityTicket)>, ()>)?.unwrap();
+				let decoded_return_output = Decode!(
+					&return_output,
+					Result<Vec<(u64, OmnityTicket)>, OmnityError>
+				)?
+				.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::VecOmnityTicket(decoded_return_output));
 			}
+			"MintTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, MintTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::MintTokenStatus(decoded_return_output));
+			}
 			_ => {
-				let decoded_return_output = Decode!(&return_output, Result<(), ()>)?.unwrap();
+				let decoded_return_output =
+					Decode!(&return_output, Result<(), OmnityError>)?.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::Non(()));
 			}
