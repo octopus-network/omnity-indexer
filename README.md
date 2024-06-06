@@ -22,7 +22,7 @@ Omnity Indexer is made up of three main parts: Synchronizer, Index database and 
 # open new terminal or tab
 # clone omnity canister repo
 git clone git@github.com:octopus-network/omnity.git
-cd omnity ; git checkout boern/dev
+cd omnity ; git checkout ting/indexer
 
 # deploy the omnity canisters. Note: use your identity
 ./scripts/hub_test.sh
