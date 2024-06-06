@@ -1,5 +1,9 @@
 use crate::types::*;
-use crate::{icp::MintTokenStatus, types, Error as OmnityError};
+use crate::{
+	bitcoin::{GenTicketRequest, ReleaseTokenStatus},
+	icp::MintTokenStatus,
+	types, Error as OmnityError,
+};
 use anyhow::{Error as AnyError, Result};
 use candid::{Decode, Encode};
 use config::{Config, ConfigError};
@@ -228,7 +232,9 @@ pub enum ReturnType {
 	VecChainMeta(Vec<ChainMeta>),
 	VecTokenMeta(Vec<TokenMeta>),
 	VecOmnityTicket(Vec<(u64, OmnityTicket)>),
+	VecGenTicketRequest(Vec<GenTicketRequest>),
 	MintTokenStatus(MintTokenStatus),
+	ReleaseTokenStatus(ReleaseTokenStatus),
 	Non(()),
 }
 
@@ -257,10 +263,22 @@ impl ReturnType {
 			_ => return Vec::new(),
 		}
 	}
+	pub fn convert_to_vec_gen_ticket_request(&self) -> Vec<GenTicketRequest> {
+		match self {
+			Self::VecGenTicketRequest(g) => return g.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
 	pub fn convert_to_mint_token_status(&self) -> MintTokenStatus {
 		match self {
 			Self::MintTokenStatus(m) => return m.clone(),
 			_ => return MintTokenStatus::Unknown,
+		}
+	}
+	pub fn convert_to_release_token_status(&self) -> ReleaseTokenStatus {
+		match self {
+			Self::ReleaseTokenStatus(r) => return r.clone(),
+			_ => return ReleaseTokenStatus::Unknown,
 		}
 	}
 }
@@ -332,10 +350,20 @@ impl Arg {
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::VecOmnityTicket(decoded_return_output));
 			}
+			"Vec<GenTicketRequest>" => {
+				let decoded_return_output = Decode!(&return_output, Vec<GenTicketRequest>)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecGenTicketRequest(decoded_return_output));
+			}
 			"MintTokenStatus" => {
 				let decoded_return_output = Decode!(&return_output, MintTokenStatus)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::MintTokenStatus(decoded_return_output));
+			}
+			"ReleaseTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, ReleaseTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::ReleaseTokenStatus(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output =

@@ -1,7 +1,7 @@
 use crate::service::{Mutation, Query};
 use crate::{
 	types::{Ticket, TicketId, TicketStatus, TicketType, TxAction},
-	with_omnity_canister,
+	with_omnity_canister, Arg,
 };
 use candid::{CandidType, Decode, Encode};
 use ic_btc_interface::Txid;
@@ -196,30 +196,54 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!(
-				"{:?} syncing tickets from bitcoin custom ... ",
-				chrono::Utc::now()
-			);
-
-			let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
-			let ret = agent
-				.query(&canister_id, "get_pending_gen_ticket_size")
-				.with_arg(args)
-				.call()
-				.await?;
-			let ticket_size = Decode!(&ret, u64)?;
-			info!("pending ticket size: {:?}", ticket_size);
+			let ticket_size = Arg::query_method(
+				Arg::V(Vec::<u8>::new()),
+				agent.clone(),
+				canister_id,
+				"get_pending_gen_ticket_size",
+				"syncing tickets from bitcoin custom ...",
+				"pending ticket size: ",
+				None,
+				"u64",
+			)
+			.await?
+			.convert_to_u64();
+			// info!(
+			// 	"{:?} syncing tickets from bitcoin custom ... ",
+			// 	chrono::Utc::now()
+			// );
+			// let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
+			// let ret = agent
+			// 	.query(&canister_id, "get_pending_gen_ticket_size")
+			// 	.with_arg(args)
+			// 	.call()
+			// 	.await?;
+			// let ticket_size = Decode!(&ret, u64)?;
+			// info!("pending ticket size: {:?}", ticket_size);
 
 			let mut offset = 0u64;
 			let limit = FETCH_LIMIT;
 			while offset < ticket_size {
-				let args = Encode!(&offset, &limit)?;
-				let ret = agent
-					.query(&canister_id, "get_pending_gen_tickets")
-					.with_arg(args)
-					.call()
-					.await?;
-				let pending_tickets: Vec<GenTicketRequest> = Decode!(&ret, Vec<GenTicketRequest>)?;
+				let pending_tickets = Arg::U(offset)
+					.query_method(
+						agent.clone(),
+						canister_id,
+						"get_pending_gen_tickets",
+						" ",
+						" ",
+						Some(limit),
+						"Vec<GenTicketRequest>",
+					)
+					.await?
+					.convert_to_vec_gen_ticket_request();
+				// let args = Encode!(&offset, &limit)?;
+				// let ret = agent
+				// 	.query(&canister_id, "get_pending_gen_tickets")
+				// 	.with_arg(args)
+				// 	.call()
+				// 	.await?;
+				// let pending_tickets: Vec<GenTicketRequest> = Decode!(&ret,
+				// Vec<GenTicketRequest>)?;
 				info!(
 					"need to sync pending tickets {}: {:?}",
 					offset, pending_tickets
@@ -266,14 +290,27 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 
 		//step2: get release_token_status by ticket id
 		for unconfirmed_ticket in unconfirmed_tickets {
-			info!("unconfirmed ticket({:?}) ", unconfirmed_ticket);
-			let args = Encode!(&unconfirmed_ticket.ticket_id)?;
-			let ret = agent
-				.query(&canister_id, "release_token_status")
-				.with_arg(args)
-				.call()
-				.await?;
-			let mint_token_status: ReleaseTokenStatus = Decode!(&ret, ReleaseTokenStatus)?;
+			let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
+					.query_method(
+						agent.clone(),
+						canister_id,
+						"release_token_status",
+						"unconfirmed ticket: ",
+						" ",
+						None,
+						"ReleaseTokenStatus",
+					)
+					.await?
+					.convert_to_release_token_status();
+			// info!("unconfirmed ticket({:?}) ", unconfirmed_ticket);
+			// let args = Encode!(&unconfirmed_ticket.ticket_id)?;
+			// let ret = agent
+			// 	.query(&canister_id, "release_token_status")
+			// 	.with_arg(args)
+			// 	.call()
+			// 	.await?;
+			// let mint_token_status: ReleaseTokenStatus = Decode!(&ret, ReleaseTokenStatus)?;
+
 			if matches!(mint_token_status, ReleaseTokenStatus::Confirmed(ref s) if s.eq(&unconfirmed_ticket.ticket_id))
 			{
 				//step3: update ticket status to finalized
