@@ -1,13 +1,12 @@
-use crate::service::{Mutation, Query};
 use crate::{
-	types::{self, ChainMeta, OmnityTicket, Ticket, TokenMeta},
-	with_omnity_canister, Arg, ReturnType,
+	service::{Mutation, Query},
+	types::{self, Ticket},
+	with_omnity_canister, Arg,
 };
-use candid::{Decode, Encode};
 use log::info;
 use sea_orm::DbConn;
 use std::error::Error;
-use types::Error as OmnityError;
+// use types::Error as OmnityError;
 
 const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 5;
@@ -79,27 +78,50 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 //full synchronization for tokens
 pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		info!("{:?} syncing tokens ... ", chrono::Utc::now());
-
-		let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
-		let ret = agent
-			.query(&canister_id, "get_token_size")
-			.with_arg(args)
-			.call()
-			.await?;
-		let token_size = Decode!(&ret, Result<u64, OmnityError>)??;
-		info!("total token size: {:?}", token_size);
+		let token_size = Arg::V(Vec::<u8>::new())
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"get_token_size",
+				"syncing tokens ... ",
+				"total token size: ",
+				None,
+				"u64",
+			)
+			.await?
+			.convert_to_u64();
+		// info!("{:?} syncing tokens ... ", chrono::Utc::now());
+		// let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
+		// let ret = agent
+		// 	.query(&canister_id, "get_token_size")
+		// 	.with_arg(args)
+		// 	.call()
+		// 	.await?;
+		// let token_size = Decode!(&ret, Result<u64, OmnityError>)??;
+		// info!("total token size: {:?}", token_size);
 
 		let mut offset = 0u64;
 		while offset < token_size {
-			let args = Encode!(&offset, &FETCH_LIMIT)?;
-			let ret = agent
-				.query(&canister_id, "get_token_metas")
-				.with_arg(args)
-				.call()
-				.await?;
-			let tokens: Vec<TokenMeta> = Decode!(&ret, Result<Vec<TokenMeta>, OmnityError>)??;
-			info!("total tokens from offset: {} ", offset);
+			let tokens = Arg::U(offset)
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"get_token_metas",
+					"syncing tokens metadata ...",
+					"total tokens from offset: ",
+					Some(FETCH_LIMIT),
+					"Vec<TokenMeta>",
+				)
+				.await?
+				.convert_to_vec_token_meta();
+			// let args = Encode!(&offset, &FETCH_LIMIT)?;
+			// let ret = agent
+			// 	.query(&canister_id, "get_token_metas")
+			// 	.with_arg(args)
+			// 	.call()
+			// 	.await?;
+			// let tokens: Vec<TokenMeta> = Decode!(&ret, Result<Vec<TokenMeta>, OmnityError>)??;
+			// info!("total tokens from offset: {} ", offset);
 			for token in tokens.iter() {
 				Mutation::save_token(db, token.clone().into()).await?;
 			}
@@ -116,16 +138,26 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		info!("{:?} send tickets to hub... ", chrono::Utc::now());
-
-		let args: Vec<u8> = Encode!(&ticket)?;
-		let ret = agent
-			.update(&canister_id, "send_ticket")
-			.with_arg(args)
-			.call_and_wait()
+		let _ = Arg::T(ticket)
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"send_ticket",
+				"send tickets to hub...",
+				"send ticket result: ",
+				None,
+				"()",
+			)
 			.await?;
-		let ret = Decode!(&ret, Result<(), OmnityError>)??;
-		info!("send ticket result: {:?}", ret);
+		// info!("{:?} send tickets to hub... ", chrono::Utc::now());
+		// let args: Vec<u8> = Encode!(&ticket)?;
+		// let ret = agent
+		// 	.update(&canister_id, "send_ticket")
+		// 	.with_arg(args)
+		// 	.call_and_wait()
+		// 	.await?;
+		// let ret = Decode!(&ret, Result<(), OmnityError>)??;
+		// info!("send ticket result: {:?}", ret);
 
 		Ok(())
 	})
@@ -135,16 +167,27 @@ pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
 //increment synchronization for tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		info!("{:?} syncing tickets from hub ... ", chrono::Utc::now());
-
-		let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
-		let ret = agent
-			.query(&canister_id, "sync_ticket_size")
-			.with_arg(args)
-			.call()
-			.await?;
-		let ticket_size = Decode!(&ret, Result<u64, OmnityError>)??;
-		info!("total ticket size: {:?}", ticket_size);
+		let ticket_size = Arg::V(Vec::<u8>::new())
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"sync_ticket_size",
+				"syncing tickets from hub ... ",
+				"total ticket size: ",
+				None,
+				"u64",
+			)
+			.await?
+			.convert_to_u64();
+		// info!("{:?} syncing tickets from hub ... ", chrono::Utc::now());
+		// let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
+		// let ret = agent
+		// 	.query(&canister_id, "sync_ticket_size")
+		// 	.with_arg(args)
+		// 	.call()
+		// 	.await?;
+		// let ticket_size = Decode!(&ret, Result<u64, OmnityError>)??;
+		// info!("total ticket size: {:?}", ticket_size);
 
 		//get latest ticket seq from  postgresql database
 		let latest_ticket_seq = Query::get_latest_ticket(db).await?.map(|t| {
@@ -168,15 +211,28 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 		let mut limit = FETCH_LIMIT;
 		for next_offset in (offset..ticket_size).step_by(limit as usize) {
-			info!("next_offset: {:?}", next_offset);
 			limit = std::cmp::min(limit, ticket_size - next_offset);
-			let args = Encode!(&next_offset, &limit)?;
-			let ret = agent
-				.query(&canister_id, "sync_tickets")
-				.with_arg(args)
-				.call()
-				.await?;
-			let new_tickets = Decode!(&ret, Result<Vec<(u64, OmnityTicket)>, OmnityError>)??;
+			let new_tickets = Arg::U(next_offset)
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"sync_tickets",
+					"next_offset:",
+					"synced tickets : ",
+					Some(limit),
+					"Vec<(u64, OmnityTicket)>",
+				)
+				.await?
+				.convert_to_vec_omnity_ticket();
+			// info!("next_offset: {:?}", next_offset);
+			// limit = std::cmp::min(limit, ticket_size - next_offset);
+			// let args = Encode!(&next_offset, &limit)?;
+			// let ret = agent
+			// 	.query(&canister_id, "sync_tickets")
+			// 	.with_arg(args)
+			// 	.call()
+			// 	.await?;
+			// let new_tickets = Decode!(&ret, Result<Vec<(u64, OmnityTicket)>, OmnityError>)??;
 			// info!("synced tickets {:?} ", new_tickets);
 			for (seq, ticket) in new_tickets.iter() {
 				let ticket_modle = Ticket::from_omnity_ticket(*seq, ticket.clone()).into();

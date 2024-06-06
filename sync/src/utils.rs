@@ -226,6 +226,8 @@ pub async fn create_omnity_canister(canister: &str) -> Result<Principal, Box<dyn
 pub enum ReturnType {
 	U64(u64),
 	VecChainMeta(Vec<ChainMeta>),
+	VecTokenMeta(Vec<TokenMeta>),
+	VecOmnityTicket(Vec<(u64, OmnityTicket)>),
 	Non(()),
 }
 
@@ -239,6 +241,18 @@ impl ReturnType {
 	pub fn convert_to_vec_chain_meta(&self) -> Vec<ChainMeta> {
 		match self {
 			Self::VecChainMeta(v) => return v.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_vec_token_meta(&self) -> Vec<TokenMeta> {
+		match self {
+			Self::VecTokenMeta(t) => return t.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_vec_omnity_ticket(&self) -> Vec<(u64, OmnityTicket)> {
+		match self {
+			Self::VecOmnityTicket(o) => return o.to_vec(),
 			_ => return Vec::new(),
 		}
 	}
@@ -294,6 +308,18 @@ impl Arg {
 					Decode!(&return_output, Result<Vec<ChainMeta>, ()>)?.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::VecChainMeta(decoded_return_output));
+			}
+			"Vec<TokenMeta>" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<Vec<TokenMeta>, ()>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecTokenMeta(decoded_return_output));
+			}
+			"Vec<(u64, OmnityTicket)>" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<Vec<(u64, OmnityTicket)>, ()>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecOmnityTicket(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output = Decode!(&return_output, Result<(), ()>)?.unwrap();

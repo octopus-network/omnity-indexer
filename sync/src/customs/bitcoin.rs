@@ -1,11 +1,10 @@
+use crate::service::{Mutation, Query};
 use crate::{
 	types::{Ticket, TicketId, TicketStatus, TicketType, TxAction},
 	with_omnity_canister,
 };
 use candid::{CandidType, Decode, Encode};
 use ic_btc_interface::Txid;
-
-use crate::service::{Mutation, Query};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -53,6 +52,7 @@ pub struct RuneId {
 	pub block: u64,
 	pub tx: u32,
 }
+
 impl Display for RuneId {
 	fn fmt(&self, f: &mut Formatter) -> fmt::Result {
 		write!(f, "{}:{}", self.block, self.tx,)
