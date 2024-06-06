@@ -66,6 +66,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { icp::sync_ticket_status_from_icp_route(&db_conn).await },
 	);
+
 	let _ = tokio::join!(
 		sync_chains_task,
 		sync_tokens_task,

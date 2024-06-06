@@ -111,9 +111,9 @@ impl Mutation {
 				info!("update token result : {:?}", res);
 			}
 		}
-
 		Ok(token_meta::Model { ..token_meta })
 	}
+
 	pub async fn save_ticket(db: &DbConn, ticket: ticket::Model) -> Result<ticket::Model, DbErr> {
 		let active_model: ticket::ActiveModel = ticket.clone().into();
 		let on_conflict = OnConflict::column(ticket::Column::TicketId)
@@ -141,6 +141,35 @@ impl Mutation {
 
 		Ok(ticket::Model { ..ticket })
 	}
+
+	// pub async fn save_directive(
+	// 	db: &DbConn,
+	// 	directive: directive::Model,
+	// ) -> Result<directive::Model, DbErr> {
+	// 	let active_model: directive::ActiveModel = directive.clone().into();
+	// 	let on_conflict = OnConflict::column(column).do_nothing().to_owned();
+	// 	let insert_result = DirectiveMeta::insert(active_model.clone())
+	// 		.on_conflict(on_conflict)
+	// 		.exec(db)
+	// 		.await;
+
+	// 	match insert_result {
+	// 		Ok(ret) => {
+	// 			info!("insert directive result : {:?}", ret);
+	// 		}
+	// 		Err(_) => {
+	// 			info!("the directive already exited, need to update directive !");
+
+	// 			let res = DirectiveMeta::update(active_model)
+	// 				.filter()
+	// 				.exec(db)
+	// 				.await
+	// 				.map(|chain| chain);
+	// 			info!("update directive result : {:?}", res);
+	// 		}
+	// 	}
+	// 	Ok(directive::Model { ..directive })
+	// }
 
 	pub async fn update_ticket_status(
 		db: &DbConn,
