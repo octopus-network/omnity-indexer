@@ -200,7 +200,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum ChainMeta {
+pub enum ChainMeta {
 	Table,
 	ChainId,
 	CanisterId,
@@ -212,7 +212,7 @@ enum ChainMeta {
 }
 
 #[derive(DeriveIden)]
-enum TokenMeta {
+pub enum TokenMeta {
 	Table,
 	TokenId,
 	Name,
