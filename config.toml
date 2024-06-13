@@ -1,4 +1,4 @@
-database_url = 'postgres://omnity:omnity_go35.201.254.48:5432/omnity'
+database_url = 'postgres://omnity:omnity_go@35.201.254.48:5432/omnity'
 dfx_network = 'https://ic0.app'
 log_config = './log4rs.yaml'
 # main net config
