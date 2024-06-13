@@ -1,14 +1,14 @@
 # version: "3.9"
 services:
-  postgres:
-    image: postgres:12
-    ports:
-       - "5432:5432"
-    restart: always
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: omnity_go
+  # postgres:
+  #   image: postgres:12
+  #   ports:
+  #      - "5432:5432"
+  #   restart: always
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data
+  #   environment:
+  #     POSTGRES_PASSWORD: omnity_go
   graphql-engine:
     image: hasura/graphql-engine:v2.38.0
     ports:
@@ -16,10 +16,10 @@ services:
     restart: always
     environment:
       ## postgres database to store Hasura metadata
-      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:omnity_go@postgres:5432/postgres
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://omnity:omnity_go35.201.254.48:5432/omnity
       ## this env var can be used to add the above postgres database to Hasura as a data source. this can be removed/updated based on your needs
-      PG_DATABASE_URL: postgres://postgres:omnity_go@postgres:5432/postgres
-      OMNITY_DATABASE_URL: postgres://postgres:omnity_go@postgres:5432/omnity
+      PG_DATABASE_URL: postgres://omnity:omnity_go35.201.254.48:5432/omnity
+      OMNITY_DATABASE_URL: postgres://omnity:omnity_go35.201.254.48:5432/omnity
       ## enable the console served by server
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
       ## enable debugging mode. It is recommended to disable this in production
