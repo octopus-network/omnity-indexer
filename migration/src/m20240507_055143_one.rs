@@ -171,7 +171,7 @@ impl MigrationTrait for Migration {
 		manager
 			.drop_index(Index::drop().name("idx-ticket_seq").to_owned())
 			.await?;
-		// Drop tables
+		// drop tables
 		manager
 			.drop_table(Table::drop().table(Ticket::Table).to_owned())
 			.await?;
@@ -181,7 +181,7 @@ impl MigrationTrait for Migration {
 		manager
 			.drop_table(Table::drop().table(ChainMeta::Table).to_owned())
 			.await?;
-		// drop emun
+		// drop enum
 		manager
 			.drop_type(
 				Type::drop()
