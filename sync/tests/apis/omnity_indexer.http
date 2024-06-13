@@ -1,5 +1,5 @@
 # @hostname = localhost
-@hostname = localhost
+@hostname = 35.239.241.148
 @port = 8080
 @host = {{hostname}}:{{port}}
 
