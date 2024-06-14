@@ -1,37 +1,40 @@
 # @hostname = localhost
-@hostname = 35.239.241.148
+@hostname = 34.44.123.28
 @port = 8080
 @host = {{hostname}}:{{port}}
 
-### query chain
+### query all the chains metadata
 GET http://{{host}}/api/rest/chain_meta
-### 	
+### query a chain metadata by its chain_id	
 GET http://{{host}}/api/rest/chain_meta/eICP
-###
-GET http://{{host}}/api/rest/chain_meta/canister/bkyz2-fmaaa-aaaaa-qaaaq-cai
+### query a chain metadata by its canister_id	
+GET http://{{host}}/api/rest/chain_meta/canister/x7lb2-jqaaa-aaaag-qjrkq-cai
 
 
-### query token
+### query all the tokens metadata
 GET http://{{host}}/api/rest/token_meta
-###
-GET http://{{host}}/api/rest/token_meta/LICP
+### query a token metadata by its token_id
+GET http://{{host}}/api/rest/token_meta/ICP-icrc-GOOD•GOD
 
 
-### quety ticket by id
-GET http://{{host}}/api/rest/ticket/28b47548-55dc-4e89-b41d-76bc024782e8f
+### query the ticket detail by its ticket_id
+GET http://{{host}}/api/rest/ticket/ugaqt-wqaaa-aaaar-qafgq-cai_101
 
 ### query tickets with pagination
 GET http://{{host}}/api/rest/tickets/paginated?limit=3&offset=0
 
-### query tickets by chain
-GET http://{{host}}/api/rest/tickets/chain/Bitcoin
+### query tickets by src_chain
+GET http://{{host}}/api/rest/tickets/chain/ICP
 
 ### query tickets by token
-GET http://{{host}}/api/rest/tickets/token/Bitcoin-runes-HOPE•YOU•GET•RICH
+GET http://{{host}}/api/rest/tickets/token/ICP-icrc-TEST•RICH
 
-### query tickets by address
-GET http://{{host}}/api/rest/tickets/address/address_on_Bitcoin
+### query tickets by receiver
+GET http://{{host}}/api/rest/tickets/address/oqqew-3kok2-4ca2v-uwf4q-bykqb-yghly-kwet3-a5vqf-cu4ug-ztg4o-sqe
 
 
-### query tickets by chain id and address with pagination alias
-GET http://{{host}}/api/rest/tickets/Bitcoin/address/address_on_Bitcoin?limit=12&offset=0
+### query tickets by src_chain and sender with pagination alias
+GET http://{{host}}/api/rest/tickets/bevm_testnet/address/null?limit=3&offset=0
+
+### query tickets by src_chain and sender without pagination alias
+GET http://{{host}}/api/rest/tickets0/bevm_testnet/address/null
