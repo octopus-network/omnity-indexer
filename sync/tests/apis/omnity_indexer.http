@@ -21,7 +21,7 @@ GET http://{{host}}/api/rest/token_meta/ICP-icrc-GOOD•GOD
 GET http://{{host}}/api/rest/ticket/ugaqt-wqaaa-aaaar-qafgq-cai_101
 
 ### query tickets with pagination
-GET http://{{host}}/api/rest/tickets/paginated?limit=3&offset=0
+GET http://{{host}}/api/rest/tickets/paginated?limit=6&offset=0
 
 ### query tickets by src_chain
 GET http://{{host}}/api/rest/tickets/chain/ICP
@@ -35,6 +35,3 @@ GET http://{{host}}/api/rest/tickets/address/oqqew-3kok2-4ca2v-uwf4q-bykqb-yghly
 
 ### query tickets by src_chain and sender with pagination alias
 GET http://{{host}}/api/rest/tickets/bevm_testnet/address/null?limit=3&offset=0
-
-### query tickets by src_chain and sender without pagination alias
-GET http://{{host}}/api/rest/tickets0/bevm_testnet/address/null
