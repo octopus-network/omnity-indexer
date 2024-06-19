@@ -635,6 +635,7 @@ pub enum TxAction {
 	#[default]
 	Transfer,
 	Redeem,
+	Burn,
 }
 
 impl From<TxAction> for sea_orm_active_enums::TxAction {
@@ -642,6 +643,7 @@ impl From<TxAction> for sea_orm_active_enums::TxAction {
 		match tx_action {
 			TxAction::Transfer => sea_orm_active_enums::TxAction::Transfer,
 			TxAction::Redeem => sea_orm_active_enums::TxAction::Redeem,
+			TxAction::Burn => sea_orm_active_enums::TxAction::Burn,
 		}
 	}
 }
@@ -650,6 +652,7 @@ impl From<sea_orm_active_enums::TxAction> for TxAction {
 		match sea_tx_action {
 			sea_orm_active_enums::TxAction::Transfer => TxAction::Transfer,
 			sea_orm_active_enums::TxAction::Redeem => TxAction::Redeem,
+			sea_orm_active_enums::TxAction::Burn => TxAction::Burn,
 		}
 	}
 }
