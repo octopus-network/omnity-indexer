@@ -64,7 +64,7 @@ cargo build --locked --release -p omnity-indexer-sync
 # update config.toml use your indentity and canister id
 
 # start sync
-./target/release/omnity_indexer_sync -c ./config.toml start
+./target/release/omnity_indexer_sync -c ./config.toml config
 
 # optional,open other terminal and watch log
 tail -f logs/omnity-indexer.log
@@ -172,7 +172,7 @@ omnity_routes_icp_canister_id = 'br5f7-7uaaa-aaaaa-qaaca-cai'
 cargo build --locked --release -p omnity-indexer-sync
 
 # start sync
-./target/release/omnity_indexer_sync -c ./config.toml start
+./target/release/omnity_indexer_sync env
 
 ```
 
