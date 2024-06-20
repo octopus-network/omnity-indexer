@@ -18,3 +18,10 @@ db-shm
 db-wal
 logs/*
 db-data/*
+
+# environment variables
+.env
+
+# Mac OSX temporary files
+.DS_Store
+**/.DS_Store

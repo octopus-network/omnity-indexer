@@ -1,8 +1,19 @@
-database_url = 'postgres://postgres:omnity_go@localhost:5432/omnity'
-dfx_network = 'http://127.0.0.1:4943'
+database_url = 'postgres://user:password@localhost:5432/db'
+dfx_network = 'https://ic0.app'
 log_config = './log4rs.yaml'
-# dfx config vars
 dfx_identity = './test.pem'
-omnity_hub_canister_id = 'bkyz2-fmaaa-aaaaa-qaaaq-cai'
-omnity_customs_bitcoin_canister_id = 'be2us-64aaa-aaaaa-qaabq-cai'
-omnity_routes_icp_canister_id = 'br5f7-7uaaa-aaaaa-qaaca-cai'
+
+# main net config
+omnity_hub_canister_id = '7wupf-wiaaa-aaaar-qaeya-cai'
+omnity_customs_bitcoin_canister_id = '7rvjr-3qaaa-aaaar-qaeyq-cai'
+omnity_routes_icp_canister_id = '7ywcn-nyaaa-aaaar-qaeza-cai'
+
+# test net config
+# omnity_hub_canister_id = 'xykho-eiaaa-aaaag-qjrka-cai'
+# omnity_customs_bitcoin_canister_id = 'x7lb2-jqaaa-aaaag-qjrkq-cai'
+# omnity_routes_icp_canister_id = 'xwikg-7yaaa-aaaag-qjrla-cai'
+
+# local net config
+# omnity_hub_canister_id = 'bkyz2-fmaaa-aaaaa-qaaaq-cai'
+# omnity_customs_bitcoin_canister_id = 'be2us-64aaa-aaaaa-qaabq-cai'
+# omnity_routes_icp_canister_id = 'br5f7-7uaaa-aaaaa-qaaca-cai'

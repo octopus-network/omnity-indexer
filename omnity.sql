@@ -17,7 +17,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: chain_state; Type: TYPE; Schema: public; Owner: postgres
+-- Name: chain_state; Type: TYPE; Schema: public; Owner: omnity
 --
 
 CREATE TYPE public.chain_state AS ENUM (
@@ -26,10 +26,10 @@ CREATE TYPE public.chain_state AS ENUM (
 );
 
 
-ALTER TYPE public.chain_state OWNER TO postgres;
+ALTER TYPE public.chain_state OWNER TO omnity;
 
 --
--- Name: chain_type; Type: TYPE; Schema: public; Owner: postgres
+-- Name: chain_type; Type: TYPE; Schema: public; Owner: omnity
 --
 
 CREATE TYPE public.chain_type AS ENUM (
@@ -38,10 +38,10 @@ CREATE TYPE public.chain_type AS ENUM (
 );
 
 
-ALTER TYPE public.chain_type OWNER TO postgres;
+ALTER TYPE public.chain_type OWNER TO omnity;
 
 --
--- Name: ticket_status; Type: TYPE; Schema: public; Owner: postgres
+-- Name: ticket_status; Type: TYPE; Schema: public; Owner: omnity
 --
 
 CREATE TYPE public.ticket_status AS ENUM (
@@ -52,10 +52,10 @@ CREATE TYPE public.ticket_status AS ENUM (
 );
 
 
-ALTER TYPE public.ticket_status OWNER TO postgres;
+ALTER TYPE public.ticket_status OWNER TO omnity;
 
 --
--- Name: ticket_type; Type: TYPE; Schema: public; Owner: postgres
+-- Name: ticket_type; Type: TYPE; Schema: public; Owner: omnity
 --
 
 CREATE TYPE public.ticket_type AS ENUM (
@@ -64,10 +64,10 @@ CREATE TYPE public.ticket_type AS ENUM (
 );
 
 
-ALTER TYPE public.ticket_type OWNER TO postgres;
+ALTER TYPE public.ticket_type OWNER TO omnity;
 
 --
--- Name: tx_action; Type: TYPE; Schema: public; Owner: postgres
+-- Name: tx_action; Type: TYPE; Schema: public; Owner: omnity
 --
 
 CREATE TYPE public.tx_action AS ENUM (
@@ -76,14 +76,14 @@ CREATE TYPE public.tx_action AS ENUM (
 );
 
 
-ALTER TYPE public.tx_action OWNER TO postgres;
+ALTER TYPE public.tx_action OWNER TO omnity;
 
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: chain_meta; Type: TABLE; Schema: public; Owner: postgres
+-- Name: chain_meta; Type: TABLE; Schema: public; Owner: omnity
 --
 
 CREATE TABLE public.chain_meta (
@@ -97,10 +97,10 @@ CREATE TABLE public.chain_meta (
 );
 
 
-ALTER TABLE public.chain_meta OWNER TO postgres;
+ALTER TABLE public.chain_meta OWNER TO omnity;
 
 --
--- Name: seaql_migrations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: seaql_migrations; Type: TABLE; Schema: public; Owner: omnity
 --
 
 CREATE TABLE public.seaql_migrations (
@@ -109,10 +109,10 @@ CREATE TABLE public.seaql_migrations (
 );
 
 
-ALTER TABLE public.seaql_migrations OWNER TO postgres;
+ALTER TABLE public.seaql_migrations OWNER TO omnity;
 
 --
--- Name: ticket; Type: TABLE; Schema: public; Owner: postgres
+-- Name: ticket; Type: TABLE; Schema: public; Owner: omnity
 --
 
 CREATE TABLE public.ticket (
@@ -132,10 +132,10 @@ CREATE TABLE public.ticket (
 );
 
 
-ALTER TABLE public.ticket OWNER TO postgres;
+ALTER TABLE public.ticket OWNER TO omnity;
 
 --
--- Name: token_meta; Type: TABLE; Schema: public; Owner: postgres
+-- Name: token_meta; Type: TABLE; Schema: public; Owner: omnity
 --
 
 CREATE TABLE public.token_meta (
@@ -150,10 +150,10 @@ CREATE TABLE public.token_meta (
 );
 
 
-ALTER TABLE public.token_meta OWNER TO postgres;
+ALTER TABLE public.token_meta OWNER TO omnity;
 
 --
--- Name: chain_meta chain_meta_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: chain_meta chain_meta_pkey; Type: CONSTRAINT; Schema: public; Owner: omnity
 --
 
 ALTER TABLE ONLY public.chain_meta
@@ -161,7 +161,7 @@ ALTER TABLE ONLY public.chain_meta
 
 
 --
--- Name: seaql_migrations seaql_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: seaql_migrations seaql_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: omnity
 --
 
 ALTER TABLE ONLY public.seaql_migrations
@@ -169,7 +169,7 @@ ALTER TABLE ONLY public.seaql_migrations
 
 
 --
--- Name: ticket ticket_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ticket ticket_pkey; Type: CONSTRAINT; Schema: public; Owner: omnity
 --
 
 ALTER TABLE ONLY public.ticket
@@ -177,7 +177,7 @@ ALTER TABLE ONLY public.ticket
 
 
 --
--- Name: token_meta token_meta_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: token_meta token_meta_pkey; Type: CONSTRAINT; Schema: public; Owner: omnity
 --
 
 ALTER TABLE ONLY public.token_meta
@@ -185,7 +185,7 @@ ALTER TABLE ONLY public.token_meta
 
 
 --
--- Name: idx-ticket_seq; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx-ticket_seq; Type: INDEX; Schema: public; Owner: omnity
 --
 
 CREATE INDEX "idx-ticket_seq" ON public.ticket USING btree (ticket_seq);
