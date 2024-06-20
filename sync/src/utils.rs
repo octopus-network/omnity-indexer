@@ -28,7 +28,6 @@ pub async fn create_agent(identity: impl Identity + 'static) -> Result<Agent, St
 		Err(_) => {
 			let network = read_config(|c| c.dfx_network.to_owned());
 			debug!("get network from  config file :{network:?}");
-
 			network
 		}
 	};
@@ -48,6 +47,7 @@ where
 	let agent_identity = match std::env::var("DFX_IDENTITY") {
 		Ok(identity) => {
 			debug!("get identity from env var :{}", identity);
+
 			let agent_identity = Secp256k1Identity::from_pem(identity.as_bytes())?;
 			agent_identity
 		}
@@ -79,7 +79,7 @@ where
 }
 
 pub struct Database {
-	pub connection: Arc<DatabaseConnection>, //
+	pub connection: Arc<DatabaseConnection>,
 }
 
 impl Database {
