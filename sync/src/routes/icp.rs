@@ -57,7 +57,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						canister_id,
 						"mint_token_status",
 						"Syncing mint token status from icp route ...",
-						" ",
+						"Mint token status from icp route result: ",
 						None,
 						"MintTokenStatus",
 					)

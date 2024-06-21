@@ -191,7 +191,7 @@ pub async fn mock_finalized_release_token(
 	.await
 }
 
-// sync tickets that transfered from customs to routes
+// mock: sync tickets that transfered from customs to routes
 pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
@@ -277,7 +277,7 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 						canister_id,
 						"release_token_status",
 						"Unconfirmed ticket: ",
-						" ",
+						"Mint token status result: ",
 						None,
 						"ReleaseTokenStatus",
 					)
@@ -294,12 +294,12 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 				)
 				.await?;
 				info!(
-					"ticket id({:?}) finally status:{:?} ",
+					"Ticket id({:?}) finally status:{:?} ",
 					ticket_modle.ticket_id, ticket_modle.status
 				);
 			} else {
 				info!(
-					"ticket id({:?}) current status {:?}",
+					"Ticket id({:?}) current status {:?}",
 					unconfirmed_ticket.ticket_id, mint_token_status
 				);
 			}
