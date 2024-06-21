@@ -77,13 +77,13 @@ pub struct ParseRuneIdError;
 
 impl fmt::Display for ParseRuneIdError {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		"provided rune_id was not valid".fmt(f)
+		"Provided rune_id was not valid".fmt(f)
 	}
 }
 
 impl Error for ParseRuneIdError {
 	fn description(&self) -> &str {
-		"failed to parse rune_id"
+		"Failed to parse rune_id"
 	}
 }
 
@@ -126,7 +126,7 @@ pub async fn gen_bitcoin_ticket(args: GenerateTicketArgs) -> Result<(), Box<dyn 
 		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
 		|agent, canister_id| async move {
 			info!(
-				"{:?} generate ticket on bitcion customs ... ",
+				"{:?} Generate ticket on bitcion customs ... ",
 				chrono::Utc::now()
 			);
 			let args: Vec<u8> = Encode!(&args)?;
@@ -135,7 +135,7 @@ pub async fn gen_bitcoin_ticket(args: GenerateTicketArgs) -> Result<(), Box<dyn 
 				.with_arg(args)
 				.call_and_wait()
 				.await?;
-			info!(" mock generate ticket on bitcion customs ret: {:?}  ", ret);
+			info!(" Mock generate ticket on bitcion customs ret: {:?}  ", ret);
 
 			Ok(())
 		},
@@ -149,7 +149,7 @@ pub async fn mock_finalized_ticket(ticket_id: TicketId) -> Result<(), Box<dyn Er
 		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
 		|agent, canister_id| async move {
 			info!(
-				"{:?} mock finalized ticket on bitcion customs ... ",
+				"{:?} Mock finalized ticket on bitcion customs ... ",
 				chrono::Utc::now()
 			);
 			let args: Vec<u8> = Encode!(&ticket_id)?;
@@ -173,7 +173,7 @@ pub async fn mock_finalized_release_token(
 		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
 		|agent, canister_id| async move {
 			info!(
-				"{:?} mock finalized release token on bitcion customs ... ",
+				"{:?} Mock finalized release token on bitcion customs ... ",
 				chrono::Utc::now()
 			);
 			let args: Vec<u8> = Encode!(&ticket_id, &status)?;
@@ -183,7 +183,7 @@ pub async fn mock_finalized_release_token(
 				.call_and_wait()
 				.await?;
 			let ret = Decode!(&ret, ())?;
-			info!("mock finalized release token ret: {:?}  ", ret);
+			info!("Mock finalized release token ret: {:?}  ", ret);
 
 			Ok(())
 		},
@@ -201,25 +201,13 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 				agent.clone(),
 				canister_id,
 				"get_pending_gen_ticket_size",
-				"syncing tickets from bitcoin custom ...",
-				"pending ticket size: ",
+				"Syncing tickets from bitcoin custom ...",
+				"Pending ticket size: ",
 				None,
 				"u64",
 			)
 			.await?
 			.convert_to_u64();
-			// info!(
-			// 	"{:?} syncing tickets from bitcoin custom ... ",
-			// 	chrono::Utc::now()
-			// );
-			// let args: Vec<u8> = Encode!(&Vec::<u8>::new())?;
-			// let ret = agent
-			// 	.query(&canister_id, "get_pending_gen_ticket_size")
-			// 	.with_arg(args)
-			// 	.call()
-			// 	.await?;
-			// let ticket_size = Decode!(&ret, u64)?;
-			// info!("pending ticket size: {:?}", ticket_size);
 
 			let mut offset = 0u64;
 			let limit = FETCH_LIMIT;
@@ -236,16 +224,9 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 					)
 					.await?
 					.convert_to_vec_gen_ticket_request();
-				// let args = Encode!(&offset, &limit)?;
-				// let ret = agent
-				// 	.query(&canister_id, "get_pending_gen_tickets")
-				// 	.with_arg(args)
-				// 	.call()
-				// 	.await?;
-				// let pending_tickets: Vec<GenTicketRequest> = Decode!(&ret,
-				// Vec<GenTicketRequest>)?;
+
 				info!(
-					"need to sync pending tickets {}: {:?}",
+					"Need to sync pending tickets {}: {:?}",
 					offset, pending_tickets
 				);
 				for pending_ticket in pending_tickets.iter() {
@@ -282,7 +263,7 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_CUSTOMS_BITCOIN_CANISTER_ID", |agent, canister_id| async move {
 		info!(
-			"{:?} syncing release token status from bitcoin ... ",
+			"{:?} Syncing release token status from bitcoin ... ",
 			chrono::Utc::now()
 		);
 		//step1: get ticket that dest is bitcion and status is waiting for comformation by dst
@@ -295,21 +276,13 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 						agent.clone(),
 						canister_id,
 						"release_token_status",
-						"unconfirmed ticket: ",
+						"Unconfirmed ticket: ",
 						" ",
 						None,
 						"ReleaseTokenStatus",
 					)
 					.await?
 					.convert_to_release_token_status();
-			// info!("unconfirmed ticket({:?}) ", unconfirmed_ticket);
-			// let args = Encode!(&unconfirmed_ticket.ticket_id)?;
-			// let ret = agent
-			// 	.query(&canister_id, "release_token_status")
-			// 	.with_arg(args)
-			// 	.call()
-			// 	.await?;
-			// let mint_token_status: ReleaseTokenStatus = Decode!(&ret, ReleaseTokenStatus)?;
 
 			if matches!(mint_token_status, ReleaseTokenStatus::Confirmed(ref s) if s.eq(&unconfirmed_ticket.ticket_id))
 			{

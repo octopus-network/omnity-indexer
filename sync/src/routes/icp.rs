@@ -27,24 +27,12 @@ pub async fn mock_finalized_mint_token(
 					agent.clone(),
 					canister_id,
 					"mock_finalized_mint_token",
-					"mock finalized mint token on icp route ...",
-					"mock finalized mint token on icp route ret: ",
+					"Mock finalized mint token on icp route ...",
+					"Mock finalized mint token on icp route ret: ",
 					Some(block_index),
 					"()",
 				)
 				.await?;
-			// info!(
-			// 	"{:?} mock finalized mint token on icp route ... ",
-			// 	chrono::Utc::now()
-			// );
-			// let args = Encode!(&ticket_id, &block_index)?;
-			// let ret = agent
-			// 	.update(&canister_id, "mock_finalized_mint_token")
-			// 	.with_arg(args)
-			// 	.call_and_wait()
-			// 	.await?;
-			// let ret = Decode!(&ret, ())?;
-			// info!("mock finalized mint token on icp route ret: {:?}", ret);
 
 			Ok(())
 		},
@@ -56,11 +44,6 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			// info!(
-			// 	"{:?} syncing mint token status from icp route ... ",
-			// 	chrono::Utc::now()
-			// );
-
 			//step1: get ticket that dest is icp route chain and status is waiting for comformation
 			// by dst
 			let unconfirmed_tickets =
@@ -73,32 +56,25 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						agent.clone(),
 						canister_id,
 						"mint_token_status",
-						"syncing mint token status from icp route ...",
+						"Syncing mint token status from icp route ...",
 						" ",
 						None,
 						"MintTokenStatus",
 					)
 					.await?
 					.convert_to_mint_token_status();
-				// let args = Encode!(&unconfirmed_ticket.ticket_id)?;
-				// let ret = agent
-				// 	.query(&canister_id, "mint_token_status")
-				// 	.with_arg(args)
-				// 	.call()
-				// 	.await?;
-				// let mint_token_status: MintTokenStatus = Decode!(&ret, MintTokenStatus)?;
 
 				match mint_token_status {
 					MintTokenStatus::Unknown => {
 						info!(
-							"ticket id({:?}) mint token status {:?}",
+							"Ticket id({:?}) mint token status {:?}",
 							unconfirmed_ticket.ticket_id,
 							MintTokenStatus::Unknown
 						);
 					}
 					MintTokenStatus::Finalized { block_index } => {
 						info!(
-							"ticket id({:?}) finalized on block {:?}",
+							"Ticket id({:?}) finalized on block {:?}",
 							unconfirmed_ticket.ticket_id, block_index
 						);
 
@@ -110,7 +86,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						)
 						.await?;
 						info!(
-							"ticket id({:?}) status:{:?} ",
+							"Ticket id({:?}) status:{:?} ",
 							ticket_modle.ticket_id, ticket_modle.status
 						);
 					}
