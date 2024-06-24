@@ -25,7 +25,7 @@ mod tests {
 	fn test_finalized_token_and_sync_ticket() {
 		dotenv().ok();
 		init_logger();
-		let db_url = std::env::var("DATABASE_URL").unwrap();
+		let db_url = std::env::var("TEST_DATABASE_URL").unwrap();
 		let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
 		runtime.block_on(async {
 			let db = Database::new(db_url).await;

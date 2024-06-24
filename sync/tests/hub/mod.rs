@@ -21,7 +21,7 @@ mod hub_tests {
 	fn test_sync_chains() {
 		dotenv().ok();
 		init_logger();
-		let db_url = std::env::var("DATABASE_URL").unwrap();
+		let db_url = std::env::var("TEST_DATABASE_URL").unwrap();
 		let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
 		let chains = runtime.block_on(async {
 			let db = Database::new(db_url).await;
@@ -40,7 +40,7 @@ mod hub_tests {
 	fn test_sync_tokens() {
 		dotenv().ok();
 		init_logger();
-		let db_url = std::env::var("DATABASE_URL").unwrap();
+		let db_url = std::env::var("TEST_DATABASE_URL").unwrap();
 		let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
 		let tokens = runtime.block_on(async {
 			let db = Database::new(db_url).await;
@@ -60,7 +60,7 @@ mod hub_tests {
 	fn test_sync_tickets() {
 		dotenv().ok();
 		init_logger();
-		let db_url = std::env::var("DATABASE_URL").unwrap();
+		let db_url = std::env::var("TEST_DATABASE_URL").unwrap();
 		let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
 		let tickets = runtime.block_on(async {
 			let db = Database::new(db_url).await;
@@ -80,7 +80,7 @@ mod hub_tests {
 	fn test_send_tickets() {
 		dotenv().ok();
 		init_logger();
-		let db_url = std::env::var("DATABASE_URL").unwrap();
+		let db_url = std::env::var("TEST_DATABASE_URL").unwrap();
 		let runtime = tokio::runtime::Runtime::new().expect("Could not create tokio runtime.");
 
 		let ticket_model = runtime.block_on(async {

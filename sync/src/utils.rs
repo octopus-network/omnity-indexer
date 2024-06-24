@@ -21,7 +21,6 @@ pub async fn create_agent(identity: impl Identity + 'static) -> Result<Agent, St
 		Err(_) => {
 			let network = read_config(|c| c.dfx_network.to_owned());
 			debug!("get network from  config file :{network:?}");
-
 			network
 		}
 	};
@@ -48,7 +47,6 @@ where
 			let identity = read_config(|c| c.dfx_identity.to_owned())
 				.ok_or_else(|| AnyError::msg("Cannot find identity file"))?;
 			debug!("get identity from  config file :{identity:?}");
-
 			let pem_file = Path::new(&identity);
 			let agent_identity = Secp256k1Identity::from_pem_file(pem_file)?;
 			agent_identity
@@ -72,7 +70,7 @@ where
 }
 
 pub struct Database {
-	pub connection: Arc<DatabaseConnection>, //
+	pub connection: Arc<DatabaseConnection>,
 }
 
 impl Database {
