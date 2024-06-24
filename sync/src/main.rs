@@ -4,6 +4,11 @@ use dotenvy::dotenv;
 use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
 // use std::env;
 use anyhow::anyhow;
+use log::LevelFilter;
+use log4rs::{
+    append::console::ConsoleAppender,
+    config::{Appender, Root},
+};
 
 // #[derive(Parser, Debug)]
 // #[command(author, version, about, long_about = None)]
@@ -49,10 +54,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	// Initial log
 	// let log_config = read_config(|c| c.log_config.to_owned());
-	if let Err(e) = log4rs::init_file("./log4rs.yaml", Default::default()) {
-		eprintln!("init log failed: {}", e);
-		std::process::exit(1);
-	}
+
+	// if let Err(e) = log4rs::init_file("log4rs.yaml", Default::default()) {
+	// 	eprintln!("init log failed: {}", e);
+	// 	std::process::exit(1);
+	// }
+
+	let stdout = ConsoleAppender::builder().build();
+	let config = log4rs::config::Config::builder()
+	.appender(Appender::builder().build("stdout", Box::new(stdout)))
+	.build(Root::builder().appender("stdout").build(LevelFilter::Info))
+	.unwrap();
+	log4rs::init_config(config).unwrap();
 
 	// let db_url = match std::env::var("DATABASE_URL") {
 	// 	Ok(url) => {
