@@ -4,33 +4,38 @@ use crate::{
 	icp::MintTokenStatus,
 	types, Error as OmnityError,
 };
-use anyhow::{Error as AnyError, Result};
+// use anyhow::{Error as AnyError, Result, anyhow};
+use anyhow::{anyhow, Result};
 use candid::{Decode, Encode};
 use config::{Config, ConfigError};
 use ic_agent::identity::Secp256k1Identity;
 use ic_agent::{agent::http_transport::ReqwestTransport, export::Principal, Agent, Identity};
 use ic_btc_interface::Txid;
 use lazy_static::lazy_static;
-use log::{debug, info};
+// use log::{debug, info};
+use log::info;
 use sea_orm::{ConnectOptions, DatabaseConnection};
 use serde::Deserialize;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::{error::Error, future::Future, path::Path};
+// use std::{error::Error, future::Future, path::Path};
+use std::{error::Error, future::Future};
 
 pub async fn create_agent(identity: impl Identity + 'static) -> Result<Agent, String> {
-	// let network = std::env::var("DFX_NETWORK").unwrap_or_else(|_| LOCAL_NET.to_string());
-	let network = match std::env::var("DFX_NETWORK") {
-		Ok(network) => {
-			debug!("get network from env var :{}", network);
-			network
-		}
-		Err(_) => {
-			let network = read_config(|c| c.dfx_network.to_owned());
-			debug!("get network from  config file :{network:?}");
-			network
-		}
-	};
+	let network = std::env::var("DFX_NETWORK")
+		.map_err(|_| anyhow!("DFX_NETWORK is not found"))
+		.unwrap();
+	// let network = match std::env::var("DFX_NETWORK") {
+	// 	Ok(network) => {
+	// 		debug!("get network from env var :{}", network);
+	// 		network
+	// 	}
+	// 	Err(_) => {
+	// 		let network = read_config(|c| c.dfx_network.to_owned());
+	// 		debug!("get network from  config file :{network:?}");
+	// 		network
+	// 	}
+	// };
 
 	Agent::builder()
 		.with_transport(ReqwestTransport::create(network).unwrap())
@@ -44,21 +49,25 @@ where
 	R: Future<Output = Result<(), Box<dyn Error>>>,
 	F: FnOnce(Agent) -> R,
 {
-	let agent_identity = match std::env::var("DFX_IDENTITY") {
-		Ok(identity) => {
-			debug!("get identity from env var :{}", identity);
-			let agent_identity = Secp256k1Identity::from_pem(identity.as_bytes())?;
-			agent_identity
-		}
-		Err(_) => {
-			let identity = read_config(|c| c.dfx_identity.to_owned())
-				.ok_or_else(|| AnyError::msg("Cannot find identity file"))?;
-			debug!("get identity from  config file :{identity:?}");
-			let pem_file = Path::new(&identity);
-			let agent_identity = Secp256k1Identity::from_pem_file(pem_file)?;
-			agent_identity
-		}
-	};
+	// let agent_identity = match std::env::var("DFX_IDENTITY") {
+	// 	Ok(identity) => {
+	// 		debug!("get identity from env var :{}", identity);
+	// 		let agent_identity = Secp256k1Identity::from_pem(identity.as_bytes())?;
+	// 		agent_identity
+	// 	}
+	// 	Err(_) => {
+	// 		let identity = read_config(|c| c.dfx_identity.to_owned())
+	// 			.ok_or_else(|| AnyError::msg("Cannot find identity file"))?;
+	// 		debug!("get identity from  config file :{identity:?}");
+	// 		let pem_file = Path::new(&identity);
+	// 		let agent_identity = Secp256k1Identity::from_pem_file(pem_file)?;
+	// 		agent_identity
+	// 	}
+	// };
+	let identity = std::env::var("DFX_IDENTITY")
+		.map_err(|_| anyhow!("DFX_IDENTITY is not found"))
+		.unwrap();
+	let agent_identity = Secp256k1Identity::from_pem(identity.as_bytes())?;
 
 	with_agent_as(agent_identity, f).await?;
 	Ok(())
@@ -209,20 +218,22 @@ where
 }
 
 pub async fn create_omnity_canister(canister: &str) -> Result<Principal, Box<dyn Error>> {
-	match std::env::var(canister) {
-		Ok(canister_id) => {
-			info!(
-				"Getting {} canister id from env var: {}",
-				canister, canister_id
-			);
-			Ok(Principal::from_text(canister_id)?)
-		}
-		Err(_) => {
-			let canister_id = read_config(|c| c.get(canister))?;
-			info!("Getting {canister:?} canister id from config file: {canister_id:?}");
-			Ok(Principal::from_text(canister_id)?)
-		}
-	}
+	// match std::env::var(canister) {
+	// 	Ok(canister_id) => {
+	// 		info!(
+	// 			"Getting {} canister id from env var: {}",
+	// 			canister, canister_id
+	// 		);
+	// 		Ok(Principal::from_text(canister_id)?)
+	// 	}
+	// 	Err(_) => {
+	// 		let canister_id = read_config(|c| c.get(canister))?;
+	// 		info!("Getting {canister:?} canister id from config file: {canister_id:?}");
+	// 		Ok(Principal::from_text(canister_id)?)
+	// 	}
+	// }
+	let canister_id = std::env::var(canister)?;
+	Ok(Principal::from_text(canister_id)?)
 }
 
 pub enum ReturnType {
