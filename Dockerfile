@@ -49,4 +49,4 @@ USER appuser
 COPY --from=build /app/target/release/omnity_indexer_sync /bin/
 
 # What the container should run when it is started.
-CMD ["/bin/omnity_indexer_sync", "env"]
+CMD ["/bin/omnity_indexer_sync"]
