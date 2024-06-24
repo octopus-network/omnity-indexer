@@ -64,7 +64,7 @@ cargo build --locked --release -p omnity-indexer-sync
 # update config.toml use your indentity and canister id
 
 # start sync
-./target/release/omnity_indexer_sync -c ./config.toml config
+./target/release/omnity_indexer_sync
 
 # optional,open other terminal and watch log
 tail -f logs/omnity-indexer.log
@@ -156,18 +156,8 @@ DATABASE_URL='postgres://postgres:omnity_go@localhost:5432/omnity'
 DFX_NETWORK='http://127.0.0.1:4943'
 
 # main net config
-OMNITY_HUB_CANISTER_ID= 'bkyz2-fmaaa-aaaaa-qaaaq-cai'
-OMNITY_CUSTOMS_BITCOIN_CANISTER_ID='be2us-64aaa-aaaaa-qaabq-cai'
-OMNITY_ROUTES_ICP_CANISTER_ID='br5f7-7uaaa-aaaaa-qaaca-cai'
-
-```
-
-### Build and run the omnity indexer sync
-```bash
-# first, install rust and compile the omnity indexer sync
-cargo build --locked --release -p omnity-indexer-sync
-
-# start sync
-./target/release/omnity_indexer_sync env
+OMNITY_HUB_CANISTER_ID=bkyz2-fmaaa-aaaaa-qaaaq-cai
+OMNITY_CUSTOMS_BITCOIN_CANISTER_ID=be2us-64aaa-aaaaa-qaabq-cai
+OMNITY_ROUTES_ICP_CANISTER_ID=br5f7-7uaaa-aaaaa-qaaca-cai
 
 ```
