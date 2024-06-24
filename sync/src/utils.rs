@@ -1,4 +1,11 @@
+use crate::types::*;
+use crate::{
+	bitcoin::{GenTicketRequest, ReleaseTokenStatus},
+	icp::MintTokenStatus,
+	types, Error as OmnityError,
+};
 use anyhow::{Error as AnyError, Result};
+use candid::{Decode, Encode};
 use config::{Config, ConfigError};
 use ic_agent::identity::Secp256k1Identity;
 use ic_agent::{agent::http_transport::ReqwestTransport, export::Principal, Agent, Identity};
@@ -215,5 +222,153 @@ pub async fn create_omnity_canister(canister: &str) -> Result<Principal, Box<dyn
 			info!("Getting {canister:?} canister id from config file: {canister_id:?}");
 			Ok(Principal::from_text(canister_id)?)
 		}
+	}
+}
+
+pub enum ReturnType {
+	U64(u64),
+	VecChainMeta(Vec<ChainMeta>),
+	VecTokenMeta(Vec<TokenMeta>),
+	VecOmnityTicket(Vec<(u64, OmnityTicket)>),
+	VecGenTicketRequest(Vec<GenTicketRequest>),
+	MintTokenStatus(MintTokenStatus),
+	ReleaseTokenStatus(ReleaseTokenStatus),
+	Non(()),
+}
+
+impl ReturnType {
+	pub fn convert_to_u64(&self) -> u64 {
+		match self {
+			Self::U64(u) => return *u,
+			_ => return 0,
+		}
+	}
+	pub fn convert_to_vec_chain_meta(&self) -> Vec<ChainMeta> {
+		match self {
+			Self::VecChainMeta(v) => return v.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_vec_token_meta(&self) -> Vec<TokenMeta> {
+		match self {
+			Self::VecTokenMeta(t) => return t.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_vec_omnity_ticket(&self) -> Vec<(u64, OmnityTicket)> {
+		match self {
+			Self::VecOmnityTicket(o) => return o.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_vec_gen_ticket_request(&self) -> Vec<GenTicketRequest> {
+		match self {
+			Self::VecGenTicketRequest(g) => return g.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_mint_token_status(&self) -> MintTokenStatus {
+		match self {
+			Self::MintTokenStatus(m) => return m.clone(),
+			_ => return MintTokenStatus::Unknown,
+		}
+	}
+	pub fn convert_to_release_token_status(&self) -> ReleaseTokenStatus {
+		match self {
+			Self::ReleaseTokenStatus(r) => return r.clone(),
+			_ => return ReleaseTokenStatus::Unknown,
+		}
+	}
+}
+pub enum Arg {
+	V(Vec<u8>),
+	T(types::Ticket),
+	U(u64),
+	TI(TicketId),
+}
+
+impl Arg {
+	pub async fn query_method(
+		self,
+		agent: Agent,
+		canister_id: Principal,
+		method: &str,
+		log_one: &str,
+		log_two: &str,
+		args_two: Option<u64>,
+		re_type: &str,
+	) -> Result<ReturnType, Box<dyn Error>> {
+		info!("{:?} {:?}", chrono::Utc::now(), log_one);
+
+		let encoded_args: Vec<u8> = match args_two {
+			Some(arg) => match self {
+				Arg::V(v) => Encode!(&v, &arg)?,
+				Arg::T(t) => Encode!(&t, &arg)?,
+				Arg::U(u) => Encode!(&u, &arg)?,
+				Arg::TI(ti) => Encode!(&ti, &arg)?,
+			},
+			None => match self {
+				Arg::V(v) => Encode!(&v)?,
+				Arg::T(t) => Encode!(&t)?,
+				Arg::U(u) => Encode!(&u)?,
+				Arg::TI(ti) => Encode!(&ti)?,
+			},
+		};
+		let return_output: Vec<u8> = agent
+			.query(&canister_id, method)
+			.with_arg(encoded_args)
+			.call()
+			.await?;
+
+		match re_type {
+			"u64" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<u64, OmnityError>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::U64(decoded_return_output));
+			}
+			"Vec<ChainMeta>" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<Vec<ChainMeta>, OmnityError>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecChainMeta(decoded_return_output));
+			}
+			"Vec<TokenMeta>" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<Vec<TokenMeta>, OmnityError>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecTokenMeta(decoded_return_output));
+			}
+			"Vec<(u64, OmnityTicket)>" => {
+				let decoded_return_output = Decode!(
+					&return_output,
+					Result<Vec<(u64, OmnityTicket)>, OmnityError>
+				)?
+				.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecOmnityTicket(decoded_return_output));
+			}
+			"Vec<GenTicketRequest>" => {
+				let decoded_return_output = Decode!(&return_output, Vec<GenTicketRequest>)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecGenTicketRequest(decoded_return_output));
+			}
+			"MintTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, MintTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::MintTokenStatus(decoded_return_output));
+			}
+			"ReleaseTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, ReleaseTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::ReleaseTokenStatus(decoded_return_output));
+			}
+			_ => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<(), OmnityError>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::Non(()));
+			}
+		};
 	}
 }
