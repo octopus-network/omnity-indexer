@@ -40,7 +40,6 @@ where
 	let agent_identity = match std::env::var("DFX_IDENTITY") {
 		Ok(identity) => {
 			debug!("get identity from env var :{}", identity);
-
 			let agent_identity = Secp256k1Identity::from_pem(identity.as_bytes())?;
 			agent_identity
 		}
@@ -48,7 +47,6 @@ where
 			let identity = read_config(|c| c.dfx_identity.to_owned())
 				.ok_or_else(|| AnyError::msg("Cannot find identity file"))?;
 			debug!("get identity from  config file :{identity:?}");
-
 			let pem_file = Path::new(&identity);
 			let agent_identity = Secp256k1Identity::from_pem_file(pem_file)?;
 			agent_identity

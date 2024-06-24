@@ -55,23 +55,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		std::process::exit(1);
 	}
 
-	match &cli.command {
-		Some(Commands::Config) => {
-			// init database
-			let db_url = read_config(|c| c.database_url.to_owned());
-			let db = Database::new(db_url).await;
+	// match &cli.command {
+	// 	Some(Commands::Config) => {
+	// 		// init database
+	// 		let db_url = read_config(|c| c.database_url.to_owned());
+	// 		let db = Database::new(db_url).await;
 
-			execute_sync_tasks(db.get_connection()).await;
-		}
-		Some(Commands::Env) => {
-			let db_url =
-				std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
-			let db = Database::new(db_url).await;
+	// 		execute_sync_tasks(db.get_connection()).await;
+	// 	}
+	// 	Some(Commands::Env) => {
+	// 		let db_url =
+	// 			std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
+	// 		let db = Database::new(db_url).await;
 
-			execute_sync_tasks(db.get_connection()).await;
-		}
-		None => {}
-	}
+	// 		execute_sync_tasks(db.get_connection()).await;
+	// 	}
+	// 	None => {}
+	// }
+	let db_url = std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
+	let db = Database::new(db_url.clone()).await;
+	execute_sync_tasks(db.get_connection()).await;
 
 	Ok(())
 }
