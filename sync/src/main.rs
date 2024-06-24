@@ -1,6 +1,6 @@
-use anyhow::anyhow;
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
+use log::info;
 use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
 use std::env;
 
@@ -18,8 +18,6 @@ struct Cli {
 enum Commands {
 	/// Use config
 	Config,
-	/// Use env
-	Env,
 }
 
 #[tokio::main]
@@ -55,23 +53,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		std::process::exit(1);
 	}
 
-	match &cli.command {
-		Some(Commands::Config) => {
-			// init database
-			let db_url = read_config(|c| c.database_url.to_owned());
-			let db = Database::new(db_url).await;
-
-			execute_sync_tasks(db.get_connection()).await;
+	let db_url = match std::env::var("DATABASE_URL") {
+		Ok(url) => {
+			info!("Getting database url from env var: {}", url);
+			url
 		}
-		Some(Commands::Env) => {
-			let db_url =
-				std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
-			let db = Database::new(db_url).await;
-
-			execute_sync_tasks(db.get_connection()).await;
+		Err(_) => {
+			let url = read_config(|c| c.get("DATABASE_URL"))?;
+			info!("Getting database url from config var: {url:?}");
+			url
 		}
-		None => {}
-	}
+	};
+	let db = Database::new(db_url.clone()).await;
+	execute_sync_tasks(db.get_connection()).await;
 
 	Ok(())
 }
