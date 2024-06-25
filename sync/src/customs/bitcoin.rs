@@ -17,12 +17,6 @@ use std::{
 pub const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
 const FETCH_LIMIT: u64 = 50;
 
-#[derive(CandidType, Deserialize)]
-pub struct GetGenTicketReqsArgs {
-	pub start_txid: Option<Txid>,
-	pub max_count: u64,
-}
-
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GenTicketRequest {
 	pub address: String,

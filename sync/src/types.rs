@@ -4,7 +4,7 @@ use entity::{chain_meta, sea_orm_active_enums, ticket, token_meta};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::Digest;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use thiserror::Error;
 
 pub type Signature = Vec<u8>;
@@ -22,10 +22,7 @@ pub struct ChainMeta {
 	pub chain_id: ChainId,
 	pub canister_id: String,
 	pub chain_type: ChainType,
-	// the chain default state is active
 	pub chain_state: ChainState,
-	// settlement chain: export contract address
-	// execution chain: port contract address
 	pub contract_address: Option<String>,
 	pub counterparties: Option<Vec<ChainId>>,
 	pub fee_token: Option<TokenId>,
@@ -152,29 +149,28 @@ impl From<token_meta::Model> for TokenMeta {
 	}
 }
 
-
 impl token_meta::Model {
-    pub fn new(token_meta: TokenMeta, token_on_chain_data: Vec<OmnityTokenOnChain>) -> Self {
-        token_meta::Model {
-            token_id: token_meta.token_id,
-            name: token_meta.name,
-            symbol: token_meta.symbol,
-            issue_chain: token_meta.issue_chain,
-            decimals: token_meta.decimals as i16,
-            icon: token_meta.icon,
-            metadata: json!(token_meta.metadata),
-            dst_chains: json!(token_meta.dst_chains),
-            token_on_chain: json!(Some(token_on_chain_data)).into(),
-        }
-    }
+	pub fn new(token_meta: TokenMeta, token_on_chain_data: Vec<OmnityTokenOnChain>) -> Self {
+		token_meta::Model {
+			token_id: token_meta.token_id,
+			name: token_meta.name,
+			symbol: token_meta.symbol,
+			issue_chain: token_meta.issue_chain,
+			decimals: token_meta.decimals as i16,
+			icon: token_meta.icon,
+			metadata: json!(token_meta.metadata),
+			dst_chains: json!(token_meta.dst_chains),
+			token_on_chain: json!(Some(token_on_chain_data)).into(),
+		}
+	}
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct OmnityTokenOnChain {
-    // the chain of the token be locked
-    pub chain_id: ChainId,
-    pub token_id: TokenId,
-    pub amount: u128,
+	// the chain of the token be locked
+	pub chain_id: ChainId,
+	pub token_id: TokenId,
+	pub amount: u128,
 }
 
 #[derive(CandidType, Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
@@ -220,27 +216,6 @@ impl Directive {
 		hasher.update(self.to_string().as_bytes());
 		let bytes: [u8; 32] = hasher.finalize().into();
 		bytes.iter().map(|byte| format!("{:02x}", byte)).collect()
-	}
-}
-
-#[derive(
-	CandidType, Deserialize, Serialize, Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Hash,
-)]
-pub struct DireKey {
-	pub chain_id: ChainId,
-	pub seq: Seq,
-}
-
-#[derive(CandidType, Deserialize, Serialize, Clone, Debug, Default)]
-pub struct DireMap {
-	pub dires: BTreeMap<Seq, Directive>,
-}
-
-impl DireMap {
-	pub fn from(seq: Seq, dire: Directive) -> Self {
-		Self {
-			dires: BTreeMap::from([(seq, dire)]),
-		}
 	}
 }
 
@@ -734,15 +709,12 @@ pub enum Error {
 	ChainAlreadyExisting(String),
 	#[error("The token(`{0}`) already exists")]
 	TokenAlreadyExisting(String),
-
 	#[error("not supported proposal")]
 	NotSupportedProposal,
 	#[error("proposal error: (`{0}`)")]
 	ProposalError(String),
-
 	#[error("generate directive error for : (`{0}`)")]
 	GenerateDirectiveError(String),
-
 	#[error("the message is malformed and cannot be decoded error")]
 	MalformedMessageBytes,
 	#[error("unauthorized")]
@@ -771,7 +743,6 @@ pub enum Error {
 	TicketAmountParseError(String, String),
 	#[error("ecdsa_public_key failed : (`{0}`)")]
 	EcdsaPublicKeyError(String),
-
 	#[error("sign_with_ecdsa failed: (`{0}`)")]
 	SighWithEcdsaError(String),
 	#[error("custom error: (`{0}`)")]

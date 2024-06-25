@@ -1,19 +1,20 @@
 use crate::{
 	service::{Mutation, Query},
+	token_meta,
 	types::{self, Ticket},
-	with_omnity_canister, Arg, OmnityTokenOnChain, Error as OmnityError, ChainId, token_meta,
+	with_omnity_canister, Arg, ChainId, Error as OmnityError, OmnityTokenOnChain,
 };
+use candid::{Decode, Encode};
 use log::info;
 use sea_orm::DbConn;
 use std::error::Error;
-use candid::{Decode, Encode};
 
 const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_SYNC_INTERVAL: u64 = 5;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
 
-//full synchronization for chains
+// full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let chain_size = Arg::query_method(
@@ -57,7 +58,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	.await
 }
 
-//full synchronization for tokens
+// full synchronization for tokens
 pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let token_size = Arg::V(Vec::<u8>::new())
@@ -90,23 +91,24 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 			for token in tokens.iter() {
 				//&None::<ChainId>, &None::<TokenId>
-				 let arg = Encode!(
-                     &None::<ChainId>,
-                     &Some(token.token_id.clone()),
-                     &offset,
-                     &FETCH_LIMIT
-                 )?;
-                 let re1 = agent
-                     .query(&canister_id, "get_chain_tokens")
-                     .with_arg(arg)
-                     .call()
-                     .await?;
-                 let tokens_on_chains: Vec<OmnityTokenOnChain> =
-                     Decode!(&re1, Result<Vec<OmnityTokenOnChain>, OmnityError>)??;
-                 info!("TOKEN ON CHAIN6: {:?} ", tokens_on_chains);
+				let arg = Encode!(
+					&None::<ChainId>,
+					&Some(token.token_id.clone()),
+					&offset,
+					&FETCH_LIMIT
+				)?;
+				let re1 = agent
+					.query(&canister_id, "get_chain_tokens")
+					.with_arg(arg)
+					.call()
+					.await?;
+				let tokens_on_chains: Vec<OmnityTokenOnChain> =
+					Decode!(&re1, Result<Vec<OmnityTokenOnChain>, OmnityError>)??;
+				info!("TOKEN ON CHAIN6: {:?} ", tokens_on_chains);
 
-				let token_meta: token_meta::Model = token_meta::Model::new(token.clone(), tokens_on_chains);
-                 Mutation::save_token(db, token_meta.clone()).await?;
+				let token_meta: token_meta::Model =
+					token_meta::Model::new(token.clone(), tokens_on_chains);
+				Mutation::save_token(db, token_meta.clone()).await?;
 
 				// Mutation::save_token(db, token.clone().into()).await?;
 			}
@@ -121,26 +123,7 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	.await
 }
 
-pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		let _ = Arg::T(ticket)
-			.query_method(
-				agent.clone(),
-				canister_id,
-				"send_ticket",
-				"Send tickets to hub...",
-				"Send ticket result: ",
-				None,
-				"()",
-			)
-			.await?;
-
-		Ok(())
-	})
-	.await
-}
-
-//increment synchronization for tickets
+// increment synchronization for tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let ticket_size = Arg::V(Vec::<u8>::new())
@@ -200,6 +183,26 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				break;
 			}
 		}
+		Ok(())
+	})
+	.await
+}
+
+// mocking
+pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		let _ = Arg::T(ticket)
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"send_ticket",
+				"Send tickets to hub...",
+				"Send ticket result: ",
+				None,
+				"()",
+			)
+			.await?;
+
 		Ok(())
 	})
 	.await
