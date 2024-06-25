@@ -1,15 +1,9 @@
+use crate::hub::{CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL};
 use crate::{customs::bitcoin, hub, routes::icp};
 use futures::Future;
 use log::error;
 use sea_orm::DbConn;
-
-use std::error::Error;
-use std::sync::Arc;
-use std::time::Duration;
-
-use crate::hub::CHAIN_SYNC_INTERVAL;
-use crate::hub::TICKET_SYNC_INTERVAL;
-use crate::hub::TOKEN_SYNC_INTERVAL;
+use std::{error::Error, sync::Arc, time::Duration};
 
 pub fn spawn_sync_task<F, Fut>(
 	db_conn: Arc<DbConn>,
