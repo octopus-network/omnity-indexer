@@ -107,6 +107,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(TokenMeta::Icon).text().null())
 					.col(ColumnDef::new(TokenMeta::Metadata).json().not_null())
 					.col(ColumnDef::new(TokenMeta::DstChains).json().not_null())
+					.col(ColumnDef::new(TokenMeta::TokenOnChain).json().null())
 					.to_owned(),
 			)
 			.await?;
@@ -222,6 +223,7 @@ enum TokenMeta {
 	Icon,
 	Metadata,
 	DstChains,
+	TokenOnChain,
 }
 
 #[derive(DeriveIden)]

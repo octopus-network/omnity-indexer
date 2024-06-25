@@ -15,6 +15,7 @@ pub struct Model {
 	pub icon: Option<String>,
 	pub metadata: Json,
 	pub dst_chains: Json,
+	pub token_on_chain: Option<Json>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
