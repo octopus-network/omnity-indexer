@@ -198,6 +198,7 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 				"Syncing tickets from bitcoin custom ...",
 				"Pending ticket size: ",
 				None,
+				None,
 				"u64",
 			)
 			.await?
@@ -214,6 +215,7 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 						" ",
 						" ",
 						Some(limit),
+						None,
 						"Vec<GenTicketRequest>",
 					)
 					.await?
@@ -272,6 +274,7 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 						"release_token_status",
 						"Unconfirmed ticket: ",
 						"Mint token status result: ",
+						None,
 						None,
 						"ReleaseTokenStatus",
 					)

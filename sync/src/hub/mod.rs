@@ -2,14 +2,13 @@ use crate::{
 	service::{Mutation, Query},
 	token_meta,
 	types::{self, Ticket},
-	with_omnity_canister, Arg, ChainId, Error as OmnityError, OmnityTokenOnChain,
+	with_omnity_canister, Arg, ChainId
 };
-use candid::{Decode, Encode};
 use log::info;
 use sea_orm::DbConn;
 use std::error::Error;
 
-const FETCH_LIMIT: u64 = 50;
+pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_SYNC_INTERVAL: u64 = 5;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
@@ -24,6 +23,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			"get_chain_size",
 			"Syncing chains ...",
 			"Chain size: ",
+			None,
 			None,
 			"u64",
 		)
@@ -40,6 +40,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					"Syncing chains metadata ...",
 					"Sync chains from offset: ",
 					Some(FETCH_LIMIT),
+					None,
 					"Vec<ChainMeta>",
 				)
 				.await?
@@ -69,6 +70,7 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				"Syncing tokens ... ",
 				"Total token size: ",
 				None,
+				None,
 				"u64",
 			)
 			.await?
@@ -84,33 +86,30 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					"Syncing tokens metadata ...",
 					"Total tokens from offset: ",
 					Some(FETCH_LIMIT),
+					None,
 					"Vec<TokenMeta>",
 				)
 				.await?
 				.convert_to_vec_token_meta();
 
 			for token in tokens.iter() {
-				//&None::<ChainId>, &None::<TokenId>
-				let arg = Encode!(
-					&None::<ChainId>,
-					&Some(token.token_id.clone()),
-					&offset,
-					&FETCH_LIMIT
-				)?;
-				let re1 = agent
-					.query(&canister_id, "get_chain_tokens")
-					.with_arg(arg)
-					.call()
-					.await?;
-				let tokens_on_chains: Vec<OmnityTokenOnChain> =
-					Decode!(&re1, Result<Vec<OmnityTokenOnChain>, OmnityError>)??;
-				info!("TOKEN ON CHAIN6: {:?} ", tokens_on_chains);
+				let tokens_on_chains = Arg::CHA(None::<ChainId>)
+					.query_method(
+						agent.clone(),
+						canister_id,
+						"get_chain_tokens",
+						"Syncing tokens on chains ...",
+						"Total tokens from chains: ",
+						Some(offset),
+						Some(token.token_id.clone()),
+						"Vec<OmnityTokenOnChain>",
+					)
+					.await?
+					.convert_to_vec_omnity_token_on_chain();
 
 				let token_meta: token_meta::Model =
 					token_meta::Model::new(token.clone(), tokens_on_chains);
 				Mutation::save_token(db, token_meta.clone()).await?;
-
-				// Mutation::save_token(db, token.clone().into()).await?;
 			}
 			offset += tokens.len() as u64;
 			if tokens.is_empty() {
@@ -133,6 +132,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				"sync_ticket_size",
 				"Syncing tickets from hub ... ",
 				"Total ticket size: ",
+				None,
 				None,
 				"u64",
 			)
@@ -170,6 +170,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					"Next_offset:",
 					"Synced tickets : ",
 					Some(limit),
+					None,
 					"Vec<(u64, OmnityTicket)>",
 				)
 				.await?
@@ -198,6 +199,7 @@ pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
 				"send_ticket",
 				"Send tickets to hub...",
 				"Send ticket result: ",
+				None,
 				None,
 				"()",
 			)

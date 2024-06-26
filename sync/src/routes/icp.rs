@@ -30,6 +30,7 @@ pub async fn mock_finalized_mint_token(
 					"Mock finalized mint token on icp route ...",
 					"Mock finalized mint token on icp route ret: ",
 					Some(block_index),
+					None,
 					"()",
 				)
 				.await?;
@@ -57,6 +58,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						"mint_token_status",
 						"Syncing mint token status from icp route ...",
 						"Mint token status from icp route result: ",
+						None,
 						None,
 						"MintTokenStatus",
 					)

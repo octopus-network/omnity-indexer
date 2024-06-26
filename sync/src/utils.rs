@@ -2,7 +2,7 @@ use crate::types::*;
 use crate::{
 	bitcoin::{GenTicketRequest, ReleaseTokenStatus},
 	icp::MintTokenStatus,
-	types, Error as OmnityError,
+	types, Error as OmnityError, FETCH_LIMIT,
 };
 // use anyhow::{Error as AnyError, Result, anyhow};
 use anyhow::{anyhow, Result};
@@ -244,6 +244,7 @@ pub enum ReturnType {
 	VecGenTicketRequest(Vec<GenTicketRequest>),
 	MintTokenStatus(MintTokenStatus),
 	ReleaseTokenStatus(ReleaseTokenStatus),
+	OmnityTokenOnChain(Vec<OmnityTokenOnChain>),
 	Non(()),
 }
 
@@ -290,12 +291,19 @@ impl ReturnType {
 			_ => return ReleaseTokenStatus::Unknown,
 		}
 	}
+	pub fn convert_to_vec_omnity_token_on_chain(&self) -> Vec<OmnityTokenOnChain> {
+		match self {
+			Self::OmnityTokenOnChain(g) => return g.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
 }
 pub enum Arg {
 	V(Vec<u8>),
 	T(types::Ticket),
 	U(u64),
 	TI(TicketId),
+	CHA(Option<ChainId>),
 }
 
 impl Arg {
@@ -307,6 +315,7 @@ impl Arg {
 		log_one: &str,
 		log_two: &str,
 		args_two: Option<u64>,
+		args_three: Option<TokenId>,
 		re_type: &str,
 	) -> Result<ReturnType, Box<dyn Error>> {
 		info!("{:?} {:?}", chrono::Utc::now(), log_one);
@@ -317,12 +326,14 @@ impl Arg {
 				Arg::T(t) => Encode!(&t, &arg)?,
 				Arg::U(u) => Encode!(&u, &arg)?,
 				Arg::TI(ti) => Encode!(&ti, &arg)?,
+				Arg::CHA(ci) => Encode!(&ci, &args_three, &arg, &FETCH_LIMIT)?,
 			},
 			None => match self {
 				Arg::V(v) => Encode!(&v)?,
 				Arg::T(t) => Encode!(&t)?,
 				Arg::U(u) => Encode!(&u)?,
 				Arg::TI(ti) => Encode!(&ti)?,
+				Arg::CHA(ci) => Encode!(&ci)?,
 			},
 		};
 		let return_output: Vec<u8> = agent
@@ -373,6 +384,12 @@ impl Arg {
 				let decoded_return_output = Decode!(&return_output, ReleaseTokenStatus)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::ReleaseTokenStatus(decoded_return_output));
+			}
+			"Vec<OmnityTokenOnChain>" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<Vec<OmnityTokenOnChain>, OmnityError>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::OmnityTokenOnChain(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output =
