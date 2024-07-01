@@ -107,7 +107,6 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(TokenMeta::Icon).text().null())
 					.col(ColumnDef::new(TokenMeta::Metadata).json().not_null())
 					.col(ColumnDef::new(TokenMeta::DstChains).json().not_null())
-					.col(ColumnDef::new(TokenMeta::TokenOnChain).json().null())
 					.to_owned(),
 			)
 			.await?;
@@ -172,7 +171,7 @@ impl MigrationTrait for Migration {
 		manager
 			.drop_index(Index::drop().name("idx-ticket_seq").to_owned())
 			.await?;
-		// Drop tables
+		// drop tables
 		manager
 			.drop_table(Table::drop().table(Ticket::Table).to_owned())
 			.await?;
@@ -182,7 +181,7 @@ impl MigrationTrait for Migration {
 		manager
 			.drop_table(Table::drop().table(ChainMeta::Table).to_owned())
 			.await?;
-		// drop emun
+		// drop enum
 		manager
 			.drop_type(
 				Type::drop()
@@ -201,7 +200,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum ChainMeta {
+pub enum ChainMeta {
 	Table,
 	ChainId,
 	CanisterId,
@@ -213,7 +212,7 @@ enum ChainMeta {
 }
 
 #[derive(DeriveIden)]
-enum TokenMeta {
+pub enum TokenMeta {
 	Table,
 	TokenId,
 	Name,
@@ -223,7 +222,6 @@ enum TokenMeta {
 	Icon,
 	Metadata,
 	DstChains,
-	TokenOnChain,
 }
 
 #[derive(DeriveIden)]

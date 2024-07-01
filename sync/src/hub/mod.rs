@@ -1,8 +1,7 @@
 use crate::{
 	service::{Mutation, Query},
-	token_meta,
 	types::{self, Ticket},
-	with_omnity_canister, Arg, ChainId
+	with_omnity_canister, Arg,
 };
 use log::info;
 use sea_orm::DbConn;
@@ -93,23 +92,23 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.convert_to_vec_token_meta();
 
 			for token in tokens.iter() {
-				let tokens_on_chains = Arg::CHA(None::<ChainId>)
-					.query_method(
-						agent.clone(),
-						canister_id,
-						"get_chain_tokens",
-						"Syncing tokens on chains ...",
-						"Total tokens from chains: ",
-						Some(offset),
-						Some(token.token_id.clone()),
-						"Vec<OmnityTokenOnChain>",
-					)
-					.await?
-					.convert_to_vec_omnity_token_on_chain();
+				// let tokens_on_chains = Arg::CHA(None::<ChainId>)
+				// 	.query_method(
+				// 		agent.clone(),
+				// 		canister_id,
+				// 		"get_chain_tokens",
+				// 		"Syncing tokens on chains ...",
+				// 		"Total tokens from chains: ",
+				// 		Some(offset),
+				// 		Some(token.token_id.clone()),
+				// 		"Vec<OmnityTokenOnChain>",
+				// 	)
+				// 	.await?
+				// 	.convert_to_vec_omnity_token_on_chain();
 
-				let token_meta: token_meta::Model =
-					token_meta::Model::new(token.clone(), tokens_on_chains);
-				Mutation::save_token(db, token_meta.clone()).await?;
+				// let token_meta: token_meta::Model =
+				// 	token_meta::Model::new(token.clone(), tokens_on_chains);
+				Mutation::save_token(db, token.clone().into()).await?;
 			}
 			offset += tokens.len() as u64;
 			if tokens.is_empty() {

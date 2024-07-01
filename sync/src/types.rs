@@ -128,7 +128,6 @@ impl From<TokenMeta> for token_meta::Model {
 			icon: token_meta.icon,
 			metadata: json!(token_meta.metadata),
 			dst_chains: json!(token_meta.dst_chains),
-			token_on_chain: None,
 		}
 	}
 }
@@ -149,21 +148,20 @@ impl From<token_meta::Model> for TokenMeta {
 	}
 }
 
-impl token_meta::Model {
-	pub fn new(token_meta: TokenMeta, token_on_chain_data: Vec<OmnityTokenOnChain>) -> Self {
-		token_meta::Model {
-			token_id: token_meta.token_id,
-			name: token_meta.name,
-			symbol: token_meta.symbol,
-			issue_chain: token_meta.issue_chain,
-			decimals: token_meta.decimals as i16,
-			icon: token_meta.icon,
-			metadata: json!(token_meta.metadata),
-			dst_chains: json!(token_meta.dst_chains),
-			token_on_chain: json!(Some(token_on_chain_data)).into(),
-		}
-	}
-}
+// impl token_meta::Model {
+// 	pub fn new(token_meta: TokenMeta, token_on_chain_data: Vec<OmnityTokenOnChain>) -> Self {
+// 		token_meta::Model {
+// 			token_id: token_meta.token_id,
+// 			name: token_meta.name,
+// 			symbol: token_meta.symbol,
+// 			issue_chain: token_meta.issue_chain,
+// 			decimals: token_meta.decimals as i16,
+// 			icon: token_meta.icon,
+// 			metadata: json!(token_meta.metadata),
+// 			dst_chains: json!(token_meta.dst_chains),
+// 		}
+// 	}
+// }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct OmnityTokenOnChain {
