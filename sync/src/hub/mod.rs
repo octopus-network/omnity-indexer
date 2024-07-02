@@ -1,7 +1,7 @@
 use crate::{
 	service::{Mutation, Query},
 	types::{self, Ticket},
-	with_omnity_canister, Arg,
+	with_omnity_canister, Arg, ChainId, TokenId,
 };
 use log::info;
 use sea_orm::DbConn;
@@ -11,6 +11,35 @@ pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_SYNC_INTERVAL: u64 = 5;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
+pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 8;
+
+// full synchronization for token on chain
+pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		let tokens_on_chains = Arg::CHA(None::<ChainId>)
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"get_chain_tokens",
+				"Syncing tokens on chains ...",
+				"Total tokens from chains: ",
+				Some(0),
+				Some(None::<TokenId>),
+				"Vec<OmnityTokenOnChain>",
+			)
+			.await?
+			.convert_to_vec_omnity_token_on_chain();
+
+		info!("Tokens on chain size: {:?}", tokens_on_chains.len());
+
+		for _token_on_chain in tokens_on_chains.iter() {
+			Mutation::save_token_on_chain(db, _token_on_chain.clone().into()).await?;
+		}
+
+		Ok(())
+	})
+	.await
+}
 
 // full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
@@ -92,22 +121,6 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.convert_to_vec_token_meta();
 
 			for token in tokens.iter() {
-				// let tokens_on_chains = Arg::CHA(None::<ChainId>)
-				// 	.query_method(
-				// 		agent.clone(),
-				// 		canister_id,
-				// 		"get_chain_tokens",
-				// 		"Syncing tokens on chains ...",
-				// 		"Total tokens from chains: ",
-				// 		Some(offset),
-				// 		Some(token.token_id.clone()),
-				// 		"Vec<OmnityTokenOnChain>",
-				// 	)
-				// 	.await?
-				// 	.convert_to_vec_omnity_token_on_chain();
-
-				// let token_meta: token_meta::Model =
-				// 	token_meta::Model::new(token.clone(), tokens_on_chains);
 				Mutation::save_token(db, token.clone().into()).await?;
 			}
 			offset += tokens.len() as u64;

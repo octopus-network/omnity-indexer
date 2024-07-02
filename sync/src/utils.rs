@@ -315,7 +315,7 @@ impl Arg {
 		log_one: &str,
 		log_two: &str,
 		args_two: Option<u64>,
-		args_three: Option<TokenId>,
+		args_three: Option<Option<TokenId>>,
 		re_type: &str,
 	) -> Result<ReturnType, Box<dyn Error>> {
 		info!("{:?} {:?}", chrono::Utc::now(), log_one);

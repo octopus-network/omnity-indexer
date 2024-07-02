@@ -1,6 +1,6 @@
 use crate::entity;
 use candid::CandidType;
-use entity::{chain_meta, sea_orm_active_enums, ticket, token_meta};
+use entity::{chain_meta, sea_orm_active_enums, ticket, token_meta, token_on_chain};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::Digest;
@@ -148,27 +148,41 @@ impl From<token_meta::Model> for TokenMeta {
 	}
 }
 
-// impl token_meta::Model {
-// 	pub fn new(token_meta: TokenMeta, token_on_chain_data: Vec<OmnityTokenOnChain>) -> Self {
-// 		token_meta::Model {
-// 			token_id: token_meta.token_id,
-// 			name: token_meta.name,
-// 			symbol: token_meta.symbol,
-// 			issue_chain: token_meta.issue_chain,
-// 			decimals: token_meta.decimals as i16,
-// 			icon: token_meta.icon,
-// 			metadata: json!(token_meta.metadata),
-// 			dst_chains: json!(token_meta.dst_chains),
-// 		}
-// 	}
-// }
-
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct OmnityTokenOnChain {
 	// the chain of the token be locked
 	pub chain_id: ChainId,
 	pub token_id: TokenId,
 	pub amount: u128,
+}
+
+impl core::fmt::Display for OmnityTokenOnChain {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+			f,
+			"\nchain id:{} \ntoken id:{}  \namount:{} ",
+			self.chain_id, self.token_id, self.amount
+		)
+	}
+}
+
+impl From<OmnityTokenOnChain> for token_on_chain::Model {
+	fn from(token_on_chain: OmnityTokenOnChain) -> Self {
+		token_on_chain::Model {
+			chain_id: token_on_chain.chain_id,
+			token_id: token_on_chain.token_id,
+			amount: token_on_chain.amount.to_string(),
+		}
+	}
+}
+impl From<token_on_chain::Model> for OmnityTokenOnChain {
+	fn from(model: token_on_chain::Model) -> Self {
+		OmnityTokenOnChain {
+			chain_id: model.chain_id,
+			token_id: model.token_id,
+			amount: model.amount.parse::<u128>().unwrap(),
+		}
+	}
 }
 
 #[derive(CandidType, Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
