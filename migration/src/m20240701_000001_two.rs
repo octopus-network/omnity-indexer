@@ -28,7 +28,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(TokenOnChain::Amount).string().not_null())
 					.primary_key(
 						Index::create()
-							.name("pk-chain-token")
+							.name("pk_chain_token")
 							.col(TokenOnChain::ChainId)
 							.col(TokenOnChain::TokenId)
 							.primary(),
