@@ -1,5 +1,5 @@
 {
-  "resource_version": 44,
+  "resource_version": 111,
   "metadata": {
     "version": 3,
     "sources": [
@@ -30,6 +30,12 @@
               "name": "token_meta",
               "schema": "public"
             }
+          },
+          {
+            "table": {
+              "name": "token_on_chain",
+              "schema": "public"
+            }
           }
         ],
         "configuration": {
@@ -49,20 +55,12 @@
         "definition": {
           "queries": [
             {
-              "name": "chain_meta_by_pk",
-              "query": "query chain_meta_by_pk($chain_id: String!) {\n  chain_meta_by_pk(chain_id: $chain_id) {\n    canister_id\n    chain_id\n    chain_state\n    chain_type\n    contract_address\n    counterparties\n    fee_token\n  }\n}\n"
-            },
-            {
               "name": "chain_meta",
-              "query": "query chain_meta {\n  chain_meta {\n    canister_id\n    chain_id\n    chain_state\n    chain_type\n    contract_address\n    counterparties\n    fee_token\n  }\n}\n"
+              "query": "query chain_meta {\n  chain_meta {\n    canister_id\n    chain_id\n    chain_state\n    chain_type\n    contract_address\n    counterparties\n    fee_token\n  }\n}"
             },
             {
-              "name": "token_meta_by_pk",
-              "query": "query token_meta_by_pk($token_id: String!) {\n  token_meta_by_pk(token_id: $token_id) {\n    decimals\n    dst_chains\n    icon\n    issue_chain\n    metadata\n    name\n    symbol\n    token_id\n  }\n}\n"
-            },
-            {
-              "name": "token_meta",
-              "query": "query token_meta {\n  token_meta {\n    decimals\n    dst_chains\n    icon\n    issue_chain\n    metadata\n    name\n    symbol\n    token_id\n  }\n}\n"
+              "name": "chain_meta_by_pk",
+              "query": "query chain_meta_by_pk($chain_id: String!) {\n  chain_meta_by_pk(chain_id: $chain_id) {\n    canister_id\n    chain_id\n    chain_state\n    chain_type\n    contract_address\n    counterparties\n    fee_token\n  }\n}"
             },
             {
               "name": "chain_meta_by_canister",
@@ -73,32 +71,44 @@
               "query": "query ticket_by_pk($ticket_id: String!) {\n  ticket_by_pk(ticket_id: $ticket_id) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
             },
             {
-              "name": "ticket_by_address",
-              "query": "query TicketByAddress($address: String) {\n  ticket(where: {_or: [{sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+              "name": "token_meta",
+              "query": "query token_meta {\n  token_meta {\n    decimals\n    dst_chains\n    icon\n    issue_chain\n    metadata\n    name\n    symbol\n    token_id\n  }\n}"
             },
             {
-              "name": "ticket_by_chain",
-              "query": "query TicketByChain($chain_id: String) {\n  ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}]}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+              "name": "token_meta_by_pk",
+              "query": "query token_meta_by_pk($token_id: String!) {\n  token_meta_by_pk(token_id: $token_id) {\n    decimals\n    dst_chains\n    icon\n    issue_chain\n    metadata\n    name\n    symbol\n    token_id\n  }\n}"
             },
             {
               "name": "tickets_pagination",
               "query": "query TicketsPagination($limit: Int, $offset: Int) {\n  ticket(limit: $limit, offset: $offset, order_by: {ticket_seq: asc}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
             },
             {
+              "name": "ticket_by_chain",
+              "query": "query TicketByChain($chain_id: String) {\n  ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}]}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
               "name": "ticket_by_token",
               "query": "query TicketByToken($token_id: String) {\n  ticket(where: {token: {_eq: $token_id}}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
             },
             {
-              "name": "filtered_tickets_by_chain_and_address_pagination",
-              "query": "query FilteredTicketsAndPagination($chain_id: String!, $address: String!, $limit: Int, $offset: Int) {\n  ticket_aggregate(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    aggregate {\n      count\n    }\n  }\n  ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}, limit: $limit, offset: $offset) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+              "name": "ticket_by_address",
+              "query": "query TicketByAddress($address: String) {\n  ticket(where: {_or: [{sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
             },
             {
-              "name": "filter_ticket_by_chain_id_or_address",
-              "query": "query FilteredTickets($chain_id: String!, $address: String!) {\n  ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
-            },
-            {
-              "name": "filtered_tickets_by_chain_and_address_with_aggregate_alase",
+              "name": "filtered_tickets_by_chain_and_address",
               "query": "query FilteredTickets($chain_id: String!, $address: String!, $limit: Int, $offset: Int) {\n  total: ticket_aggregate(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}) {\n    aggregate {\n      count\n    }\n  }\n  ticket: ticket(where: {_or: [{src_chain: {_eq: $chain_id}}, {dst_chain: {_eq: $chain_id}}, {sender: {_eq: $address}}, {receiver: {_eq: $address}}]}, limit: $limit, offset: $offset) {\n    action\n    amount\n    dst_chain\n    memo\n    receiver\n    sender\n    src_chain\n    status\n    ticket_id\n    ticket_seq\n    ticket_time\n    ticket_type\n    token\n  }\n}"
+            },
+            {
+              "name": "token_on_chain",
+              "query": "query token_on_chain {\n  token_on_chain {\n    amount\n    chain_id\n    token_id\n  }\n}"
+            },
+            {
+              "name": "token_on_chain_by_pk",
+              "query": "query token_on_chain_by_pk($chain_id: String!, $token_id: String!,) {\n  token_on_chain_by_pk(chain_id: $chain_id, token_id: $token_id) {\n    amount\n  }\n}"
+            },
+            {
+              "name": "token_on_chain_by_token",
+              "query": "query token_on_chain_by_token($token_id: String!) {\n  token_on_chain_aggregate(where: {token_id: {_eq: $token_id}}) {\n    nodes {\n      amount\n      chain_id\n      token_id\n    }\n  }\n}"
             }
           ]
         }
@@ -125,7 +135,7 @@
           "GET"
         ],
         "name": "chain_meta",
-        "url": "chain_meta"
+        "url": "chain-meta"
       },
       {
         "comment": "",
@@ -174,13 +184,13 @@
         "definition": {
           "query": {
             "collection_name": "allowed-queries",
-            "query_name": "filtered_tickets_by_chain_and_address_with_aggregate_alase"
+            "query_name": "filtered_tickets_by_chain_and_address"
           }
         },
         "methods": [
           "GET"
         ],
-        "name": "filtered_tickets_by_chain_and_address_with_aggregate_alase",
+        "name": "filtered_tickets_by_chain_and_address",
         "url": "tickets/:chain_id/address/:address"
       },
       {
@@ -244,28 +254,28 @@
         "definition": {
           "query": {
             "collection_name": "allowed-queries",
-            "query_name": "filter_ticket_by_chain_id_or_address"
+            "query_name": "token_on_chain"
           }
         },
         "methods": [
           "GET"
         ],
-        "name": "filter_ticket_by_chain_id_or_address",
-        "url": "tickets0/:chain_id/address/:address"
+        "name": "token_on_chain",
+        "url": "token-on-chain"
       },
       {
         "comment": "",
         "definition": {
           "query": {
             "collection_name": "allowed-queries",
-            "query_name": "filtered_tickets_by_chain_and_address_pagination"
+            "query_name": "token_on_chain_by_token"
           }
         },
         "methods": [
           "GET"
         ],
-        "name": "filtered_tickets_by_chain_and_address_pagination",
-        "url": "tickets2/:chain_id/address/:address"
+        "name": "token_on_chain_by_token",
+        "url": "token-on-chain-by-token/token/:token_id"
       },
       {
         "comment": "",
@@ -294,6 +304,20 @@
         ],
         "name": "token_meta_by_pk",
         "url": "token_meta/:token_id"
+      },
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "token_on_chain_by_pk"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "token_on_chain_by_pk",
+        "url": "token_on_chain/token_id/:chain_id/token_id/:token_id"
       }
     ]
   }
