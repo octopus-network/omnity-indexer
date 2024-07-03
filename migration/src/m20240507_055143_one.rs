@@ -35,7 +35,7 @@ impl MigrationTrait for Migration {
 			.create_type(
 				Type::create()
 					.as_enum(Alias::new("tx_action"))
-					.values([TxAction::Transfer, TxAction::Redeem,TxAction::Burn])
+					.values([TxAction::Transfer, TxAction::Redeem, TxAction::Burn])
 					.to_owned(),
 			)
 			.await?;
@@ -133,7 +133,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(Ticket::DstChain).string().not_null())
 					.col(ColumnDef::new(Ticket::Action).not_null().enumeration(
 						Alias::new("tx_action"),
-						[TxAction::Transfer, TxAction::Redeem,TxAction::Burn],
+						[TxAction::Transfer, TxAction::Redeem, TxAction::Burn],
 					))
 					.col(ColumnDef::new(Ticket::Token).string().not_null())
 					.col(ColumnDef::new(Ticket::Amount).string().not_null())
@@ -171,7 +171,7 @@ impl MigrationTrait for Migration {
 		manager
 			.drop_index(Index::drop().name("idx-ticket_seq").to_owned())
 			.await?;
-		// Drop tables
+		// drop tables
 		manager
 			.drop_table(Table::drop().table(Ticket::Table).to_owned())
 			.await?;
@@ -181,7 +181,7 @@ impl MigrationTrait for Migration {
 		manager
 			.drop_table(Table::drop().table(ChainMeta::Table).to_owned())
 			.await?;
-		// drop emun
+		// drop enum
 		manager
 			.drop_type(
 				Type::drop()
@@ -200,7 +200,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum ChainMeta {
+pub enum ChainMeta {
 	Table,
 	ChainId,
 	CanisterId,
@@ -212,7 +212,7 @@ enum ChainMeta {
 }
 
 #[derive(DeriveIden)]
-enum TokenMeta {
+pub enum TokenMeta {
 	Table,
 	TokenId,
 	Name,

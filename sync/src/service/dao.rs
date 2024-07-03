@@ -5,6 +5,8 @@ use crate::entity::ticket;
 use crate::entity::ticket::Entity as Ticket;
 use crate::entity::token_meta;
 use crate::entity::token_meta::Entity as TokenMeta;
+use crate::entity::token_on_chain;
+use crate::entity::token_on_chain::Entity as TokenOnChain;
 
 use log::info;
 use sea_orm::sea_query::OnConflict;
@@ -19,14 +21,26 @@ impl Query {
 	pub async fn get_all_tokens(db: &DbConn) -> Result<Vec<token_meta::Model>, DbErr> {
 		TokenMeta::find().all(db).await
 	}
+	pub async fn get_all_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
+		Ticket::find().all(db).await
+	}
+	pub async fn get_all_tokens_on_chains(
+		db: &DbConn,
+	) -> Result<Vec<token_on_chain::Model>, DbErr> {
+		TokenOnChain::find().all(db).await
+	}
 	pub async fn get_ticket_by_id(
 		db: &DbConn,
 		ticket_id: String,
 	) -> Result<Option<ticket::Model>, DbErr> {
 		Ticket::find_by_id(ticket_id).one(db).await
 	}
-	pub async fn get_all_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
-		Ticket::find().all(db).await
+	pub async fn get_token_on_chain_by_id(
+		db: &DbConn,
+		chain_id: String,
+		token_id: String,
+	) -> Result<Option<token_on_chain::Model>, DbErr> {
+		TokenOnChain::find_by_id((chain_id, token_id)).one(db).await
 	}
 	pub async fn get_latest_ticket(db: &DbConn) -> Result<Option<ticket::Model>, DbErr> {
 		Ticket::find()
@@ -50,11 +64,69 @@ impl Query {
 			.all(db)
 			.await
 	}
+	// pub async fn get_token_amount_on_chain(
+	// 	db: &DbConn,
+	// 	chain: String,
+	// 	token: String,
+	// ) -> Result<token_on_chain::Model, DbErr> {
+	// 	TokenOnChain::find()
+	// 		.filter(
+	// 			Condition::all()
+	// 				.add(token_on_chain::Column::ChainId.eq(chain))
+	// 				.add(token_on_chain::Column::TokenId.eq(token)),
+	// 		)
+	// 		.one(db)
+	// 		.await
+	// }
 }
 
 pub struct Mutation;
 
 impl Mutation {
+	pub async fn save_token_on_chain(
+		db: &DbConn,
+		token_on_chain: token_on_chain::Model,
+	) -> Result<token_on_chain::Model, DbErr> {
+		let active_model: token_on_chain::ActiveModel = token_on_chain.clone().into();
+		let on_conflict = OnConflict::columns([
+			token_on_chain::Column::ChainId,
+			token_on_chain::Column::TokenId,
+		])
+		.do_nothing()
+		.to_owned();
+		let insert_result = TokenOnChain::insert(active_model.clone())
+			.on_conflict(on_conflict)
+			.exec(db)
+			.await;
+
+		match insert_result {
+			Ok(ret) => {
+				info!("insert token on chain result : {:?}", ret);
+			}
+			Err(_) => {
+				info!("the token on chain already exited, need to update it !");
+
+				let res = TokenOnChain::update(active_model)
+					.filter(
+						Condition::all()
+							.add(
+								token_on_chain::Column::ChainId
+									.eq(token_on_chain.chain_id.to_owned()),
+							)
+							.add(
+								token_on_chain::Column::TokenId
+									.eq(token_on_chain.token_id.to_owned()),
+							),
+					)
+					.exec(db)
+					.await
+					.map(|token_on_chain| token_on_chain);
+				info!("update token on chain result : {:?}", res);
+			}
+		}
+		Ok(token_on_chain::Model { ..token_on_chain })
+	}
+
 	pub async fn save_chain(
 		db: &DbConn,
 		chain_meta: chain_meta::Model,
@@ -114,6 +186,7 @@ impl Mutation {
 
 		Ok(token_meta::Model { ..token_meta })
 	}
+
 	pub async fn save_ticket(db: &DbConn, ticket: ticket::Model) -> Result<ticket::Model, DbErr> {
 		let active_model: ticket::ActiveModel = ticket.clone().into();
 		let on_conflict = OnConflict::column(ticket::Column::TicketId)

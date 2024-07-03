@@ -18,6 +18,24 @@ pub struct Model {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+	#[sea_orm(has_many = "super::token_on_chain::Entity")]
+	TokenOnChain,
+}
+
+impl Related<super::token_on_chain::Entity> for Entity {
+	fn to() -> RelationDef {
+		Relation::TokenOnChain.def()
+	}
+}
+
+impl Related<super::chain_meta::Entity> for Entity {
+	fn to() -> RelationDef {
+		super::token_on_chain::Relation::ChainMeta.def()
+	}
+	fn via() -> Option<RelationDef> {
+		Some(super::token_on_chain::Relation::TokenMeta.def().rev())
+	}
+}
 
 impl ActiveModelBehavior for ActiveModel {}

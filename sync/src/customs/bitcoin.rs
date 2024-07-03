@@ -17,12 +17,6 @@ use std::{
 pub const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
 const FETCH_LIMIT: u64 = 50;
 
-#[derive(CandidType, Deserialize)]
-pub struct GetGenTicketReqsArgs {
-	pub start_txid: Option<Txid>,
-	pub max_count: u64,
-}
-
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GenTicketRequest {
 	pub address: String,
@@ -204,6 +198,7 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 				"Syncing tickets from bitcoin custom ...",
 				"Pending ticket size: ",
 				None,
+				None,
 				"u64",
 			)
 			.await?
@@ -220,6 +215,7 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 						" ",
 						" ",
 						Some(limit),
+						None,
 						"Vec<GenTicketRequest>",
 					)
 					.await?
@@ -278,6 +274,7 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 						"release_token_status",
 						"Unconfirmed ticket: ",
 						"Mint token status result: ",
+						None,
 						None,
 						"ReleaseTokenStatus",
 					)

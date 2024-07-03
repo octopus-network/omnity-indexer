@@ -1,15 +1,11 @@
+use crate::hub::{
+	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
+};
 use crate::{customs::bitcoin, hub, routes::icp};
 use futures::Future;
 use log::error;
 use sea_orm::DbConn;
-
-use std::error::Error;
-use std::sync::Arc;
-use std::time::Duration;
-
-use crate::hub::CHAIN_SYNC_INTERVAL;
-use crate::hub::TICKET_SYNC_INTERVAL;
-use crate::hub::TOKEN_SYNC_INTERVAL;
+use std::{error::Error, sync::Arc, time::Duration};
 
 pub fn spawn_sync_task<F, Fut>(
 	db_conn: Arc<DbConn>,
@@ -59,11 +55,19 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { icp::sync_ticket_status_from_icp_route(&db_conn).await },
 	);
+
+	let sync_tokens_on_chains_from_huh = spawn_sync_task(
+		db_conn.clone(),
+		TOKEN_ON_CHAIN_SYNC_INTERVAL,
+		|db_conn| async move { hub::sync_tokens_on_chains(&db_conn).await },
+	);
+
 	let _ = tokio::join!(
 		sync_chains_task,
 		sync_tokens_task,
 		sync_tickets_task,
 		sync_ticket_status_from_bitcoin,
-		sync_ticket_status_from_icp
+		sync_ticket_status_from_icp,
+		sync_tokens_on_chains_from_huh
 	);
 }

@@ -6,8 +6,8 @@ use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
 use anyhow::anyhow;
 use log::LevelFilter;
 use log4rs::{
-    append::console::ConsoleAppender,
-    config::{Appender, Root},
+	append::console::ConsoleAppender,
+	config::{Appender, Root},
 };
 
 // #[derive(Parser, Debug)]
@@ -62,9 +62,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	let stdout = ConsoleAppender::builder().build();
 	let config = log4rs::config::Config::builder()
-	.appender(Appender::builder().build("stdout", Box::new(stdout)))
-	.build(Root::builder().appender("stdout").build(LevelFilter::Info))
-	.unwrap();
+		.appender(Appender::builder().build("stdout", Box::new(stdout)))
+		.build(Root::builder().appender("stdout").build(LevelFilter::Info))
+		.unwrap();
 	log4rs::init_config(config).unwrap();
 
 	// let db_url = match std::env::var("DATABASE_URL") {

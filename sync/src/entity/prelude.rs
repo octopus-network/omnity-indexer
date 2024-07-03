@@ -2,3 +2,4 @@
 pub use super::chain_meta::Entity as ChainMeta;
 pub use super::ticket::Entity as Ticket;
 pub use super::token_meta::Entity as TokenMeta;
+pub use super::token_on_chain::Entity as TokenOnChain;

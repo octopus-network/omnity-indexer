@@ -30,6 +30,7 @@ pub async fn mock_finalized_mint_token(
 					"Mock finalized mint token on icp route ...",
 					"Mock finalized mint token on icp route ret: ",
 					Some(block_index),
+					None,
 					"()",
 				)
 				.await?;
@@ -44,12 +45,11 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			//step1: get ticket that dest is icp route chain and status is waiting for comformation
-			// by dst
+			//1: get ticket that dest is icp route and status is waiting for comformation by dst
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await?;
 
-			//step2: get mint_token_status by ticket id
+			//2: get mint_token_status by ticket id
 			for unconfirmed_ticket in unconfirmed_tickets {
 				let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
 					.query_method(
@@ -58,6 +58,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						"mint_token_status",
 						"Syncing mint token status from icp route ...",
 						"Mint token status from icp route result: ",
+						None,
 						None,
 						"MintTokenStatus",
 					)
@@ -78,7 +79,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 							unconfirmed_ticket.ticket_id, block_index
 						);
 
-						//step3: update ticket status to finalized
+						//3: update ticket status to finalized
 						let ticket_modle = Mutation::update_ticket_status(
 							db,
 							unconfirmed_ticket,
@@ -95,15 +96,6 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 
 			Ok(())
 		},
-	)
-	.await
-}
-
-//TODO: nothing to do from icp redeem to customs
-pub async fn sync_redeem_tickets(_db: &DbConn) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister(
-		"OMNITY_ROUTES_ICP_CANISTER_ID",
-		|_agent, _canister_id| async move { Ok(()) },
 	)
 	.await
 }

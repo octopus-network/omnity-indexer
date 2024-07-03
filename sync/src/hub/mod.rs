@@ -1,18 +1,66 @@
 use crate::{
 	service::{Mutation, Query},
 	types::{self, Ticket},
-	with_omnity_canister, Arg,
+	with_omnity_canister, Arg, ChainId, TokenId,
 };
 use log::info;
 use sea_orm::DbConn;
 use std::error::Error;
 
-const FETCH_LIMIT: u64 = 50;
-pub const CHAIN_SYNC_INTERVAL: u64 = 5;
-pub const TOKEN_SYNC_INTERVAL: u64 = 5;
+pub const FETCH_LIMIT: u64 = 50;
+pub const CHAIN_SYNC_INTERVAL: u64 = 60;
+pub const TOKEN_SYNC_INTERVAL: u64 = 60;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
+pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 60;
 
-//full synchronization for chains
+// full synchronization for token on chain
+pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		let tokens_on_chains_size = Arg::V(Vec::<u8>::new())
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"get_token_position_size",
+				"Syncing tokens on chains ...",
+				"Tokens on chain size: ",
+				None,
+				None,
+				"u64",
+			)
+			.await?
+			.convert_to_u64();
+
+		let mut from_seq = 0u64;
+
+		while from_seq < tokens_on_chains_size {
+			let tokens_on_chains = Arg::CHA(None::<ChainId>)
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"get_chain_tokens",
+					"Syncing tokens on chains from offset ...",
+					"Total tokens from chains from offset: ",
+					Some(from_seq),
+					Some(None::<TokenId>),
+					"Vec<OmnityTokenOnChain>",
+				)
+				.await?
+				.convert_to_vec_omnity_token_on_chain();
+
+			for _token_on_chain in tokens_on_chains.iter() {
+				Mutation::save_token_on_chain(db, _token_on_chain.clone().into()).await?;
+			}
+			from_seq += tokens_on_chains.len() as u64;
+			if tokens_on_chains.is_empty() {
+				break;
+			}
+		}
+		Ok(())
+	})
+	.await
+}
+
+// full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let chain_size = Arg::query_method(
@@ -22,6 +70,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			"get_chain_size",
 			"Syncing chains ...",
 			"Chain size: ",
+			None,
 			None,
 			"u64",
 		)
@@ -38,6 +87,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					"Syncing chains metadata ...",
 					"Sync chains from offset: ",
 					Some(FETCH_LIMIT),
+					None,
 					"Vec<ChainMeta>",
 				)
 				.await?
@@ -56,7 +106,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	.await
 }
 
-//full synchronization for tokens
+// full synchronization for tokens
 pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let token_size = Arg::V(Vec::<u8>::new())
@@ -66,6 +116,7 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				"get_token_size",
 				"Syncing tokens ... ",
 				"Total token size: ",
+				None,
 				None,
 				"u64",
 			)
@@ -82,6 +133,7 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					"Syncing tokens metadata ...",
 					"Total tokens from offset: ",
 					Some(FETCH_LIMIT),
+					None,
 					"Vec<TokenMeta>",
 				)
 				.await?
@@ -101,26 +153,7 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	.await
 }
 
-pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		let _ = Arg::T(ticket)
-			.query_method(
-				agent.clone(),
-				canister_id,
-				"send_ticket",
-				"Send tickets to hub...",
-				"Send ticket result: ",
-				None,
-				"()",
-			)
-			.await?;
-
-		Ok(())
-	})
-	.await
-}
-
-//increment synchronization for tickets
+// increment synchronization for tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let ticket_size = Arg::V(Vec::<u8>::new())
@@ -130,6 +163,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				"sync_ticket_size",
 				"Syncing tickets from hub ... ",
 				"Total ticket size: ",
+				None,
 				None,
 				"u64",
 			)
@@ -167,6 +201,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					"Next_offset:",
 					"Synced tickets : ",
 					Some(limit),
+					None,
 					"Vec<(u64, OmnityTicket)>",
 				)
 				.await?
@@ -180,6 +215,27 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				break;
 			}
 		}
+		Ok(())
+	})
+	.await
+}
+
+// mocking
+pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		let _ = Arg::T(ticket)
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"send_ticket",
+				"Send tickets to hub...",
+				"Send ticket result: ",
+				None,
+				None,
+				"()",
+			)
+			.await?;
+
 		Ok(())
 	})
 	.await

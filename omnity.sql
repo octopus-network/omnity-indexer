@@ -72,7 +72,8 @@ ALTER TYPE public.ticket_type OWNER TO omnity;
 
 CREATE TYPE public.tx_action AS ENUM (
     'Transfer',
-    'Redeem'
+    'Redeem',
+    'Burn'
 );
 
 
@@ -153,11 +154,32 @@ CREATE TABLE public.token_meta (
 ALTER TABLE public.token_meta OWNER TO omnity;
 
 --
+-- Name: token_on_chain; Type: TABLE; Schema: public; Owner: omnity
+--
+
+CREATE TABLE public.token_on_chain (
+    chain_id character varying NOT NULL,
+    token_id character varying NOT NULL,
+    amount character varying NOT NULL
+);
+
+
+ALTER TABLE public.token_on_chain OWNER TO omnity;
+
+--
 -- Name: chain_meta chain_meta_pkey; Type: CONSTRAINT; Schema: public; Owner: omnity
 --
 
 ALTER TABLE ONLY public.chain_meta
     ADD CONSTRAINT chain_meta_pkey PRIMARY KEY (chain_id);
+
+
+--
+-- Name: token_on_chain pk_chain_token; Type: CONSTRAINT; Schema: public; Owner: omnity
+--
+
+ALTER TABLE ONLY public.token_on_chain
+    ADD CONSTRAINT pk_chain_token PRIMARY KEY (chain_id, token_id);
 
 
 --
@@ -189,6 +211,22 @@ ALTER TABLE ONLY public.token_meta
 --
 
 CREATE INDEX "idx-ticket_seq" ON public.ticket USING btree (ticket_seq);
+
+--
+-- Name: token_on_chain fk_chain_id; Type: FK CONSTRAINT; Schema: public; Owner: omnity
+--
+
+ALTER TABLE ONLY public.token_on_chain
+    ADD CONSTRAINT fk_chain_id FOREIGN KEY (chain_id) REFERENCES public.chain_meta(chain_id);
+
+
+--
+-- Name: token_on_chain fk_token_id; Type: FK CONSTRAINT; Schema: public; Owner: omnity
+--
+
+ALTER TABLE ONLY public.token_on_chain
+    ADD CONSTRAINT fk_token_id FOREIGN KEY (token_id) REFERENCES public.token_meta(token_id);
+
 
 
 --
