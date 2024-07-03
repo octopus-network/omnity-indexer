@@ -8,10 +8,10 @@ use sea_orm::DbConn;
 use std::error::Error;
 
 pub const FETCH_LIMIT: u64 = 50;
-pub const CHAIN_SYNC_INTERVAL: u64 = 5;
-pub const TOKEN_SYNC_INTERVAL: u64 = 5;
+pub const CHAIN_SYNC_INTERVAL: u64 = 60;
+pub const TOKEN_SYNC_INTERVAL: u64 = 60;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
-pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 8;
+pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 60;
 
 // full synchronization for token on chain
 pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
