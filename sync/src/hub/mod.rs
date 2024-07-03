@@ -16,26 +16,45 @@ pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 8;
 // full synchronization for token on chain
 pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		let tokens_on_chains = Arg::CHA(None::<ChainId>)
+		let tokens_on_chains_size = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
 				canister_id,
-				"get_chain_tokens",
+				"get_token_position_size",
 				"Syncing tokens on chains ...",
-				"Total tokens from chains: ",
-				Some(0),
-				Some(None::<TokenId>),
-				"Vec<OmnityTokenOnChain>",
+				"Tokens on chain size: ",
+				None,
+				None,
+				"u64",
 			)
 			.await?
-			.convert_to_vec_omnity_token_on_chain();
+			.convert_to_u64();
 
-		info!("Tokens on chain size: {:?}", tokens_on_chains.len());
+		let mut from_seq = 0u64;
 
-		for _token_on_chain in tokens_on_chains.iter() {
-			Mutation::save_token_on_chain(db, _token_on_chain.clone().into()).await?;
+		while from_seq < tokens_on_chains_size {
+			let tokens_on_chains = Arg::CHA(None::<ChainId>)
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"get_chain_tokens",
+					"Syncing tokens on chains from offset ...",
+					"Total tokens from chains from offset: ",
+					Some(from_seq),
+					Some(None::<TokenId>),
+					"Vec<OmnityTokenOnChain>",
+				)
+				.await?
+				.convert_to_vec_omnity_token_on_chain();
+
+			for _token_on_chain in tokens_on_chains.iter() {
+				Mutation::save_token_on_chain(db, _token_on_chain.clone().into()).await?;
+			}
+			from_seq += tokens_on_chains.len() as u64;
+			if tokens_on_chains.is_empty() {
+				break;
+			}
 		}
-
 		Ok(())
 	})
 	.await
