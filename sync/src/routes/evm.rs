@@ -59,7 +59,7 @@ async fn sync_ticket_status_from_evm_route(
 	chain_id: ChainId,
 ) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(canister_id, |agent, canister_id| async move {
-		let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, chain_id).await?;
+		let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, chain_id.clone()).await?;
 
 		for unconfirmed_ticket in unconfirmed_tickets {
 			let mint_evm_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
@@ -79,8 +79,9 @@ async fn sync_ticket_status_from_evm_route(
 			match mint_evm_token_status {
 				MintEvmTokenStatus::Unknown => {
 					info!(
-						"Ticket id({:?}) mint evm token status {:?}",
+						"Ticket id({:?}) from {:?} mint evm token status {:?}",
 						unconfirmed_ticket.ticket_id,
+						chain_id.clone(),
 						MintEvmTokenStatus::Unknown
 					);
 				}
