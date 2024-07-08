@@ -406,6 +406,11 @@ impl Arg {
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::OmnityTokenOnChain(decoded_return_output));
 			}
+			"MintEvmTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, MintEvmTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::MintEvmTokenStatus(decoded_return_output));
+			}
 			"TxHash" => {
 				let decoded_return_output = Decode!(&return_output, TxHash)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);

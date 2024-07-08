@@ -24,22 +24,22 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 			canister: "BEVM_CHAIN_ID",
 			chain: "bevm".to_owned(),
 		},
-		EvmRoutes {
-			canister: "BITLAYER_CHAIN_ID",
-			chain: "Bitlayer".to_owned(),
-		},
-		EvmRoutes {
-			canister: "XLAYER_CHAIN_ID",
-			chain: "X Layer".to_owned(),
-		},
-		EvmRoutes {
-			canister: "BSQUARE_CHAIN_ID",
-			chain: "B² Network".to_owned(),
-		},
-		EvmRoutes {
-			canister: "MERLIN_CHAIN_ID",
-			chain: "Merlin".to_owned(),
-		},
+		// EvmRoutes {
+		// 	canister: "BITLAYER_CHAIN_ID",
+		// 	chain: "Bitlayer".to_owned(),
+		// },
+		// EvmRoutes {
+		// 	canister: "XLAYER_CHAIN_ID",
+		// 	chain: "X Layer".to_owned(),
+		// },
+		// EvmRoutes {
+		// 	canister: "BSQUARE_CHAIN_ID",
+		// 	chain: "B² Network".to_owned(),
+		// },
+		// EvmRoutes {
+		// 	canister: "MERLIN_CHAIN_ID",
+		// 	chain: "Merlin".to_owned(),
+		// },
 		// EvmRoutes {
 		// 	canister: "BOB_CHAIN_ID",
 		// 	chain: "Bob".to_owned(),
@@ -55,11 +55,11 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 
 async fn sync_ticket_status_from_evm_route(
 	db: &DbConn,
-	canister_id: &str,
-	chain_id: ChainId,
+	canister: &str,
+	chain: ChainId,
 ) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister(canister_id, |agent, canister_id| async move {
-		let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, chain_id.clone()).await?;
+	with_omnity_canister("BEVM_CHAIN_ID", |agent, canister_id| async move {
+		let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, "bevm".to_owned()).await?;
 
 		for unconfirmed_ticket in unconfirmed_tickets {
 			let mint_evm_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
@@ -81,7 +81,7 @@ async fn sync_ticket_status_from_evm_route(
 					info!(
 						"Ticket id({:?}) from {:?} mint evm token status {:?}",
 						unconfirmed_ticket.ticket_id,
-						chain_id.clone(),
+						chain.clone(),
 						MintEvmTokenStatus::Unknown
 					);
 				}
@@ -99,9 +99,10 @@ async fn sync_ticket_status_from_evm_route(
 					// 	)
 					// 	.await?
 					// 	.convert_to_tx_hash();
-					let ticket_tx_hash =
-						Mutation::update_tikcet_tx_hash(db, unconfirmed_ticket.clone(), tx_hash)
-							.await?;
+	
+					// let ticket_tx_hash =
+					// 	Mutation::update_tikcet_tx_hash(db, unconfirmed_ticket.clone(), tx_hash)
+					// 		.await?;
 
 					let ticket_model = Mutation::update_ticket_status(
 						db,
@@ -112,7 +113,7 @@ async fn sync_ticket_status_from_evm_route(
 
 					info!(
 						"Ticket id({:?}) status:{:?} and its hash is {:?} ",
-						ticket_model.ticket_id, ticket_model.status, ticket_tx_hash
+						ticket_model.ticket_id, ticket_model.status, tx_hash
 					);
 				}
 			}
