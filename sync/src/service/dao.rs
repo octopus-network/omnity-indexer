@@ -7,7 +7,7 @@ use crate::entity::token_meta;
 use crate::entity::token_meta::Entity as TokenMeta;
 use crate::entity::token_on_chain;
 use crate::entity::token_on_chain::Entity as TokenOnChain;
-
+use crate::TxHash;
 use log::info;
 use sea_orm::sea_query::OnConflict;
 use sea_orm::*;
@@ -208,6 +208,17 @@ impl Mutation {
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
 		active_model.status = Set(status.to_owned());
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
+	}
+
+	pub async fn update_tikcet_tx_hash(
+		db: &DbConn,
+		ticket: ticket::Model,
+		tx_hash: TxHash,
+	) -> Result<ticket::Model, DbErr> {
+		let mut active_model: ticket::ActiveModel = ticket.into();
+		active_model.tx_hash = Set(tx_hash.to_owned());
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}
