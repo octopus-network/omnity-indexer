@@ -240,6 +240,7 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 						pending_ticket.receiver.to_owned(),
 						None,
 						TicketStatus::WaitingForConfirmByDest,
+						" ".to_string(),
 					)
 					.into();
 					Mutation::save_ticket(db, ticket_modle).await?;

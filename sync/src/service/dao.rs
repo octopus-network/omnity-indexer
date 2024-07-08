@@ -64,20 +64,6 @@ impl Query {
 			.all(db)
 			.await
 	}
-	// pub async fn get_token_amount_on_chain(
-	// 	db: &DbConn,
-	// 	chain: String,
-	// 	token: String,
-	// ) -> Result<token_on_chain::Model, DbErr> {
-	// 	TokenOnChain::find()
-	// 		.filter(
-	// 			Condition::all()
-	// 				.add(token_on_chain::Column::ChainId.eq(chain))
-	// 				.add(token_on_chain::Column::TokenId.eq(token)),
-	// 		)
-	// 		.one(db)
-	// 		.await
-	// }
 }
 
 pub struct Mutation;

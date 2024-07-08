@@ -1,6 +1,7 @@
 use crate::types::*;
 use crate::{
 	bitcoin::{GenTicketRequest, ReleaseTokenStatus},
+	evm::MintEvmTokenStatus,
 	icp::MintTokenStatus,
 	types, Error as OmnityError, FETCH_LIMIT,
 };
@@ -243,8 +244,10 @@ pub enum ReturnType {
 	VecOmnityTicket(Vec<(u64, OmnityTicket)>),
 	VecGenTicketRequest(Vec<GenTicketRequest>),
 	MintTokenStatus(MintTokenStatus),
+	MintEvmTokenStatus(MintEvmTokenStatus),
 	ReleaseTokenStatus(ReleaseTokenStatus),
 	OmnityTokenOnChain(Vec<OmnityTokenOnChain>),
+	TxHash(TxHash),
 	Non(()),
 }
 
@@ -285,6 +288,12 @@ impl ReturnType {
 			_ => return MintTokenStatus::Unknown,
 		}
 	}
+	pub fn convert_to_mint_evm_token_status(&self) -> MintEvmTokenStatus {
+		match self {
+			Self::MintEvmTokenStatus(m) => return m.clone(),
+			_ => return MintEvmTokenStatus::Unknown,
+		}
+	}
 	pub fn convert_to_release_token_status(&self) -> ReleaseTokenStatus {
 		match self {
 			Self::ReleaseTokenStatus(r) => return r.clone(),
@@ -295,6 +304,12 @@ impl ReturnType {
 		match self {
 			Self::OmnityTokenOnChain(g) => return g.to_vec(),
 			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_tx_hash(&self) -> TxHash {
+		match self {
+			Self::TxHash(th) => return th.clone(),
+			_ => return " ".to_string(),
 		}
 	}
 }
