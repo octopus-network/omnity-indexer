@@ -544,6 +544,7 @@ pub enum TxAction {
 	Transfer,
 	Redeem,
 	Burn,
+	Mint,
 }
 
 impl From<TxAction> for sea_orm_active_enums::TxAction {
@@ -552,6 +553,7 @@ impl From<TxAction> for sea_orm_active_enums::TxAction {
 			TxAction::Transfer => sea_orm_active_enums::TxAction::Transfer,
 			TxAction::Redeem => sea_orm_active_enums::TxAction::Redeem,
 			TxAction::Burn => sea_orm_active_enums::TxAction::Burn,
+			TxAction::Mint => sea_orm_active_enums::TxAction::Mint,
 		}
 	}
 }
@@ -561,6 +563,7 @@ impl From<sea_orm_active_enums::TxAction> for TxAction {
 			sea_orm_active_enums::TxAction::Transfer => TxAction::Transfer,
 			sea_orm_active_enums::TxAction::Redeem => TxAction::Redeem,
 			sea_orm_active_enums::TxAction::Burn => TxAction::Burn,
+			sea_orm_active_enums::TxAction::Mint => TxAction::Mint,
 		}
 	}
 }

@@ -35,7 +35,12 @@ impl MigrationTrait for Migration {
 			.create_type(
 				Type::create()
 					.as_enum(Alias::new("tx_action"))
-					.values([TxAction::Transfer, TxAction::Redeem, TxAction::Burn])
+					.values([
+						TxAction::Transfer,
+						TxAction::Redeem,
+						TxAction::Burn,
+						TxAction::Mint,
+					])
 					.to_owned(),
 			)
 			.await?;
@@ -133,7 +138,12 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(Ticket::DstChain).string().not_null())
 					.col(ColumnDef::new(Ticket::Action).not_null().enumeration(
 						Alias::new("tx_action"),
-						[TxAction::Transfer, TxAction::Redeem, TxAction::Burn],
+						[
+							TxAction::Transfer,
+							TxAction::Redeem,
+							TxAction::Burn,
+							TxAction::Mint,
+						],
 					))
 					.col(ColumnDef::new(Ticket::Token).string().not_null())
 					.col(ColumnDef::new(Ticket::Amount).string().not_null())
@@ -282,6 +292,8 @@ pub enum TxAction {
 	Redeem,
 	#[iden = "Burn"]
 	Burn,
+	#[iden = "Mint"]
+	Mint,
 }
 
 #[derive(Iden, EnumIter)]
