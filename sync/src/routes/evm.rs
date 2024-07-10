@@ -24,26 +24,26 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 			canister: "BEVM_CHAIN_ID",
 			chain: "bevm".to_owned(),
 		},
-		// EvmRoutes {
-		// 	canister: "BITLAYER_CHAIN_ID",
-		// 	chain: "Bitlayer".to_owned(),
-		// },
-		// EvmRoutes {
-		// 	canister: "XLAYER_CHAIN_ID",
-		// 	chain: "X Layer".to_owned(),
-		// },
-		// EvmRoutes {
-		// 	canister: "BSQUARE_CHAIN_ID",
-		// 	chain: "B² Network".to_owned(),
-		// },
-		// EvmRoutes {
-		// 	canister: "MERLIN_CHAIN_ID",
-		// 	chain: "Merlin".to_owned(),
-		// },
-		// EvmRoutes {
-		// 	canister: "BOB_CHAIN_ID",
-		// 	chain: "Bob".to_owned(),
-		// },
+		EvmRoutes {
+			canister: "BITLAYER_CHAIN_ID",
+			chain: "Bitlayer".to_owned(),
+		},
+		EvmRoutes {
+			canister: "XLAYER_CHAIN_ID",
+			chain: "X Layer".to_owned(),
+		},
+		EvmRoutes {
+			canister: "BSQUARE_CHAIN_ID",
+			chain: "B² Network".to_owned(),
+		},
+		EvmRoutes {
+			canister: "MERLIN_CHAIN_ID",
+			chain: "Merlin".to_owned(),
+		},
+		EvmRoutes {
+			canister: "BOB_CHAIN_ID",
+			chain: "Bob".to_owned(),
+		},
 	];
 
 	for evm_route in evm_routes.iter() {
