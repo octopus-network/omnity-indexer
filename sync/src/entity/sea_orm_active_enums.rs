@@ -47,4 +47,6 @@ pub enum TxAction {
 	Transfer,
 	#[sea_orm(string_value = "Burn")]
 	Burn,
+	#[sea_orm(string_value = "Mint")]
+	Mint,
 }
