@@ -159,6 +159,7 @@ impl MigrationTrait for Migration {
 							TicketStatus::Finalized,
 						],
 					))
+					.col(ColumnDef::new(Ticket::TxHash).string().not_null())
 					.to_owned(),
 			)
 			.await?;
@@ -250,6 +251,7 @@ enum Ticket {
 	Receiver,
 	Memo,
 	Status,
+	TxHash,
 }
 
 #[derive(Iden, EnumIter)]

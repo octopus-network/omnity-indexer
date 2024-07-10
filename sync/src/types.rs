@@ -16,6 +16,7 @@ pub type DstChain = ChainId;
 pub type TokenId = String;
 pub type Timestamp = u64;
 pub type TicketId = String;
+pub type TxHash = String;
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ChainMeta {
@@ -354,6 +355,7 @@ pub struct Ticket {
 	pub receiver: Account,
 	pub memo: Option<Vec<u8>>,
 	pub status: TicketStatus,
+	pub tx_hash: TxHash,
 }
 
 impl Ticket {
@@ -371,6 +373,7 @@ impl Ticket {
 		receiver: Account,
 		memo: Option<Vec<u8>>,
 		status: TicketStatus,
+		tx_hash: TxHash,
 	) -> Self {
 		Self {
 			ticket_id,
@@ -386,6 +389,7 @@ impl Ticket {
 			receiver,
 			memo,
 			status,
+			tx_hash,
 		}
 	}
 
@@ -404,6 +408,7 @@ impl Ticket {
 			receiver: omnity_ticket.receiver.to_owned(),
 			memo: omnity_ticket.memo.to_owned(),
 			status: TicketStatus::WaitingForConfirmByDest,
+			tx_hash: " ".to_string(),
 		}
 	}
 }
@@ -424,6 +429,7 @@ impl From<Ticket> for ticket::Model {
 			receiver: ticket.receiver,
 			memo: ticket.memo,
 			status: ticket.status.into(),
+			tx_hash: ticket.tx_hash,
 		}
 	}
 }
@@ -444,6 +450,7 @@ impl From<ticket::Model> for Ticket {
 			receiver: model.receiver,
 			memo: model.memo,
 			status: model.status.into(),
+			tx_hash: model.tx_hash,
 		}
 	}
 }
@@ -452,7 +459,7 @@ impl core::fmt::Display for Ticket {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
 		write!(
             f,
-            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?} \nstatus:{:?}",
+            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?} \nstatus:{:?} \ntx hash:{:?}",
             self.ticket_id,
             self.ticket_seq,
             self.ticket_type,
@@ -466,6 +473,7 @@ impl core::fmt::Display for Ticket {
             self.receiver,
             self.memo,
             self.status,
+			self.tx_hash,
         )
 	}
 }

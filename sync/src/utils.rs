@@ -1,6 +1,7 @@
 use crate::types::*;
 use crate::{
 	bitcoin::{GenTicketRequest, ReleaseTokenStatus},
+	evm::MintEvmTokenStatus,
 	icp::MintTokenStatus,
 	types, Error as OmnityError, FETCH_LIMIT,
 };
@@ -243,8 +244,10 @@ pub enum ReturnType {
 	VecOmnityTicket(Vec<(u64, OmnityTicket)>),
 	VecGenTicketRequest(Vec<GenTicketRequest>),
 	MintTokenStatus(MintTokenStatus),
+	MintEvmTokenStatus(MintEvmTokenStatus),
 	ReleaseTokenStatus(ReleaseTokenStatus),
 	OmnityTokenOnChain(Vec<OmnityTokenOnChain>),
+	// TxHash(TxHash),
 	Non(()),
 }
 
@@ -285,6 +288,12 @@ impl ReturnType {
 			_ => return MintTokenStatus::Unknown,
 		}
 	}
+	pub fn convert_to_mint_evm_token_status(&self) -> MintEvmTokenStatus {
+		match self {
+			Self::MintEvmTokenStatus(m) => return m.clone(),
+			_ => return MintEvmTokenStatus::Unknown,
+		}
+	}
 	pub fn convert_to_release_token_status(&self) -> ReleaseTokenStatus {
 		match self {
 			Self::ReleaseTokenStatus(r) => return r.clone(),
@@ -297,6 +306,12 @@ impl ReturnType {
 			_ => return Vec::new(),
 		}
 	}
+	// pub fn convert_to_tx_hash(&self) -> TxHash {
+	// 	match self {
+	// 		Self::TxHash(th) => return th.clone(),
+	// 		_ => return " ".to_string(),
+	// 	}
+	// }
 }
 pub enum Arg {
 	V(Vec<u8>),
@@ -391,6 +406,16 @@ impl Arg {
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::OmnityTokenOnChain(decoded_return_output));
 			}
+			"MintEvmTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, MintEvmTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::MintEvmTokenStatus(decoded_return_output));
+			}
+			// "TxHash" => {
+			// 	let decoded_return_output = Decode!(&return_output, TxHash)?;
+			// 	info!("{:?} {:?}", log_two, decoded_return_output);
+			// 	return Ok(ReturnType::TxHash(decoded_return_output));
+			// }
 			_ => {
 				let decoded_return_output =
 					Decode!(&return_output, Result<(), OmnityError>)?.unwrap();
