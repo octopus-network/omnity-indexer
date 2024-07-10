@@ -47,8 +47,7 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 	];
 
 	for evm_route in evm_routes.iter() {
-		//evm_route.canister, 
-		let _ = sync_ticket_status_from_evm_route(db, evm_route.chain.clone())
+		let _ = sync_ticket_status_from_evm_route(db, evm_route.canister, evm_route.chain.clone())
 			.await;
 	}
 	Ok(())
@@ -56,12 +55,11 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 
 async fn sync_ticket_status_from_evm_route(
 	db: &DbConn,
-	// canister: &str,
+	canister: &str,
 	chain: ChainId,
 ) -> Result<(), Box<dyn Error>> {
-	println!("{:?}", chain);
-	with_omnity_canister("BEVM_CHAIN_ID", |agent, canister_id| async move {
-		let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, "bevm".to_owned()).await?;
+	with_omnity_canister(canister, |agent, canister_id| async move {
+		let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, chain.clone()).await?;
 
 		for unconfirmed_ticket in unconfirmed_tickets {
 			let mint_evm_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
@@ -83,8 +81,7 @@ async fn sync_ticket_status_from_evm_route(
 					info!(
 						"Ticket id({:?}) from {:?} mint evm token status {:?}",
 						unconfirmed_ticket.ticket_id,
-						// chain.clone(),
-						"B² Network".to_owned(),
+						chain.clone(),
 						MintEvmTokenStatus::Unknown
 					);
 				}
