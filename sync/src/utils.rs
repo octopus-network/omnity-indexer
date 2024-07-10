@@ -247,7 +247,6 @@ pub enum ReturnType {
 	MintEvmTokenStatus(MintEvmTokenStatus),
 	ReleaseTokenStatus(ReleaseTokenStatus),
 	OmnityTokenOnChain(Vec<OmnityTokenOnChain>),
-	TxHash(TxHash),
 	Non(()),
 }
 
@@ -304,12 +303,6 @@ impl ReturnType {
 		match self {
 			Self::OmnityTokenOnChain(g) => return g.to_vec(),
 			_ => return Vec::new(),
-		}
-	}
-	pub fn convert_to_tx_hash(&self) -> TxHash {
-		match self {
-			Self::TxHash(th) => return th.clone(),
-			_ => return " ".to_string(),
 		}
 	}
 }
@@ -410,11 +403,6 @@ impl Arg {
 				let decoded_return_output = Decode!(&return_output, MintEvmTokenStatus)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::MintEvmTokenStatus(decoded_return_output));
-			}
-			"TxHash" => {
-				let decoded_return_output = Decode!(&return_output, TxHash)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
-				return Ok(ReturnType::TxHash(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output =

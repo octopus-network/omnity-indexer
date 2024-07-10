@@ -79,27 +79,6 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 							unconfirmed_ticket.ticket_id, block_index
 						);
 
-						let tx_hash = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-							.query_method(
-								agent.clone(),
-								canister_id,
-								"query_tx_hash",
-								"Syncing the icp tx hash:",
-								"Synced the icp tx hash : ",
-								None,
-								None,
-								"TxHash",
-							)
-							.await?
-							.convert_to_tx_hash();
-
-						let ticket_tx_hash = Mutation::update_tikcet_tx_hash(
-							db,
-							unconfirmed_ticket.clone(),
-							tx_hash,
-						)
-						.await?;
-
 						//3: update ticket status to finalized
 						let ticket_modle = Mutation::update_ticket_status(
 							db,
@@ -108,8 +87,8 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						)
 						.await?;
 						info!(
-							"Ticket id({:?}) status:{:?} and its icp tx hash is {:?} ",
-							ticket_modle.ticket_id, ticket_modle.status, ticket_tx_hash.tx_hash
+							"Ticket id({:?}) status:{:?}  ",
+							ticket_modle.ticket_id, ticket_modle.status
 						);
 					}
 				}
