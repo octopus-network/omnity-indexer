@@ -17,15 +17,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
---
-
--- *not* creating schema, since initdb creates it
-
-
-ALTER SCHEMA public OWNER TO postgres;
-
---
 -- Name: chain_state; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -35,7 +26,7 @@ CREATE TYPE public.chain_state AS ENUM (
 );
 
 
-ALTER TYPE public.chain_state OWNER TO postgres;
+-- ALTER TYPE public.chain_state OWNER TO postgres;
 
 --
 -- Name: chain_type; Type: TYPE; Schema: public; Owner: postgres
@@ -47,7 +38,7 @@ CREATE TYPE public.chain_type AS ENUM (
 );
 
 
-ALTER TYPE public.chain_type OWNER TO postgres;
+-- ALTER TYPE public.chain_type OWNER TO postgres;
 
 --
 -- Name: ticket_status; Type: TYPE; Schema: public; Owner: postgres
@@ -61,7 +52,7 @@ CREATE TYPE public.ticket_status AS ENUM (
 );
 
 
-ALTER TYPE public.ticket_status OWNER TO postgres;
+-- ALTER TYPE public.ticket_status OWNER TO postgres;
 
 --
 -- Name: ticket_type; Type: TYPE; Schema: public; Owner: postgres
@@ -73,7 +64,7 @@ CREATE TYPE public.ticket_type AS ENUM (
 );
 
 
-ALTER TYPE public.ticket_type OWNER TO postgres;
+-- ALTER TYPE public.ticket_type OWNER TO postgres;
 
 --
 -- Name: tx_action; Type: TYPE; Schema: public; Owner: postgres
@@ -87,7 +78,7 @@ CREATE TYPE public.tx_action AS ENUM (
 );
 
 
-ALTER TYPE public.tx_action OWNER TO postgres;
+-- ALTER TYPE public.tx_action OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -108,7 +99,7 @@ CREATE TABLE public.chain_meta (
 );
 
 
-ALTER TABLE public.chain_meta OWNER TO postgres;
+-- ALTER TABLE public.chain_meta OWNER TO postgres;
 
 --
 -- Name: seaql_migrations; Type: TABLE; Schema: public; Owner: postgres
@@ -120,7 +111,7 @@ CREATE TABLE public.seaql_migrations (
 );
 
 
-ALTER TABLE public.seaql_migrations OWNER TO postgres;
+-- ALTER TABLE public.seaql_migrations OWNER TO postgres;
 
 --
 -- Name: ticket; Type: TABLE; Schema: public; Owner: postgres
@@ -135,15 +126,16 @@ CREATE TABLE public.ticket (
     dst_chain character varying NOT NULL,
     action public.tx_action NOT NULL,
     token character varying NOT NULL,
-    amount character varying NOT NULL,
+    amount bigint NOT NULL,
     sender character varying,
     receiver character varying NOT NULL,
     memo bytea,
-    status public.ticket_status NOT NULL
+    status public.ticket_status NOT NULL,
+    tx_hash character varying NOT NULL
 );
 
 
-ALTER TABLE public.ticket OWNER TO postgres;
+-- ALTER TABLE public.ticket OWNER TO postgres;
 
 --
 -- Name: token_meta; Type: TABLE; Schema: public; Owner: postgres
@@ -161,7 +153,7 @@ CREATE TABLE public.token_meta (
 );
 
 
-ALTER TABLE public.token_meta OWNER TO postgres;
+-- ALTER TABLE public.token_meta OWNER TO postgres;
 
 --
 -- Name: token_on_chain; Type: TABLE; Schema: public; Owner: postgres
@@ -170,53 +162,11 @@ ALTER TABLE public.token_meta OWNER TO postgres;
 CREATE TABLE public.token_on_chain (
     chain_id character varying NOT NULL,
     token_id character varying NOT NULL,
-    amount character varying NOT NULL
+    amount bigint NOT NULL
 );
 
 
-ALTER TABLE public.token_on_chain OWNER TO postgres;
-
---
--- Data for Name: chain_meta; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.chain_meta (chain_id, canister_id, chain_type, chain_state, contract_address, counterparties, fee_token) FROM stdin;
-\.
-
-
---
--- Data for Name: seaql_migrations; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.seaql_migrations (version, applied_at) FROM stdin;
-m20240507_055143_one	1720530904
-m20240701_000001_two	1720530904
-\.
-
-
---
--- Data for Name: ticket; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.ticket (ticket_id, ticket_seq, ticket_type, ticket_time, src_chain, dst_chain, action, token, amount, sender, receiver, memo, status) FROM stdin;
-\.
-
-
---
--- Data for Name: token_meta; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.token_meta (token_id, name, symbol, issue_chain, decimals, icon, metadata, dst_chains) FROM stdin;
-\.
-
-
---
--- Data for Name: token_on_chain; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.token_on_chain (chain_id, token_id, amount) FROM stdin;
-\.
-
+-- ALTER TABLE public.token_on_chain OWNER TO postgres;
 
 --
 -- Name: chain_meta chain_meta_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
@@ -279,15 +229,6 @@ ALTER TABLE ONLY public.token_on_chain
 
 ALTER TABLE ONLY public.token_on_chain
     ADD CONSTRAINT fk_token_id FOREIGN KEY (token_id) REFERENCES public.token_meta(token_id);
-
-
---
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-GRANT ALL ON SCHEMA public TO PUBLIC;
-
 
 --
 -- PostgreSQL database dump complete
