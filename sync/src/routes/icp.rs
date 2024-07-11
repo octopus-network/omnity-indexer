@@ -87,7 +87,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						)
 						.await?;
 						info!(
-							"Ticket id({:?}) status:{:?}  ",
+							"Ticket id({:?}) status:{:?}",
 							ticket_modle.ticket_id, ticket_modle.status
 						);
 					}
