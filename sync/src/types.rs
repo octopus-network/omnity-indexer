@@ -172,7 +172,7 @@ impl From<OmnityTokenOnChain> for token_on_chain::Model {
 		token_on_chain::Model {
 			chain_id: token_on_chain.chain_id,
 			token_id: token_on_chain.token_id,
-			amount: token_on_chain.amount.to_string(),
+			amount: token_on_chain.amount as i64,
 		}
 	}
 }
@@ -181,7 +181,7 @@ impl From<token_on_chain::Model> for OmnityTokenOnChain {
 		OmnityTokenOnChain {
 			chain_id: model.chain_id,
 			token_id: model.token_id,
-			amount: model.amount.parse::<u128>().unwrap(),
+			amount: model.amount as u128,
 		}
 	}
 }
@@ -424,7 +424,7 @@ impl From<Ticket> for ticket::Model {
 			dst_chain: ticket.dst_chain,
 			action: ticket.action.into(),
 			token: ticket.token,
-			amount: ticket.amount,
+			amount: ticket.amount.parse::<i64>().unwrap_or(0),
 			sender: ticket.sender,
 			receiver: ticket.receiver,
 			memo: ticket.memo,
@@ -445,7 +445,7 @@ impl From<ticket::Model> for Ticket {
 			dst_chain: model.dst_chain,
 			action: model.action.into(),
 			token: model.token,
-			amount: model.amount,
+			amount: model.amount.to_string(),
 			sender: model.sender,
 			receiver: model.receiver,
 			memo: model.memo,
