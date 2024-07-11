@@ -146,7 +146,7 @@ impl MigrationTrait for Migration {
 						],
 					))
 					.col(ColumnDef::new(Ticket::Token).string().not_null())
-					.col(ColumnDef::new(Ticket::Amount).string().not_null())
+					.col(ColumnDef::new(Ticket::Amount).big_unsigned().not_null())
 					.col(ColumnDef::new(Ticket::Sender).string().null())
 					.col(ColumnDef::new(Ticket::Receiver).string().not_null())
 					.col(ColumnDef::new(Ticket::Memo).binary().null())
