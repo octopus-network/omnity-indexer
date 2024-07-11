@@ -258,17 +258,20 @@ pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dy
 
 // sync tickets status that transfered from routes to customs
 pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister("OMNITY_CUSTOMS_BITCOIN_CANISTER_ID", |agent, canister_id| async move {
-		info!(
-			"{:?} Syncing release token status from bitcoin ... ",
-			chrono::Utc::now()
-		);
-		//step1: get ticket that dest is bitcion and status is waiting for comformation by dst
-		let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, CUSTOMS_CHAIN_ID.to_owned()).await?;
+	with_omnity_canister(
+		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+		|agent, canister_id| async move {
+			info!(
+				"{:?} Syncing release token status from bitcoin ... ",
+				chrono::Utc::now()
+			);
+			//step1: get ticket that dest is bitcion and status is waiting for comformation by dst
+			let unconfirmed_tickets =
+				Query::get_unconfirmed_tickets(db, CUSTOMS_CHAIN_ID.to_owned()).await?;
 
-		//step2: get release_token_status by ticket id
-		for unconfirmed_ticket in unconfirmed_tickets {
-			let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
+			//step2: get release_token_status by ticket id
+			for unconfirmed_ticket in unconfirmed_tickets {
+				let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
 					.query_method(
 						agent.clone(),
 						canister_id,
@@ -282,28 +285,33 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 					.await?
 					.convert_to_release_token_status();
 
-			if matches!(mint_token_status, ReleaseTokenStatus::Confirmed(ref s) if s.eq(&unconfirmed_ticket.ticket_id))
-			{
-				//step3: update ticket status to finalized
-				let ticket_modle = Mutation::update_ticket_status(
-					db,
-					unconfirmed_ticket,
-					crate::entity::sea_orm_active_enums::TicketStatus::Finalized,
-				)
-				.await?;
-				info!(
-					"Ticket id({:?}) finally status:{:?} ",
-					ticket_modle.ticket_id, ticket_modle.status
-				);
-			} else {
-				info!(
-					"Ticket id({:?}) current status {:?}",
-					unconfirmed_ticket.ticket_id, mint_token_status
-				);
-			}
-		}
+				if let ReleaseTokenStatus::Confirmed(tx_hash) = mint_token_status {
+					//step3: update ticket status to finalized
+					let ticket_model = Mutation::update_ticket_status(
+						db,
+						unconfirmed_ticket.clone(),
+						crate::entity::sea_orm_active_enums::TicketStatus::Finalized,
+					)
+					.await?;
 
-		Ok(())
-	})
+					let ticket_tx_hash =
+						Mutation::update_tikcet_tx_hash(db, unconfirmed_ticket.clone(), tx_hash)
+							.await?;
+
+					info!(
+						"Ticket id({:?}) finally status:{:?} and its ICP hash is {:?} ",
+						ticket_model.ticket_id, ticket_model.status, ticket_tx_hash.tx_hash
+					);
+				} else {
+					info!(
+						"Ticket id({:?}) current status {:?}",
+						unconfirmed_ticket.ticket_id, mint_token_status
+					);
+				}
+			}
+
+			Ok(())
+		},
+	)
 	.await
 }

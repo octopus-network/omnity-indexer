@@ -86,20 +86,6 @@ async fn sync_ticket_status_from_evm_route(
 					);
 				}
 				MintEvmTokenStatus::Finalized { tx_hash } => {
-					// let tx_hash = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-					// 	.query_method(
-					// 		agent.clone(),
-					// 		canister_id,
-					// 		"query_tx_hash",
-					// 		"Syncing the tx hash:",
-					// 		"Synced the tx hash : ",
-					// 		None,
-					// 		None,
-					// 		"TxHash",
-					// 	)
-					// 	.await?
-					// 	.convert_to_tx_hash();
-
 					let ticket_tx_hash =
 						Mutation::update_tikcet_tx_hash(db, unconfirmed_ticket.clone(), tx_hash)
 							.await?;
