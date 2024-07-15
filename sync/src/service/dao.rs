@@ -1,6 +1,6 @@
 use crate::entity::chain_meta;
 use crate::entity::chain_meta::Entity as ChainMeta;
-use crate::entity::sea_orm_active_enums::TicketStatus;
+use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
 use crate::entity::ticket;
 use crate::entity::ticket::Entity as Ticket;
 use crate::entity::token_meta;
@@ -11,6 +11,7 @@ use crate::TxHash;
 use log::info;
 use sea_orm::sea_query::OnConflict;
 use sea_orm::*;
+use crate::service::graphql::terms_amount::query_terms_amount;
 
 pub struct Query;
 
@@ -65,7 +66,15 @@ impl Query {
 			.await
 	}
 
-	pub async fn get_runescan_terms_amount() -> Result<Option<u32>, DbErr> {
+	pub async fn get_runescan_terms_amount(db: &DbConn, variables: &str) -> Result<Option<u32>, DbErr> {
+		let amount = query_terms_amount(variables).await.unwrap();
+		let tickets = Ticket::find().filter(
+				Condition::all()
+					.add(ticket::Column::Action.eq(TxAction::Mint))
+			)
+			.all(db)
+			.await;
+		
 		Ok(())
 	}
 }

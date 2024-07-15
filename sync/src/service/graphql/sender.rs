@@ -6,15 +6,15 @@ type json = serde_json::Value;
 
 #[derive(GraphQLQuery)]
 #[graphql(
-    schema_path = "src/schema.json",
-    query_path = "src/sender.graphql",
+    schema_path = "src/service/graphql/schema.json",
+    query_path = "src/service/graphql/sender.graphql",
     response_derives = "Debug",
 )]
 pub struct MyQuery;
 
 #[tokio::main]
-async fn query_sender() -> Result<(), Box<dyn std::error::Error>> {
-	let variables: my_query::Variables = my_query::Variables{address: "a10c9b71bf15458093eeb883cc4cd15078bb34a55ae78ea2480fe2927c1102ca".to_string()};
+pub async fn query_sender(address: &str) -> Result<String, anyhow::Error> {
+	let variables: my_query::Variables = my_query::Variables{address: address.to_string()};
 	let request_body = MyQuery::build_query(variables);
 	let client = Client::new();
 	let response = client
@@ -26,7 +26,6 @@ async fn query_sender() -> Result<(), Box<dyn std::error::Error>> {
 
 	let response_body: Response<my_query::ResponseData> = response.json().await.expect("Error deserializing response");
 	let data = response_body.data.expect("Missing response data");
-	println!("{:?}",data.transactions[0].transaction["inputs"][0]["address"]);
 
-	Ok(())
+	Ok(data.transactions[0].transaction["inputs"][0]["address"].to_string())
 }

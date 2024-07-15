@@ -1,4 +1,4 @@
 mod dao;
+mod graphql;
 pub use dao::*;
-pub use graphql;
 pub use sea_orm;
