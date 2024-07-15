@@ -64,6 +64,10 @@ impl Query {
 			.all(db)
 			.await
 	}
+
+	pub async fn get_runescan_terms_amount() -> Result<Option<u32>, DbErr> {
+		Ok(())
+	}
 }
 
 pub struct Mutation;
