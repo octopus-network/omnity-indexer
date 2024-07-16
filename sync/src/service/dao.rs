@@ -90,6 +90,17 @@ impl Query {
 			.all(db)
 			.await
 	}
+
+	pub async fn get_null_sender_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
+		Ticket::find()
+			.filter(
+				Condition::all()
+					// The ticket with null sender
+					.add(ticket::Column::Sender.eq(' ')),
+			)
+			.all(db)
+			.await
+	}
 }
 
 pub struct Delete;
@@ -267,6 +278,17 @@ impl Mutation {
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
 		active_model.amount = Set(amount.to_owned());
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
+	}
+
+	pub async fn update_tikcet_sender(
+		db: &DbConn,
+		ticket: ticket::Model,
+		sender: String,
+	) -> Result<ticket::Model, DbErr> {
+		let mut active_model: ticket::ActiveModel = ticket.into();
+		active_model.sender = Set(Some(sender.to_owned()));
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}

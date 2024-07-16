@@ -12,11 +12,8 @@ type json = serde_json::Value;
 )]
 pub struct SenderQuery;
 
-#[tokio::main]
-pub async fn query_sender(address: &str) -> Result<String, anyhow::Error> {
-	let variables: sender_query::Variables = sender_query::Variables {
-		address: address.to_string(),
-	};
+pub async fn query_sender(address: String) -> Result<String, anyhow::Error> {
+	let variables: sender_query::Variables = sender_query::Variables { address: address };
 	let request_body = SenderQuery::build_query(variables);
 	let client = Client::new();
 	let response = client

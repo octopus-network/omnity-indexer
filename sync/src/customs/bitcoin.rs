@@ -1,5 +1,5 @@
 use crate::graphql::terms_amount::query_terms_amount;
-use crate::service::{Mutation, Query, Delete};
+use crate::service::{Delete, Mutation, Query};
 use crate::{
 	types::{Ticket, TicketId, TicketStatus, TicketType, TxAction},
 	with_omnity_canister, Arg,
@@ -334,15 +334,20 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 		}
 	}
 
-	let updated_mint_tickets =  Query::get_updated_mint_tickets(db).await?;
+	let updated_mint_tickets = Query::get_updated_mint_tickets(db).await?;
 	for mint_ticket in updated_mint_tickets {
 		// Retrieval the tx_hash from each mint tickets
 		if let Some(ticket_should_be_removed) =
 			Query::get_ticket_by_id(db, mint_ticket.clone().tx_hash).await?
 		{
 			// Remove the ticket that contains the tx_hash as the ticket_id
-			let row = Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await?;
-			info!("Ticket id({:?}) has been removed and {:?} row has been deleted", ticket_should_be_removed.clone().ticket_id, row);
+			let row =
+				Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await?;
+			info!(
+				"Ticket id({:?}) has been removed and {:?} row has been deleted",
+				ticket_should_be_removed.clone().ticket_id,
+				row
+			);
 		}
 	}
 	Ok(())
