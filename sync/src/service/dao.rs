@@ -93,11 +93,8 @@ impl Query {
 
 	pub async fn get_null_sender_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
 		Ticket::find()
-			.filter(
-				Condition::all()
-					// The ticket with null sender
-					.add(ticket::Column::Sender.eq(' ')),
-			)
+			.filter(ticket::Column::Sender.is_null())
+			.order_by_desc(ticket::Column::TicketSeq)
 			.all(db)
 			.await
 	}
