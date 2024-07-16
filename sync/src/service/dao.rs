@@ -78,6 +78,23 @@ impl Query {
 			.await
 	}
 
+	pub async fn get_updated_mint_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
+		Ticket::find()
+			.filter(
+				Condition::all()
+					// The ticket is for minting action
+					.add(ticket::Column::Action.eq(TxAction::Mint))
+					// The ticket amount is updated
+					.add(ticket::Column::Amount.ne(0)),
+			)
+			.all(db)
+			.await
+	}
+}
+
+pub struct Delete;
+
+impl Delete {
 	pub async fn remove_ticket_by_id(
 		db: &DbConn,
 		ticket_id: String,
