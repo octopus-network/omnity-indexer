@@ -8,16 +8,16 @@ type numeric = i64;
 #[derive(GraphQLQuery)]
 #[graphql(
 	schema_path = "src/customs/graphql/schema.json",
-	query_path = "src/customs/graphql/customs/term_amount.graphql",
+	query_path = "src/customs/graphql/term_amount.graphql",
 	response_derives = "Debug"
 )]
-pub struct MyQuery;
+pub struct AmountQuery;
 
 pub async fn query_terms_amount(variables: &str) -> Result<i64, anyhow::Error> {
-	let variables: my_query::Variables = my_query::Variables {
+	let variables: amount_query::Variables = amount_query::Variables {
 		token_id: variables.to_string(),
 	};
-	let request_body = MyQuery::build_query(variables);
+	let request_body = AmountQuery::build_query(variables);
 
 	let client = Client::new();
 
@@ -29,7 +29,7 @@ pub async fn query_terms_amount(variables: &str) -> Result<i64, anyhow::Error> {
 		.await
 		.expect("Error sending request");
 
-	let response_body: Response<my_query::ResponseData> =
+	let response_body: Response<amount_query::ResponseData> =
 		response.json().await.expect("Error deserializing response");
 
 	let data = &response_body.data.as_ref().expect("Missing response data");

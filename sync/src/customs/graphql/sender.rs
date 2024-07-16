@@ -10,14 +10,14 @@ type json = serde_json::Value;
 	query_path = "src/customs/graphql/sender.graphql",
 	response_derives = "Debug"
 )]
-pub struct MyQuery;
+pub struct SenderQuery;
 
 #[tokio::main]
 pub async fn query_sender(address: &str) -> Result<String, anyhow::Error> {
-	let variables: my_query::Variables = my_query::Variables {
+	let variables: sender_query::Variables = sender_query::Variables {
 		address: address.to_string(),
 	};
-	let request_body = MyQuery::build_query(variables);
+	let request_body = SenderQuery::build_query(variables);
 	let client = Client::new();
 	let response = client
 		.post("https://hasura-secondary-graphql-engine-2252klcbva-uc.a.run.app/v1/graphql")
@@ -27,7 +27,7 @@ pub async fn query_sender(address: &str) -> Result<String, anyhow::Error> {
 		.await
 		.expect("Error sending request");
 
-	let response_body: Response<my_query::ResponseData> =
+	let response_body: Response<sender_query::ResponseData> =
 		response.json().await.expect("Error deserializing response");
 	let data = response_body.data.expect("Missing response data");
 
