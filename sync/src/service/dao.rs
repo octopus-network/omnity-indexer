@@ -11,7 +11,6 @@ use crate::TxHash;
 use log::info;
 use sea_orm::sea_query::OnConflict;
 use sea_orm::*;
-use crate::service::graphql::terms_amount::query_terms_amount;
 
 pub struct Query;
 
@@ -66,16 +65,11 @@ impl Query {
 			.await
 	}
 
-	pub async fn get_runescan_terms_amount(db: &DbConn, variables: &str) -> Result<Option<u32>, DbErr> {
-		let amount = query_terms_amount(variables).await.unwrap();
-		let tickets = Ticket::find().filter(
-				Condition::all()
-					.add(ticket::Column::Action.eq(TxAction::Mint))
-			)
+	pub async fn get_mint_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
+		Ticket::find()
+			.filter(Condition::all().add(ticket::Column::Action.eq(TxAction::Mint)))
 			.all(db)
-			.await;
-		
-		Ok(())
+			.await
 	}
 }
 

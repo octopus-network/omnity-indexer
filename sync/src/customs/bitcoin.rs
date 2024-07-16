@@ -13,6 +13,7 @@ use std::{
 	fmt::{self, Display, Formatter},
 	str::FromStr,
 };
+use crate::graphql::terms_amount::query_terms_amount;
 
 pub const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
 const FETCH_LIMIT: u64 = 50;
@@ -309,9 +310,21 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 					);
 				}
 			}
-
 			Ok(())
 		},
 	)
 	.await
+}
+
+// update mint tickets meta
+pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	// Find all the mint tickets
+	let tickets = Query::get_mint_tickets(db).await?;
+// Retrieval the tx_hash from each mint tickets
+// Find the tickets that contain the tx_hash as the ticket_ids
+// Fetch the amount from the runescan graphql api
+let amount = query_terms_amount(variables).await.unwrap();
+// Insert the amount into the ticket meta
+
+Ok(())
 }
