@@ -1,0 +1,5 @@
+query SenderQuery($address: String!) {
+  transactions(where: {txid: {_eq: $address}}) {
+    transaction
+  }
+}

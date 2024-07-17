@@ -1,3 +1,4 @@
+use crate::graphql::sender::query_sender;
 use crate::{
 	service::{Mutation, Query},
 	types::{self, Ticket},
@@ -12,6 +13,27 @@ pub const CHAIN_SYNC_INTERVAL: u64 = 60;
 pub const TOKEN_SYNC_INTERVAL: u64 = 60;
 pub const TICKET_SYNC_INTERVAL: u64 = 3;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 60;
+
+pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	// Find the tickets with no sender
+	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
+	info!("TINGLEN {:?}", null_sender_tickets.len());
+
+	for ticket in null_sender_tickets {
+		info!("TINGTICKET {:?}", ticket.clone().ticket_id);
+		// Fetch the sender address from the runescan graphql api
+		let sender = query_sender(ticket.clone().ticket_id).await?;
+		info!("TINGSENDER {:?}", sender);
+		// Insert the sender into the ticket meta
+		let updated_ticket = Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
+
+		info!(
+			"Ticket id({:?}) has changed its sender to {:?}",
+			ticket.ticket_id, updated_ticket.sender
+		);
+	}
+	Ok(())
+}
 
 // full synchronization for token on chain
 pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
