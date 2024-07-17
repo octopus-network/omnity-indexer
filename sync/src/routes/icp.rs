@@ -41,6 +41,16 @@ pub async fn mock_finalized_mint_token(
 	.await
 }
 
+pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister(
+		"OMNITY_ROUTES_ICP_CANISTER_ID",
+		|agent, canister_id| async move {
+			Ok(())
+		},
+	)
+	.await
+}
+
 pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
