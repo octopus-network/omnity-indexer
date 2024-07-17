@@ -1,6 +1,6 @@
+use anyhow::*;
 use graphql_client::{GraphQLQuery, Response};
 use reqwest::Client;
-use anyhow::*;
 
 #[allow(non_camel_case_types)]
 type json = serde_json::Value;
@@ -31,5 +31,5 @@ pub async fn query_sender(address: String) -> Result<String, anyhow::Error> {
 		Ok(data.transactions[0].transaction["inputs"][0]["address"].to_string())
 	} else {
 		Err(format_err!("Missing response data"))
-	}	
+	}
 }
