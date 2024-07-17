@@ -74,21 +74,23 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						);
 					}
 					MintTokenStatus::Finalized { block_index } => {
-						info!(
-							"Ticket id({:?}) finalized on block {:?}",
-							unconfirmed_ticket.ticket_id, block_index
-						);
-
 						//3: update ticket status to finalized
-						let ticket_modle = Mutation::update_ticket_status(
+						let ticket_model = Mutation::update_ticket_status(
 							db,
-							unconfirmed_ticket,
+							unconfirmed_ticket.clone(),
 							TicketStatus::Finalized,
 						)
 						.await?;
+						let index_ticket_model = Mutation::update_tikcet_tx_hash(
+							db,
+							unconfirmed_ticket.clone(),
+							block_index.to_string(),
+						)
+						.await?;
+
 						info!(
-							"Ticket id({:?}) status:{:?}",
-							ticket_modle.ticket_id, ticket_modle.status
+							"Ticket id({:?}) status:{:?} and finalized on block {:?}",
+							ticket_model.ticket_id, ticket_model.status, index_ticket_model.tx_hash
 						);
 					}
 				}
