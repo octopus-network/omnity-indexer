@@ -137,7 +137,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						.await?
 						{
 							Some(rep) => {
-								format!("{:?}-{:?}", rep.contract_id, block_index.to_string())
+								rep.contract_id + &block_index.to_string()
 							}
 							None => block_index.to_string(),
 						};

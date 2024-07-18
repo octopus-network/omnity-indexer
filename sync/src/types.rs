@@ -197,6 +197,15 @@ impl token_ledger_id_on_chain::Model {
 		}
 	}
 }
+impl core::fmt::Display for token_ledger_id_on_chain::Model {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+			f,
+			"\nchain id:{} \ntoken id:{}  \ncontract id:{} ",
+			self.chain_id, self.token_id, self.contract_id
+		)
+	}
+}
 
 #[derive(CandidType, Clone, Debug, Serialize, Deserialize)]
 pub struct TokenResp {
@@ -206,6 +215,16 @@ pub struct TokenResp {
 	pub icon: Option<String>,
 	pub rune_id: Option<String>,
 	pub evm_contract: Option<String>,
+}
+
+impl core::fmt::Display for TokenResp {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+			f,
+			"\ntoken id:{} \nsymbol:{}  \ndecimals:{} \nicon:{:?} \nrune id:{:?} \nevm contract:{:?}",
+			self.token_id, self.symbol, self.decimals, self.icon, self.rune_id, self.evm_contract
+		)
+	}
 }
 
 #[derive(CandidType, Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
