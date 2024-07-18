@@ -1,6 +1,8 @@
 use crate::entity;
 use candid::CandidType;
-use entity::{chain_meta, sea_orm_active_enums, ticket, token_meta, token_on_chain};
+use entity::{
+	chain_meta, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::Digest;
@@ -182,6 +184,16 @@ impl From<token_on_chain::Model> for OmnityTokenOnChain {
 			chain_id: model.chain_id,
 			token_id: model.token_id,
 			amount: model.amount as u128,
+		}
+	}
+}
+
+impl token_ledger_id_on_chain::Model {
+	pub fn new(chain_id: String, token_id: String, contract_id: String) -> Self {
+		token_ledger_id_on_chain::Model {
+			chain_id,
+			token_id,
+			contract_id,
 		}
 	}
 }

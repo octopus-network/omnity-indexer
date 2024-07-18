@@ -69,7 +69,7 @@ impl MigrationTrait for Migration {
 					.col(
 						ColumnDef::new(TokenLedgerIdOnChain::ContractId)
 							.string()
-							.null(),
+							.not_null(),
 					)
 					.primary_key(
 						Index::create()

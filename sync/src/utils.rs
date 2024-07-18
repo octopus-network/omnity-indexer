@@ -247,6 +247,7 @@ pub enum ReturnType {
 	MintEvmTokenStatus(MintEvmTokenStatus),
 	ReleaseTokenStatus(ReleaseTokenStatus),
 	OmnityTokenOnChain(Vec<OmnityTokenOnChain>),
+	CanisterId(Option<Principal>),
 	Non(()),
 }
 
@@ -305,6 +306,12 @@ impl ReturnType {
 			_ => return Vec::new(),
 		}
 	}
+	pub fn convert_to_canister_id(&self) -> Option<Principal> {
+		match self {
+			Self::CanisterId(p) => return p.clone(),
+			_ => return None,
+		}
+	}
 }
 pub enum Arg {
 	V(Vec<u8>),
@@ -312,6 +319,7 @@ pub enum Arg {
 	U(u64),
 	TI(TicketId),
 	CHA(Option<ChainId>),
+	TokId(String),
 }
 
 impl Arg {
@@ -335,6 +343,7 @@ impl Arg {
 				Arg::U(u) => Encode!(&u, &arg)?,
 				Arg::TI(ti) => Encode!(&ti, &arg)?,
 				Arg::CHA(ci) => Encode!(&ci, &args_three, &arg, &FETCH_LIMIT)?,
+				Arg::TokId(token_id) => Encode!(&token_id, &arg)?,
 			},
 			None => match self {
 				Arg::V(v) => Encode!(&v)?,
@@ -342,6 +351,7 @@ impl Arg {
 				Arg::U(u) => Encode!(&u)?,
 				Arg::TI(ti) => Encode!(&ti)?,
 				Arg::CHA(ci) => Encode!(&ci)?,
+				Arg::TokId(token_id) => Encode!(&token_id)?,
 			},
 		};
 		let return_output: Vec<u8> = agent
@@ -403,6 +413,11 @@ impl Arg {
 				let decoded_return_output = Decode!(&return_output, MintEvmTokenStatus)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::MintEvmTokenStatus(decoded_return_output));
+			}
+			"Option<Principal>" => {
+				let decoded_return_output = Decode!(&return_output, Option<Principal>)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::CanisterId(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output =

@@ -9,7 +9,7 @@ pub struct Model {
 	pub chain_id: String,
 	#[sea_orm(primary_key, auto_increment = false)]
 	pub token_id: String,
-	pub contract_id: Option<String>,
+	pub contract_id: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

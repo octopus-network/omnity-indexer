@@ -1,9 +1,8 @@
 use crate::hub::{
-	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL,
-	TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
+	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
-use crate::{customs::bitcoin, hub, routes, evm, routes::icp};
+use crate::{customs::bitcoin, evm, hub, routes::icp};
 use futures::Future;
 use log::error;
 use sea_orm::DbConn;
@@ -82,10 +81,10 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { hub::update_sender(&db_conn).await },
 	);
 
-	let sync_all_token_ledger_id_on_chain_from_routes = spawn_sync_task(
+	let sync_all_token_ledger_id_on_chain_from_icp = spawn_sync_task(
 		db_conn,
 		TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
-		|db_conn| async move { routes::sync_all_token_ledger_id_on_chain(&db_conn).await },
+		|db_conn| async move { icp::sync_all_icp_token_ledger_id_on_chain(&db_conn).await },
 	);
 
 	let _ = tokio::join!(
@@ -98,6 +97,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_all_tickets_status_from_evm_route_from_evm,
 		update_mint_tickets_from_btc,
 		update_sender_tickets_from_hub,
-		sync_all_token_ledger_id_on_chain_from_routes
+		sync_all_token_ledger_id_on_chain_from_icp
 	);
 }

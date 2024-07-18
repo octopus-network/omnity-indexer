@@ -1,6 +1,6 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
-use crate::{types::TicketId, with_omnity_canister, Arg};
+use crate::{token_ledger_id_on_chain, types::TicketId, with_omnity_canister, Arg};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -45,6 +45,43 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
+			for token in Query::get_all_tokens(db).await? {
+				let token_ledger = Arg::TokId(token.clone().token_id)
+					.query_method(
+						agent.clone(),
+						canister_id,
+						"get_token_ledger",
+						"Syncing token ledger id from icp route ...",
+						"Token ledger id from icp route result: ",
+						None,
+						None,
+						"Option<Principal>",
+					)
+					.await?
+					.convert_to_canister_id();
+				if let Some(ledger_id) = token_ledger {
+					let token_ledger_id = serde_json::to_string(&ledger_id).unwrap();
+					let token_ledger_id_on_chain_model = token_ledger_id_on_chain::Model::new(
+						ROUTE_CHAIN_ID.to_owned(),
+						token.clone().token_id,
+						token_ledger_id,
+					);
+					// Save to the database
+					let token_ledger_id_on_chain = Mutation::save_all_token_ledger_id_on_chain(
+						db,
+						token_ledger_id_on_chain_model,
+					)
+					.await?;
+
+					info!(
+						"Token {:?} in Chain id({:?})' Canister id is {:?}",
+						token_ledger_id_on_chain.token_id,
+						token_ledger_id_on_chain.chain_id,
+						token_ledger_id_on_chain.contract_id
+					);
+				}
+			}
+
 			Ok(())
 		},
 	)

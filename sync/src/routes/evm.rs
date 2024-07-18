@@ -53,17 +53,13 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 	Ok(())
 }
 
-async fn sync_all_evm_token_ledger_id_on_chain(
-	db: &DbConn,
-	canister: &str,
-	chain: ChainId,
-) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister(canister, |agent, canister_id| async move {
-		
-		Ok(())
-	})
-	.await
-}
+// async fn sync_all_evm_token_ledger_id_on_chain(
+// 	db: &DbConn,
+// 	canister: &str,
+// 	chain: ChainId,
+// ) -> Result<(), Box<dyn Error>> {
+// 	with_omnity_canister(canister, |agent, canister_id| async move { Ok(()) }).await
+// }
 
 async fn sync_ticket_status_from_evm_route(
 	db: &DbConn,
