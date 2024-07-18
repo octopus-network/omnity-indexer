@@ -3,6 +3,8 @@ use crate::entity::chain_meta::Entity as ChainMeta;
 use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
 use crate::entity::ticket;
 use crate::entity::ticket::Entity as Ticket;
+use crate::entity::token_ledger_id_on_chain;
+use crate::entity::token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain;
 use crate::entity::token_meta;
 use crate::entity::token_meta::Entity as TokenMeta;
 use crate::entity::token_on_chain;
@@ -41,6 +43,15 @@ impl Query {
 		token_id: String,
 	) -> Result<Option<token_on_chain::Model>, DbErr> {
 		TokenOnChain::find_by_id((chain_id, token_id)).one(db).await
+	}
+	pub async fn get_token_ledger_id_on_chain_by_id(
+		db: &DbConn,
+		chain_id: String,
+		token_id: String,
+	) -> Result<Option<token_ledger_id_on_chain::Model>, DbErr> {
+		TokenLedgerIdOnChain::find_by_id((chain_id, token_id))
+			.one(db)
+			.await
 	}
 	pub async fn get_latest_ticket(db: &DbConn) -> Result<Option<ticket::Model>, DbErr> {
 		Ticket::find()
@@ -114,6 +125,53 @@ impl Delete {
 pub struct Mutation;
 
 impl Mutation {
+	pub async fn save_all_token_ledger_id_on_chain(
+		db: &DbConn,
+		token_ledger_id_on_chain: token_ledger_id_on_chain::Model,
+	) -> Result<token_ledger_id_on_chain::Model, DbErr> {
+		let active_model: token_ledger_id_on_chain::ActiveModel =
+			token_ledger_id_on_chain.clone().into();
+		let on_conflict = OnConflict::columns([
+			token_ledger_id_on_chain::Column::ChainId,
+			token_ledger_id_on_chain::Column::TokenId,
+		])
+		.do_nothing()
+		.to_owned();
+		let insert_result = TokenLedgerIdOnChain::insert(active_model.clone())
+			.on_conflict(on_conflict)
+			.exec(db)
+			.await;
+
+		match insert_result {
+			Ok(ret) => {
+				info!("insert token ledger id result : {:?}", ret);
+			}
+			Err(_) => {
+				info!("the token ledger id already exited, need to update it !");
+
+				let res = TokenLedgerIdOnChain::update(active_model)
+					.filter(
+						Condition::all()
+							.add(
+								token_ledger_id_on_chain::Column::ChainId
+									.eq(token_ledger_id_on_chain.chain_id.to_owned()),
+							)
+							.add(
+								token_ledger_id_on_chain::Column::TokenId
+									.eq(token_ledger_id_on_chain.token_id.to_owned()),
+							),
+					)
+					.exec(db)
+					.await
+					.map(|token_on_chain| token_on_chain);
+				info!("update token ledger id result : {:?}", res);
+			}
+		}
+		Ok(token_ledger_id_on_chain::Model {
+			..token_ledger_id_on_chain
+		})
+	}
+
 	pub async fn save_token_on_chain(
 		db: &DbConn,
 		token_on_chain: token_on_chain::Model,

@@ -17,13 +17,10 @@ pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 60;
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
 	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
-	info!("TINGLEN {:?}", null_sender_tickets.len());
 
 	for ticket in null_sender_tickets {
-		info!("TINGTICKET {:?}", ticket.clone().ticket_id);
 		// Fetch the sender address from the runescan graphql api
 		let sender = query_sender(ticket.clone().ticket_id).await?;
-		info!("TINGSENDER {:?}", sender);
 		// Insert the sender into the ticket meta
 		let updated_ticket = Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
 

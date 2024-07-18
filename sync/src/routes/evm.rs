@@ -1,6 +1,6 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
-use crate::{with_omnity_canister, Arg, ChainId};
+use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg, ChainId};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -18,7 +18,9 @@ pub enum MintEvmTokenStatus {
 	Unknown,
 }
 
-pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
+pub async fn sync_all_tickets_status_and_token_ledger_id_from_evm_route(
+	db: &DbConn,
+) -> Result<(), Box<dyn Error>> {
 	let evm_routes = vec![
 		EvmRoutes {
 			canister: "BEVM_CHAIN_ID",
@@ -49,8 +51,56 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 	for evm_route in evm_routes.iter() {
 		let _ = sync_ticket_status_from_evm_route(db, evm_route.canister, evm_route.chain.clone())
 			.await;
+		let _ =
+			sync_all_evm_token_ledger_id_on_chain(db, evm_route.canister, evm_route.chain.clone())
+				.await;
 	}
 	Ok(())
+}
+
+async fn sync_all_evm_token_ledger_id_on_chain(
+	db: &DbConn,
+	canister: &str,
+	chain: ChainId,
+) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister(canister, |agent, canister_id| async move {
+		let token_ledgers = Arg::V(Vec::<u8>::new())
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"get_token_list",
+				"Syncing token ledger id from evm routes ...",
+				"Token ledger id from evm routes result: ",
+				None,
+				None,
+				"Vec<TokenResp>",
+			)
+			.await?
+			.convert_to_vec_token_resp();
+		for token_resp in token_ledgers {
+			if let Some(evm_contract) = &token_resp.evm_contract {
+				let token_ledger_id_on_chain_model = token_ledger_id_on_chain::Model::new(
+					chain.clone(),
+					token_resp.token_id,
+					evm_contract.to_owned(),
+				);
+				// Save to the database
+				let token_ledger_id_on_chain =
+					Mutation::save_all_token_ledger_id_on_chain(db, token_ledger_id_on_chain_model)
+						.await?;
+
+				info!(
+					"Token {:?} in Chain id({:?})' Contract id is {:?}",
+					token_ledger_id_on_chain.token_id,
+					token_ledger_id_on_chain.chain_id,
+					token_ledger_id_on_chain.contract_id
+				);
+			}
+		}
+
+		Ok(())
+	})
+	.await
 }
 
 async fn sync_ticket_status_from_evm_route(

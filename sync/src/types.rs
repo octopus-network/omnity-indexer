@@ -1,6 +1,8 @@
 use crate::entity;
 use candid::CandidType;
-use entity::{chain_meta, sea_orm_active_enums, ticket, token_meta, token_on_chain};
+use entity::{
+	chain_meta, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::Digest;
@@ -183,6 +185,45 @@ impl From<token_on_chain::Model> for OmnityTokenOnChain {
 			token_id: model.token_id,
 			amount: model.amount as u128,
 		}
+	}
+}
+
+impl token_ledger_id_on_chain::Model {
+	pub fn new(chain_id: String, token_id: String, contract_id: String) -> Self {
+		token_ledger_id_on_chain::Model {
+			chain_id,
+			token_id,
+			contract_id,
+		}
+	}
+}
+impl core::fmt::Display for token_ledger_id_on_chain::Model {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+			f,
+			"\nchain id:{} \ntoken id:{}  \ncontract id:{} ",
+			self.chain_id, self.token_id, self.contract_id
+		)
+	}
+}
+
+#[derive(CandidType, Clone, Debug, Serialize, Deserialize)]
+pub struct TokenResp {
+	pub token_id: TokenId,
+	pub symbol: String,
+	pub decimals: u8,
+	pub icon: Option<String>,
+	pub rune_id: Option<String>,
+	pub evm_contract: Option<String>,
+}
+
+impl core::fmt::Display for TokenResp {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+			f,
+			"\ntoken id:{} \nsymbol:{}  \ndecimals:{} \nicon:{:?} \nrune id:{:?} \nevm contract:{:?}",
+			self.token_id, self.symbol, self.decimals, self.icon, self.rune_id, self.evm_contract
+		)
 	}
 }
 
