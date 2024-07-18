@@ -248,6 +248,7 @@ pub enum ReturnType {
 	ReleaseTokenStatus(ReleaseTokenStatus),
 	OmnityTokenOnChain(Vec<OmnityTokenOnChain>),
 	CanisterId(Option<Principal>),
+	VecTokenResp(Vec<TokenResp>),
 	Non(()),
 }
 
@@ -310,6 +311,12 @@ impl ReturnType {
 		match self {
 			Self::CanisterId(p) => return p.clone(),
 			_ => return None,
+		}
+	}
+	pub fn convert_to_vec_token_resp(&self) -> Vec<TokenResp> {
+		match self {
+			Self::VecTokenResp(tr) => return tr.to_vec(),
+			_ => return Vec::new(),
 		}
 	}
 }
@@ -418,6 +425,11 @@ impl Arg {
 				let decoded_return_output = Decode!(&return_output, Option<Principal>)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::CanisterId(decoded_return_output));
+			}
+			"Vec<TokenResp>" => {
+				let decoded_return_output = Decode!(&return_output, Vec<TokenResp>)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecTokenResp(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output =

@@ -63,10 +63,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { hub::sync_tokens_on_chains(&db_conn).await },
 	);
 
-	let sync_all_tickets_status_from_evm_route_from_evm = spawn_sync_task(
+	let sync_all_tickets_status_and_token_ledger_id_from_evm_route_from_evm = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
-		|db_conn| async move { evm::sync_all_tickets_status_from_evm_route(&db_conn).await },
+		|db_conn| async move {
+			evm::sync_all_tickets_status_and_token_ledger_id_from_evm_route(&db_conn).await
+		},
 	);
 
 	let update_mint_tickets_from_btc = spawn_sync_task(
@@ -94,7 +96,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_ticket_status_from_bitcoin,
 		sync_ticket_status_from_icp,
 		sync_tokens_on_chains_from_hub,
-		sync_all_tickets_status_from_evm_route_from_evm,
+		sync_all_tickets_status_and_token_ledger_id_from_evm_route_from_evm,
 		update_mint_tickets_from_btc,
 		update_sender_tickets_from_hub,
 		sync_all_token_ledger_id_on_chain_from_icp

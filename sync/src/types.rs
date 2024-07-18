@@ -198,6 +198,16 @@ impl token_ledger_id_on_chain::Model {
 	}
 }
 
+#[derive(CandidType, Clone, Debug, Serialize, Deserialize)]
+pub struct TokenResp {
+	pub token_id: TokenId,
+	pub symbol: String,
+	pub decimals: u8,
+	pub icon: Option<String>,
+	pub rune_id: Option<String>,
+	pub evm_contract: Option<String>,
+}
+
 #[derive(CandidType, Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
 pub enum Directive {
 	AddChain(Chain),
