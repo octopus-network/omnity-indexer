@@ -128,10 +128,24 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 							TicketStatus::Finalized,
 						)
 						.await?;
+
+						let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
+							db,
+							ROUTE_CHAIN_ID.to_owned(),
+							unconfirmed_ticket.clone().token,
+						)
+						.await?
+						{
+							Some(contract_id) => {
+								format!("{:?}-{:?}", contract_id, block_index.to_string())
+							}
+							None => block_index.to_string(),
+						};
+
 						let index_ticket_model = Mutation::update_tikcet_tx_hash(
 							db,
 							unconfirmed_ticket.clone(),
-							block_index.to_string(),
+							tx_hash,
 						)
 						.await?;
 

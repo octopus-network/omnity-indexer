@@ -44,6 +44,15 @@ impl Query {
 	) -> Result<Option<token_on_chain::Model>, DbErr> {
 		TokenOnChain::find_by_id((chain_id, token_id)).one(db).await
 	}
+	pub async fn get_token_ledger_id_on_chain_by_id(
+		db: &DbConn,
+		chain_id: String,
+		token_id: String,
+	) -> Result<Option<token_ledger_id_on_chain::Model>, DbErr> {
+		TokenLedgerIdOnChain::find_by_id((chain_id, token_id))
+			.one(db)
+			.await
+	}
 	pub async fn get_latest_ticket(db: &DbConn) -> Result<Option<ticket::Model>, DbErr> {
 		Ticket::find()
 			.filter(ticket::Column::TicketSeq.is_not_null())
