@@ -134,6 +134,15 @@ CREATE TABLE public.ticket (
     tx_hash character varying NOT NULL
 );
 
+--
+-- Name: token_ledger_id_on_chain; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.token_ledger_id_on_chain (
+    chain_id character varying NOT NULL,
+    token_id character varying NOT NULL,
+    contract_id character varying NOT NULL
+);
 
 -- ALTER TABLE public.ticket OWNER TO postgres;
 
@@ -185,6 +194,15 @@ ALTER TABLE ONLY public.token_on_chain
 
 
 --
+-- Name: token_ledger_id_on_chain pk_chain_token_contract; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.token_ledger_id_on_chain
+    ADD CONSTRAINT pk_chain_token_contract PRIMARY KEY (chain_id, token_id);
+
+
+
+--
 -- Name: seaql_migrations seaql_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -224,10 +242,26 @@ ALTER TABLE ONLY public.token_on_chain
 
 
 --
+-- Name: token_ledger_id_on_chain fk_chain_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.token_ledger_id_on_chain
+    ADD CONSTRAINT fk_chain_id FOREIGN KEY (chain_id) REFERENCES public.chain_meta(chain_id);
+
+
+--
 -- Name: token_on_chain fk_token_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.token_on_chain
+    ADD CONSTRAINT fk_token_id FOREIGN KEY (token_id) REFERENCES public.token_meta(token_id);
+
+
+--
+-- Name: token_ledger_id_on_chain fk_token_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.token_ledger_id_on_chain
     ADD CONSTRAINT fk_token_id FOREIGN KEY (token_id) REFERENCES public.token_meta(token_id);
 
 --
