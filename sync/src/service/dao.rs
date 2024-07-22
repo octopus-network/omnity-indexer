@@ -76,6 +76,21 @@ impl Query {
 			.await
 	}
 
+	pub async fn get_confirmed_tickets(
+		db: &DbConn,
+		dest: String,
+	) -> Result<Vec<ticket::Model>, DbErr> {
+		Ticket::find()
+			.filter(
+				Condition::all()
+					.add(ticket::Column::Status.eq(TicketStatus::Finalized))
+					.add(ticket::Column::DstChain.eq(dest))
+					.add(ticket::Column::TxHash.contains("0")),
+			)
+			.all(db)
+			.await
+	}
+
 	pub async fn get_non_updated_mint_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
 		Ticket::find()
 			.filter(
