@@ -1,4 +1,4 @@
-use crate::graphql::sender::query_sender;
+use crate::graphql::sender::query_sender_fm_mempool;
 use crate::{
 	service::{Mutation, Query},
 	types::{self, Ticket},
@@ -11,7 +11,8 @@ use std::error::Error;
 pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 60;
 pub const TOKEN_SYNC_INTERVAL: u64 = 60;
-pub const TICKET_SYNC_INTERVAL: u64 = 3;
+pub const TICKET_SYNC_INTERVAL: u64 = 5;
+pub const TICKET_UPDATE_INTERVAL: u64 = 2;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 60;
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
@@ -20,7 +21,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 	for ticket in null_sender_tickets {
 		// Fetch the sender address from the runescan graphql api
-		let sender = query_sender(ticket.clone().ticket_id).await?;
+		let sender = query_sender_fm_mempool(&ticket.clone().ticket_id).await?;
 		// Insert the sender into the ticket meta
 		let updated_ticket = Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
 

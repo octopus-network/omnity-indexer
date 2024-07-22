@@ -1,5 +1,5 @@
 use crate::hub::{
-	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
+	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL, TICKET_UPDATE_INTERVAL,
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
 use crate::{customs::bitcoin, evm, hub, routes::icp};
@@ -79,7 +79,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 
 	let update_sender_tickets_from_hub = spawn_sync_task(
 		db_conn.clone(),
-		TICKET_SYNC_INTERVAL,
+		TICKET_UPDATE_INTERVAL,
 		|db_conn| async move { hub::update_sender(&db_conn).await },
 	);
 
