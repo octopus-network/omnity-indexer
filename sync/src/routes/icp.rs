@@ -60,7 +60,10 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 					.await?
 					.convert_to_canister_id();
 				if let Some(ledger_id) = token_ledger {
-					let token_ledger_id = serde_json::to_string(&ledger_id).unwrap();
+					let mut token_ledger_id = serde_json::to_string(&ledger_id).unwrap();
+					token_ledger_id.replace_range(0..1, "");
+					token_ledger_id.replace_range((token_ledger_id.len() - 1).., "");
+
 					let token_ledger_id_on_chain_model = token_ledger_id_on_chain::Model::new(
 						ROUTE_CHAIN_ID.to_owned(),
 						token.clone().token_id,
@@ -136,7 +139,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						)
 						.await?
 						{
-							Some(rep) => rep.contract_id + &block_index.to_string(),
+							Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
 							None => block_index.to_string(),
 						};
 
