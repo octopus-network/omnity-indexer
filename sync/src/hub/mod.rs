@@ -37,27 +37,29 @@ pub async fn sync_pending_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			"Need to fetch pending tickets size: {:?}",
 			pending_ticket_size
 		);
-
-		let mut limit = FETCH_LIMIT;
-		for next_offset in (offset..ticket_size).step_by(limit as usize) {
-			limit = std::cmp::min(limit, ticket_size - next_offset);
-			let new_pending_tickets = Arg::U(next_offset)
+		let mut from_seq = 0u64;
+		while from_seq < pending_ticket_size {
+			let new_pending_tickets = Arg::U(from_seq)
 				.query_method(
 					agent.clone(),
 					canister_id,
 					"get_pending_tickets",
 					"Next offset:",
 					"Synced pending tickets : ",
-					Some(limit),
+					Some(FETCH_LIMIT),
 					None,
 					"Vec<(TicketId, OmnityTicket)>",
 				)
 				.await?
 				.convert_to_vec_omnity_pending_ticket();
 
-			for (_ticket_id, pending_ticket) in new_pending_tickets {
+			for (_ticket_id, pending_ticket) in new_pending_tickets.clone() {
 				let pending_ticket_model = pending_ticket.into();
 				Mutation::save_pending_ticket(db, pending_ticket_model).await?;
+			}
+			from_seq += new_pending_tickets.clone().len() as u64;
+			if new_pending_tickets.is_empty() {
+				break;
 			}
 		}
 
