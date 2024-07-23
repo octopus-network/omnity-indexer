@@ -7,7 +7,7 @@ use entity::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::Digest;
-use std::collections::HashMap;
+use std::{collections::HashMap, default};
 use thiserror::Error;
 
 pub type Signature = Vec<u8>;
@@ -524,6 +524,7 @@ impl From<OmnityTicket> for pending_ticket::Model {
 	fn from(ticket: OmnityTicket) -> Self {
 		pending_ticket::Model {
 			ticket_id: ticket.ticket_id,
+			ticket_seq: Default::default(),
 			ticket_type: ticket.ticket_type.into(),
 			ticket_time: ticket.ticket_time as i64,
 			src_chain: ticket.src_chain,
@@ -562,8 +563,9 @@ impl core::fmt::Display for pending_ticket::Model {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
 		write!(
             f,
-            "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
+            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
             self.ticket_id,
+			self.ticket_seq,
             self.ticket_type,
             self.ticket_time,
             self.src_chain,

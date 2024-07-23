@@ -18,6 +18,7 @@ impl MigrationTrait for Migration {
 							.not_null()
 							.primary_key(),
 					)
+					.col(ColumnDef::new(PendingTicket::TicketSeq).big_unsigned())
 					.col(
 						ColumnDef::new(PendingTicket::TicketType)
 							.not_null()
@@ -58,10 +59,26 @@ impl MigrationTrait for Migration {
 					// .col(ColumnDef::new(Ticket::TxHash).string().not_null())
 					.to_owned(),
 			)
+			.await?;
+
+		// create index
+		manager
+			.create_index(
+				Index::create()
+					.if_not_exists()
+					.name("pending_ticket_seq")
+					.table(PendingTicket::Table)
+					.col(PendingTicket::TicketSeq)
+					.to_owned(),
+			)
 			.await
 	}
 
 	async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+		// drop index
+		manager
+			.drop_index(Index::drop().name("pending_ticket_seq").to_owned())
+			.await?;
 		// drop tables
 		manager
 			.drop_table(Table::drop().table(PendingTicket::Table).to_owned())
@@ -85,6 +102,7 @@ impl MigrationTrait for Migration {
 enum PendingTicket {
 	Table,
 	TicketId,
+	TicketSeq,
 	TicketType,
 	TicketTime,
 	SrcChain,

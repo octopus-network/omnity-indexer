@@ -1,5 +1,4 @@
 use crate::graphql::sender::query_sender_fm_mempool;
-use crate::pending_ticket;
 use crate::{
 	service::{Mutation, Query},
 	types::{self, Ticket},
@@ -13,8 +12,59 @@ pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 60;
 pub const TOKEN_SYNC_INTERVAL: u64 = 60;
 pub const TICKET_SYNC_INTERVAL: u64 = 5;
-pub const TICKET_UPDATE_INTERVAL: u64 = 2;
+pub const TICKET_UPDATE_INTERVAL: u64 = 60;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 60;
+pub const PENDING_TICKET_SYNC_INTERVAL: u64 = 20;
+
+// full synchronization for pending tickets
+pub async fn sync_pending_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		let pending_ticket_size = Arg::V(Vec::<u8>::new())
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"get_pending_ticket_size",
+				"Syncing pending tickets from hub ... ",
+				"Total pending ticket size: ",
+				None,
+				None,
+				"u64",
+			)
+			.await?
+			.convert_to_u64();
+
+		info!(
+			"Need to fetch pending tickets size: {:?}",
+			pending_ticket_size
+		);
+
+		let mut limit = FETCH_LIMIT;
+		for next_offset in (offset..ticket_size).step_by(limit as usize) {
+			limit = std::cmp::min(limit, ticket_size - next_offset);
+			let new_pending_tickets = Arg::U(next_offset)
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"get_pending_tickets",
+					"Next offset:",
+					"Synced pending tickets : ",
+					Some(limit),
+					None,
+					"Vec<(TicketId, OmnityTicket)>",
+				)
+				.await?
+				.convert_to_vec_omnity_pending_ticket();
+
+			for (_ticket_id, pending_ticket) in new_pending_tickets {
+				let pending_ticket_model = pending_ticket.into();
+				Mutation::save_pending_ticket(db, pending_ticket_model).await?;
+			}
+		}
+
+		Ok(())
+	})
+	.await
+}
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
@@ -174,7 +224,7 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	.await
 }
 
-// increment synchronization for Ledger tickets and full synchronization for Pending tickets
+// increment synchronization for ledger tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		// Ledger tickets
@@ -237,53 +287,6 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				break;
 			}
 		}
-
-		// Pending tickets
-		let pending_ticket_size = Arg::V(Vec::<u8>::new())
-			.query_method(
-				agent.clone(),
-				canister_id,
-				"get_pending_ticket_size",
-				"Syncing pending tickets from hub ... ",
-				"Total pending ticket size: ",
-				None,
-				None,
-				"u64",
-			)
-			.await?
-			.convert_to_u64();
-
-		info!(
-			"Need to fetch pending tickets size: {:?}",
-			pending_ticket_size
-		);
-
-		let mut limit = FETCH_LIMIT;
-		for next_offset in (offset..ticket_size).step_by(limit as usize) {
-			limit = std::cmp::min(limit, ticket_size - next_offset);
-			let new_pending_tickets = Arg::U(next_offset)
-				.query_method(
-					agent.clone(),
-					canister_id,
-					"get_pending_tickets",
-					"Next offset:",
-					"Synced pending tickets : ",
-					Some(limit),
-					None,
-					"Vec<(TicketId, OmnityTicket)>",
-				)
-				.await?
-				.convert_to_vec_omnity_pending_ticket();
-
-			for (_ticket_id, pending_ticket) in new_pending_tickets {
-				let pending_ticket_model = pending_ticket.into();
-				Mutation::save_pending_ticket(db, pending_ticket_model).await?;
-			}
-			// if new_tickets.len() < limit as usize {
-			// 	break;
-			// }
-		}
-
 		Ok(())
 	})
 	.await
