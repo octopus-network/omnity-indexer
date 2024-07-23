@@ -1,7 +1,8 @@
 use crate::entity;
 use candid::CandidType;
 use entity::{
-	chain_meta, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
+	chain_meta, pending_ticket, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta,
+	token_on_chain,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -515,6 +516,65 @@ impl core::fmt::Display for Ticket {
             self.memo,
             self.status,
 			self.tx_hash,
+        )
+	}
+}
+
+impl From<OmnityTicket> for pending_ticket::Model {
+	fn from(ticket: OmnityTicket) -> Self {
+		pending_ticket::Model {
+			ticket_id: ticket.ticket_id,
+			ticket_type: ticket.ticket_type.into(),
+			ticket_time: ticket.ticket_time as i64,
+			src_chain: ticket.src_chain,
+			dst_chain: ticket.dst_chain,
+			action: ticket.action.into(),
+			token: ticket.token,
+			amount: ticket.amount.parse::<i64>().unwrap_or(0),
+			sender: ticket.sender,
+			receiver: ticket.receiver,
+			memo: ticket.memo,
+			// tx_hash: ticket.tx_hash,
+		}
+	}
+}
+
+impl From<pending_ticket::Model> for OmnityTicket {
+	fn from(model: pending_ticket::Model) -> Self {
+		OmnityTicket {
+			ticket_id: model.ticket_id,
+			ticket_type: model.ticket_type.into(),
+			ticket_time: model.ticket_time as u64,
+			src_chain: model.src_chain,
+			dst_chain: model.dst_chain,
+			action: model.action.into(),
+			token: model.token,
+			amount: model.amount.to_string(),
+			sender: model.sender,
+			receiver: model.receiver,
+			memo: model.memo,
+			// tx_hash: model.tx_hash,
+		}
+	}
+}
+
+impl core::fmt::Display for pending_ticket::Model {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+            f,
+            "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
+            self.ticket_id,
+            self.ticket_type,
+            self.ticket_time,
+            self.src_chain,
+            self.dst_chain,
+            self.action,
+            self.token,
+            self.amount,
+            self.sender,
+            self.receiver,
+            self.memo,
+			// self.tx_hash,
         )
 	}
 }

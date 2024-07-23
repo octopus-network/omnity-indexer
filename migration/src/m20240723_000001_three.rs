@@ -1,5 +1,5 @@
-use sea_orm_migration::{prelude::*, sea_query::extension::postgres::Type};
 use super::m20240507_055143_one::{TicketType, TxAction};
+use sea_orm_migration::{prelude::*, sea_query::extension::postgres::Type};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -18,24 +18,40 @@ impl MigrationTrait for Migration {
 							.not_null()
 							.primary_key(),
 					)
-					.col(ColumnDef::new(PendingTicket::TicketType).not_null().enumeration(
-						Alias::new("ticket_type"),
-						[TicketType::Normal, TicketType::Resubmit],
-					))
-					.col(ColumnDef::new(PendingTicket::TicketTime).big_unsigned().not_null())
+					.col(
+						ColumnDef::new(PendingTicket::TicketType)
+							.not_null()
+							.enumeration(
+								Alias::new("ticket_type"),
+								[TicketType::Normal, TicketType::Resubmit],
+							),
+					)
+					.col(
+						ColumnDef::new(PendingTicket::TicketTime)
+							.big_unsigned()
+							.not_null(),
+					)
 					.col(ColumnDef::new(PendingTicket::SrcChain).string().not_null())
 					.col(ColumnDef::new(PendingTicket::DstChain).string().not_null())
-					.col(ColumnDef::new(PendingTicket::Action).not_null().enumeration(
-						Alias::new("tx_action"),
-						[
-							TxAction::Transfer,
-							TxAction::Redeem,
-							TxAction::Burn,
-							TxAction::Mint,
-						],
-					))
+					.col(
+						ColumnDef::new(PendingTicket::Action)
+							.not_null()
+							.enumeration(
+								Alias::new("tx_action"),
+								[
+									TxAction::Transfer,
+									TxAction::Redeem,
+									TxAction::Burn,
+									TxAction::Mint,
+								],
+							),
+					)
 					.col(ColumnDef::new(PendingTicket::Token).string().not_null())
-					.col(ColumnDef::new(PendingTicket::Amount).big_unsigned().not_null())
+					.col(
+						ColumnDef::new(PendingTicket::Amount)
+							.big_unsigned()
+							.not_null(),
+					)
 					.col(ColumnDef::new(PendingTicket::Sender).string().null())
 					.col(ColumnDef::new(PendingTicket::Receiver).string().not_null())
 					.col(ColumnDef::new(PendingTicket::Memo).binary().null())

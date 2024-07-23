@@ -1,5 +1,7 @@
 use crate::entity::chain_meta;
 use crate::entity::chain_meta::Entity as ChainMeta;
+use crate::entity::pending_ticket;
+use crate::entity::pending_ticket::Entity as PendingTicket;
 use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
 use crate::entity::ticket;
 use crate::entity::ticket::Entity as Ticket;
@@ -317,6 +319,39 @@ impl Mutation {
 		}
 
 		Ok(ticket::Model { ..ticket })
+	}
+
+	pub async fn save_pending_ticket(
+		db: &DbConn,
+		pending_ticket: pending_ticket::Model,
+	) -> Result<pending_ticket::Model, DbErr> {
+		let active_model: pending_ticket::ActiveModel = pending_ticket.clone().into();
+		let on_conflict = OnConflict::column(pending_ticket::Column::TicketId)
+			.do_nothing()
+			.to_owned();
+		let insert_result = PendingTicket::insert(active_model.clone())
+			.on_conflict(on_conflict)
+			.exec(db)
+			.await;
+		match insert_result {
+			Ok(ret) => {
+				info!("insert pending ticket result : {:?}", ret);
+			}
+			Err(_) => {
+				info!("the pending ticket already exited, need to update ticket !");
+
+				let res = PendingTicket::update(active_model)
+					.filter(
+						pending_ticket::Column::TicketId.eq(pending_ticket.ticket_id.to_owned()),
+					)
+					.exec(db)
+					.await
+					.map(|ticket| ticket);
+				info!("update pending ticket result : {:?}", res);
+			}
+		}
+
+		Ok(pending_ticket::Model { ..pending_ticket })
 	}
 
 	pub async fn update_ticket_status(
