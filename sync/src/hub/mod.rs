@@ -123,13 +123,14 @@ pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.await?
 				.convert_to_vec_omnity_token_on_chain();
 
+			if tokens_on_chains.is_empty() {
+				break;
+			}
+
 			for _token_on_chain in tokens_on_chains.iter() {
 				Mutation::save_token_on_chain(db, _token_on_chain.clone().into()).await?;
 			}
 			from_seq += tokens_on_chains.len() as u64;
-			if tokens_on_chains.is_empty() {
-				break;
-			}
 		}
 		Ok(())
 	})
@@ -169,13 +170,14 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.await?
 				.convert_to_vec_chain_meta();
 
+			if chains.is_empty() {
+				break;
+			}
+
 			for chain in chains.iter() {
 				Mutation::save_chain(db, chain.clone().into()).await?;
 			}
 			from_seq += chains.len() as u64;
-			if chains.is_empty() {
-				break;
-			}
 		}
 		Ok(())
 	})
@@ -215,15 +217,15 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.await?
 				.convert_to_vec_token_meta();
 
+			if tokens.is_empty() {
+				break;
+			}
+
 			for token in tokens.iter() {
 				Mutation::save_token(db, token.clone().into()).await?;
 			}
 			offset += tokens.len() as u64;
-			if tokens.is_empty() {
-				break;
-			}
 		}
-
 		Ok(())
 	})
 	.await
@@ -284,12 +286,13 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.await?
 				.convert_to_vec_omnity_ticket();
 
+			if new_tickets.len() < limit as usize {
+				break;
+			}
+
 			for (seq, ticket) in new_tickets.iter() {
 				let ticket_modle = Ticket::from_omnity_ticket(*seq, ticket.clone()).into();
 				Mutation::save_ticket(db, ticket_modle).await?;
-			}
-			if new_tickets.len() < limit as usize {
-				break;
 			}
 		}
 		Ok(())
