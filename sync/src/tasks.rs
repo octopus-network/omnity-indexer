@@ -54,7 +54,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 
 	let sync_ticket_status_from_icp = spawn_sync_task(
 		db_conn.clone(),
-		TICKET_SYNC_INTERVAL,
+		TICKET_UPDATE_INTERVAL,
 		|db_conn| async move { icp::sync_ticket_status_from_icp_route(&db_conn).await },
 	);
 
