@@ -39,7 +39,7 @@ pub async fn sync_pending_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			"Need to fetch pending tickets size: {:?}",
 			pending_ticket_size
 		);
-		
+
 		let mut from_seq = 0u64;
 		while from_seq < pending_ticket_size {
 			let new_pending_tickets = Arg::U(from_seq)
