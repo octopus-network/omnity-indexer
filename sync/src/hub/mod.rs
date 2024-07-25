@@ -1,4 +1,4 @@
-use crate::graphql::sender::query_sender_fm_mempool;
+// use crate::graphql::sender::query_sender_fm_mempool;
 use crate::Delete;
 use crate::{
 	service::{Mutation, Query},
@@ -75,17 +75,51 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
 	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
 
-	for ticket in null_sender_tickets {
-		// Fetch the sender address from the runescan graphql api
-		let sender = query_sender_fm_mempool(&ticket.clone().ticket_id).await?;
-		// Insert the sender into the ticket meta
-		let updated_ticket = Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
+	info!("There are {:?} senders are null", null_sender_tickets.len());
 
-		info!(
-			"Ticket id({:?}) has changed its sender to {:?}",
-			ticket.ticket_id, updated_ticket.sender
-		);
+	loop {
+		for ticket in null_sender_tickets.clone() {
+			let client = reqwest::Client::new();
+			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
+			let response = client.get(url).send().await?;
+			println!("STATUSSSSS{:?}", response.status());
+
+			let body = response.text().await?;
+			let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
+				Ok(v) => v,
+				Err(_) => continue,
+			};
+
+			if let Some(vin) = a.get_mut("vin") {
+				let sender = vin[0]["prevout"]["scriptpubkey_address"]
+					.as_str()
+					.unwrap()
+					.to_string();
+
+				// Insert the sender into the ticket meta
+				let updated_ticket =
+					Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
+
+				info!(
+					"Ticket id({:?}) has changed its sender to {:?}",
+					ticket.ticket_id, updated_ticket.sender
+				);
+			};
+		}
+		break;
 	}
+
+	// for ticket in null_sender_tickets {
+	// 	// Fetch the sender address from the mempool graphql api
+	// 	let sender = query_sender_fm_mempool(&ticket.clone().ticket_id).await?;
+	// 	// Insert the sender into the ticket meta
+	// 	let updated_ticket = Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
+
+	// 	info!(
+	// 		"Ticket id({:?}) has changed its sender to {:?}",
+	// 		ticket.ticket_id, updated_ticket.sender
+	// 	);
+	// }
 	Ok(())
 }
 
