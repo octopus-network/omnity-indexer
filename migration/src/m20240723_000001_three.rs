@@ -66,7 +66,7 @@ impl MigrationTrait for Migration {
 			.create_index(
 				Index::create()
 					.if_not_exists()
-					.name("pending_ticket_seq")
+					.name("pending-ticket_seq")
 					.table(PendingTicket::Table)
 					.col(PendingTicket::TicketSeq)
 					.to_owned(),
