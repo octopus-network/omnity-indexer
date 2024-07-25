@@ -1,4 +1,4 @@
-use crate::graphql::sender::query_sender;
+use crate::Delete;
 use crate::{
 	service::{Mutation, Query},
 	types::{self, Ticket},
@@ -11,23 +11,100 @@ use std::error::Error;
 pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 60;
 pub const TOKEN_SYNC_INTERVAL: u64 = 60;
-pub const TICKET_SYNC_INTERVAL: u64 = 3;
+pub const TICKET_SYNC_INTERVAL: u64 = 5;
+pub const TICKET_UPDATE_INTERVAL: u64 = 120;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 60;
+pub const PENDING_TICKET_SYNC_INTERVAL: u64 = 60;
+
+// full synchronization for pending tickets
+pub async fn sync_pending_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		let _ = Delete::remove_pending_ticket(db).await?;
+		let pending_ticket_size = Arg::V(Vec::<u8>::new())
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"get_pending_ticket_size",
+				"Syncing pending tickets from hub ... ",
+				"Total pending ticket size: ",
+				None,
+				None,
+				"u64",
+			)
+			.await?
+			.convert_to_u64();
+
+		info!(
+			"Need to fetch pending tickets size: {:?}",
+			pending_ticket_size
+		);
+
+		let mut from_seq = 0u64;
+		while from_seq < pending_ticket_size {
+			let new_pending_tickets = Arg::U(from_seq)
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"get_pending_tickets",
+					"Next offset:",
+					"Synced pending tickets : ",
+					Some(FETCH_LIMIT),
+					None,
+					"Vec<(TicketId, OmnityTicket)>",
+				)
+				.await?
+				.convert_to_vec_omnity_pending_ticket();
+
+			if new_pending_tickets.is_empty() {
+				break;
+			}
+
+			for (_ticket_id, pending_ticket) in new_pending_tickets.clone() {
+				let pending_ticket_model = pending_ticket.into();
+				Mutation::save_pending_ticket(db, pending_ticket_model).await?;
+			}
+			from_seq += new_pending_tickets.clone().len() as u64;
+		}
+		Ok(())
+	})
+	.await
+}
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
 	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
 
-	for ticket in null_sender_tickets {
-		// Fetch the sender address from the runescan graphql api
-		let sender = query_sender(ticket.clone().ticket_id).await?;
-		// Insert the sender into the ticket meta
-		let updated_ticket = Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
+	info!("There are {:?} senders are null", null_sender_tickets.len());
 
-		info!(
-			"Ticket id({:?}) has changed its sender to {:?}",
-			ticket.ticket_id, updated_ticket.sender
-		);
+	loop {
+		for ticket in null_sender_tickets.clone() {
+			let client = reqwest::Client::new();
+			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
+			let response = client.get(url).send().await?;
+
+			let body = response.text().await?;
+			let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
+				Ok(v) => v,
+				Err(_) => continue,
+			};
+
+			if let Some(vin) = a.get_mut("vin") {
+				let sender = vin[0]["prevout"]["scriptpubkey_address"]
+					.as_str()
+					.unwrap()
+					.to_string();
+
+				// Insert the sender into the ticket meta
+				let updated_ticket =
+					Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
+
+				info!(
+					"Ticket id({:?}) has changed its sender to {:?}",
+					ticket.ticket_id, updated_ticket.sender
+				);
+			};
+		}
+		break;
 	}
 	Ok(())
 }
@@ -66,13 +143,14 @@ pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.await?
 				.convert_to_vec_omnity_token_on_chain();
 
+			if tokens_on_chains.is_empty() {
+				break;
+			}
+
 			for _token_on_chain in tokens_on_chains.iter() {
 				Mutation::save_token_on_chain(db, _token_on_chain.clone().into()).await?;
 			}
 			from_seq += tokens_on_chains.len() as u64;
-			if tokens_on_chains.is_empty() {
-				break;
-			}
 		}
 		Ok(())
 	})
@@ -112,13 +190,14 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.await?
 				.convert_to_vec_chain_meta();
 
+			if chains.is_empty() {
+				break;
+			}
+
 			for chain in chains.iter() {
 				Mutation::save_chain(db, chain.clone().into()).await?;
 			}
 			from_seq += chains.len() as u64;
-			if chains.is_empty() {
-				break;
-			}
 		}
 		Ok(())
 	})
@@ -158,23 +237,24 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.await?
 				.convert_to_vec_token_meta();
 
+			if tokens.is_empty() {
+				break;
+			}
+
 			for token in tokens.iter() {
 				Mutation::save_token(db, token.clone().into()).await?;
 			}
 			offset += tokens.len() as u64;
-			if tokens.is_empty() {
-				break;
-			}
 		}
-
 		Ok(())
 	})
 	.await
 }
 
-// increment synchronization for tickets
+// increment synchronization for ledger tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		// Ledger tickets
 		let ticket_size = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
@@ -226,12 +306,13 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.await?
 				.convert_to_vec_omnity_ticket();
 
+			if new_tickets.len() < limit as usize {
+				break;
+			}
+
 			for (seq, ticket) in new_tickets.iter() {
 				let ticket_modle = Ticket::from_omnity_ticket(*seq, ticket.clone()).into();
 				Mutation::save_ticket(db, ticket_modle).await?;
-			}
-			if new_tickets.len() < limit as usize {
-				break;
 			}
 		}
 		Ok(())
