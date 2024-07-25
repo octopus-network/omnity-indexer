@@ -1,4 +1,3 @@
-// use crate::graphql::sender::query_sender_fm_mempool;
 use crate::Delete;
 use crate::{
 	service::{Mutation, Query},
@@ -82,7 +81,6 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			let client = reqwest::Client::new();
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
 			let response = client.get(url).send().await?;
-			println!("STATUSSSSS{:?}", response.status());
 
 			let body = response.text().await?;
 			let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
@@ -108,18 +106,6 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 		}
 		break;
 	}
-
-	// for ticket in null_sender_tickets {
-	// 	// Fetch the sender address from the mempool graphql api
-	// 	let sender = query_sender_fm_mempool(&ticket.clone().ticket_id).await?;
-	// 	// Insert the sender into the ticket meta
-	// 	let updated_ticket = Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
-
-	// 	info!(
-	// 		"Ticket id({:?}) has changed its sender to {:?}",
-	// 		ticket.ticket_id, updated_ticket.sender
-	// 	);
-	// }
 	Ok(())
 }
 
