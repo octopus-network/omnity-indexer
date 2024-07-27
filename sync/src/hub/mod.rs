@@ -1,7 +1,7 @@
 use crate::{
 	service::{Mutation, Query},
 	types::{self, Ticket},
-	with_omnity_canister, Arg, ChainId, TokenId,
+	with_omnity_canister, Arg, ChainId, Delete, TokenId,
 };
 use log::info;
 use sea_orm::DbConn;
@@ -55,6 +55,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 // full synchronization for token on chain
 pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	let _ = Delete::remove_token_on_chains(db).await?;
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let tokens_on_chains_size = Arg::V(Vec::<u8>::new())
 			.query_method(
@@ -103,6 +104,7 @@ pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 // full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	let _ = Delete::remove_chains(db).await?;
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let chain_size = Arg::query_method(
 			Arg::V(Vec::<u8>::new()),
@@ -150,6 +152,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 // full synchronization for tokens
 pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	let _ = Delete::remove_tokens(db).await?;
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		let token_size = Arg::V(Vec::<u8>::new())
 			.query_method(
@@ -195,8 +198,9 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	.await
 }
 
-// increment synchronization for ledger tickets and pending tickets
+// increment synchronization for ledger tickets and full synchronization for pending tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	let _ = Delete::remove_tickets(db).await?;
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
 		// Ledger tickets
 		let ticket_size = Arg::V(Vec::<u8>::new())

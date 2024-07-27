@@ -135,6 +135,41 @@ impl Delete {
 	) -> Result<DeleteResult, DbErr> {
 		Ticket::delete_by_id(ticket_id).exec(db).await
 	}
+
+	pub async fn remove_chains(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		ChainMeta::delete_many()
+			.filter(Condition::all().add(chain_meta::Column::ChainId.is_not_null()))
+			.exec(db)
+			.await
+	}
+
+	pub async fn remove_tokens(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		TokenMeta::delete_many()
+			.filter(Condition::all().add(token_meta::Column::TokenId.is_not_null()))
+			.exec(db)
+			.await
+	}
+
+	pub async fn remove_token_on_chains(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		TokenOnChain::delete_many()
+			.filter(Condition::all().add(token_on_chain::Column::ChainId.is_not_null()))
+			.exec(db)
+			.await
+	}
+
+	pub async fn remove_token_ledger_id_on_chain(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		TokenLedgerIdOnChain::delete_many()
+			.filter(Condition::all().add(token_ledger_id_on_chain::Column::ChainId.is_not_null()))
+			.exec(db)
+			.await
+	}
+
+	pub async fn remove_tickets(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		Ticket::delete_many()
+			.filter(Condition::all().add(ticket::Column::TicketSeq.is_not_null()))
+			.exec(db)
+			.await
+	}
 }
 
 pub struct Mutation;
