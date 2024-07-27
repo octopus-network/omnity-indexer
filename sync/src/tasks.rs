@@ -1,6 +1,6 @@
 use crate::hub::{
-	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL,
-	TICKET_UPDATE_INTERVAL, TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
+	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TICKET_UPDATE_INTERVAL,
+	TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
 use crate::{customs::bitcoin, evm, hub, routes::icp};
@@ -90,12 +90,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { icp::sync_all_icp_token_ledger_id_on_chain(&db_conn).await },
 	);
 
-	// let sync_pending_tickets_task = spawn_sync_task(
-	// 	db_conn.clone(),
-	// 	PENDING_TICKET_SYNC_INTERVAL,
-	// 	|db_conn| async move { hub::sync_pending_tickets(&db_conn).await },
-	// );
-
 	let _ = tokio::join!(
 		sync_chains_task,
 		sync_tokens_task,
@@ -107,6 +101,5 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		update_mint_tickets_from_btc,
 		update_sender_tickets_from_hub,
 		sync_all_token_ledger_id_on_chain_from_icp,
-		// sync_pending_tickets_task
 	);
 }
