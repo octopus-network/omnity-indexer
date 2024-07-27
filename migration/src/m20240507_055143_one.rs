@@ -53,6 +53,7 @@ impl MigrationTrait for Migration {
 						TicketStatus::WaitingForConfirmBySrc,
 						TicketStatus::WaitingForConfirmByDest,
 						TicketStatus::Finalized,
+						TicketStatus::Pending,
 					])
 					.to_owned(),
 			)
@@ -157,6 +158,7 @@ impl MigrationTrait for Migration {
 							TicketStatus::WaitingForConfirmBySrc,
 							TicketStatus::WaitingForConfirmByDest,
 							TicketStatus::Finalized,
+							TicketStatus::Pending,
 						],
 					))
 					.col(ColumnDef::new(Ticket::TxHash).string().not_null())
@@ -310,4 +312,6 @@ pub enum TicketStatus {
 	WaitingForConfirmByDest,
 	#[iden = "Finalized"]
 	Finalized,
+	#[iden = "Pending"]
+	Pending,
 }

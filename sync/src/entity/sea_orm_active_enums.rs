@@ -29,6 +29,8 @@ pub enum TicketStatus {
 	WaitingForConfirmByDest,
 	#[sea_orm(string_value = "WaitingForConfirmBySrc")]
 	WaitingForConfirmBySrc,
+	#[sea_orm(string_value = "Pending")]
+	Pending,
 }
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "ticket_type")]
