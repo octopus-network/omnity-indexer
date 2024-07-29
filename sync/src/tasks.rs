@@ -4,6 +4,7 @@ use crate::hub::{
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
 use crate::{customs::bitcoin, evm, hub, routes::icp};
+use crate::Delete;
 use futures::Future;
 use log::error;
 use sea_orm::DbConn;
@@ -30,6 +31,14 @@ where
 }
 
 pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
+	let remove_database = async {
+		let _ = Delete::remove_chains(&db_conn).await;
+		let _ = Delete::remove_tokens(&db_conn).await;
+		let _ = Delete::remove_tickets(&db_conn).await;
+		let _ = Delete::remove_token_on_chains(&db_conn).await;
+		let _ = Delete::remove_token_ledger_id_on_chain(&db_conn).await;
+	};
+
 	let sync_chains_task =
 		spawn_sync_task(db_conn.clone(), CHAIN_SYNC_INTERVAL, |db_conn| async move {
 			hub::sync_chains(&db_conn).await
@@ -91,6 +100,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 	);
 
 	let _ = tokio::join!(
+		remove_database,
 		sync_chains_task,
 		sync_tokens_task,
 		sync_tickets_task,

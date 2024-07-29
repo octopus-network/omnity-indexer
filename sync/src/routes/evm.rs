@@ -1,5 +1,5 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
-use crate::service::{Delete, Mutation, Query};
+use crate::service::{Mutation, Query};
 use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg, ChainId};
 use log::info;
 use sea_orm::DbConn;
@@ -21,7 +21,6 @@ pub enum MintEvmTokenStatus {
 pub async fn sync_all_tickets_status_and_token_ledger_id_from_evm_route(
 	db: &DbConn,
 ) -> Result<(), Box<dyn Error>> {
-	let _ = Delete::remove_token_ledger_id_on_chain(db).await?;
 	let evm_routes = vec![
 		EvmRoutes {
 			canister: "BEVM_CHAIN_ID",
