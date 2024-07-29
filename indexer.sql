@@ -13,7 +13,8 @@ CREATE TYPE public.ticket_status AS ENUM (
     'Unknown',
     'WaitingForConfirmBySrc',
     'WaitingForConfirmByDest',
-    'Finalized'
+    'Finalized',
+    'Pending'
 );
 
 CREATE TYPE public.ticket_type AS ENUM (
@@ -40,21 +41,6 @@ CREATE TABLE public.chain_meta (
     contract_address character varying,
     counterparties json,
     fee_token character varying
-);
-
-CREATE TABLE public.pending_ticket (
-    ticket_id text NOT NULL,
-    ticket_seq bigint,
-    ticket_type public.ticket_type NOT NULL,
-    ticket_time bigint NOT NULL,
-    src_chain character varying NOT NULL,
-    dst_chain character varying NOT NULL,
-    action public.tx_action NOT NULL,
-    token character varying NOT NULL,
-    amount bigint NOT NULL,
-    sender character varying,
-    receiver character varying NOT NULL,
-    memo bytea
 );
 
 CREATE TABLE public.seaql_migrations (
@@ -105,8 +91,6 @@ CREATE TABLE public.token_on_chain (
 ALTER TABLE ONLY public.chain_meta
     ADD CONSTRAINT chain_meta_pkey PRIMARY KEY (chain_id);
 
-ALTER TABLE ONLY public.pending_ticket
-    ADD CONSTRAINT pending_ticket_pkey PRIMARY KEY (ticket_id);
 
 ALTER TABLE ONLY public.token_on_chain
     ADD CONSTRAINT pk_chain_token PRIMARY KEY (chain_id, token_id);
@@ -129,8 +113,6 @@ ALTER TABLE ONLY public.token_meta
 
 
 CREATE INDEX "idx-ticket_seq" ON public.ticket USING btree (ticket_seq);
-
-CREATE INDEX "pending-ticket_seq" ON public.pending_ticket USING btree (ticket_seq);
 
 ALTER TABLE ONLY public.token_on_chain
     ADD CONSTRAINT fk_chain_id FOREIGN KEY (chain_id) REFERENCES public.chain_meta(chain_id);
