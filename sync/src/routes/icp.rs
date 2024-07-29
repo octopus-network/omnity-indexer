@@ -141,7 +141,6 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						{
 							Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
 							None => block_index.to_string(),
-							// None => 0.to_string(),
 						};
 
 						let index_ticket_model = Mutation::update_tikcet_tx_hash(
@@ -158,25 +157,6 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 					}
 				}
 			}
-
-			// let confirmed_tickets = Query::get_confirmed_tickets(db,
-			// ROUTE_CHAIN_ID.to_owned()).await?; for confirmed_ticket in confirmed_tickets {
-			// 	let tx_hash = Query::get_token_ledger_id_on_chain_by_id(
-			// 		db,
-			// 		ROUTE_CHAIN_ID.to_owned(),
-			// 		confirmed_ticket.clone().token,
-			// 	)
-			// 	.await?.unwrap();
-			// 	let hash = tx_hash.contract_id + "-";
-
-			// 	let _ = Mutation::update_tikcet_tx_hash(
-			// 		db,
-			// 		confirmed_ticket.clone(),
-			// 		hash,
-			// 	)
-			// 	.await?;
-			// }
-
 			Ok(())
 		},
 	)

@@ -1,8 +1,7 @@
 use crate::entity;
 use candid::CandidType;
 use entity::{
-	chain_meta, pending_ticket, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta,
-	token_on_chain,
+	chain_meta, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -349,6 +348,7 @@ pub enum TicketStatus {
 	WaitingForConfirmBySrc,
 	WaitingForConfirmByDest,
 	Finalized,
+	Pending,
 }
 
 impl From<TicketStatus> for sea_orm_active_enums::TicketStatus {
@@ -362,6 +362,7 @@ impl From<TicketStatus> for sea_orm_active_enums::TicketStatus {
 				sea_orm_active_enums::TicketStatus::WaitingForConfirmByDest
 			}
 			TicketStatus::Finalized => sea_orm_active_enums::TicketStatus::Finalized,
+			TicketStatus::Pending => sea_orm_active_enums::TicketStatus::Pending,
 		}
 	}
 }
@@ -376,6 +377,7 @@ impl From<sea_orm_active_enums::TicketStatus> for TicketStatus {
 				TicketStatus::WaitingForConfirmByDest
 			}
 			sea_orm_active_enums::TicketStatus::Finalized => TicketStatus::Finalized,
+			sea_orm_active_enums::TicketStatus::Pending => TicketStatus::Pending,
 		}
 	}
 }
@@ -453,6 +455,25 @@ impl Ticket {
 			tx_hash: " ".to_string(),
 		}
 	}
+
+	pub fn from_omnity_pending_ticket(tx_hash: TicketId, pending_ticket: OmnityTicket) -> Self {
+		Self {
+			ticket_id: pending_ticket.ticket_id.to_owned(),
+			ticket_seq: Some(00),
+			ticket_type: pending_ticket.ticket_type.to_owned(),
+			ticket_time: pending_ticket.ticket_time,
+			src_chain: pending_ticket.src_chain.to_owned(),
+			dst_chain: pending_ticket.dst_chain.to_owned(),
+			action: pending_ticket.action.to_owned(),
+			token: pending_ticket.token.to_owned(),
+			amount: pending_ticket.amount.to_owned(),
+			sender: pending_ticket.sender.to_owned(),
+			receiver: pending_ticket.receiver.to_owned(),
+			memo: pending_ticket.memo.to_owned(),
+			status: TicketStatus::Pending,
+			tx_hash: tx_hash,
+		}
+	}
 }
 
 impl From<Ticket> for ticket::Model {
@@ -516,67 +537,6 @@ impl core::fmt::Display for Ticket {
             self.memo,
             self.status,
 			self.tx_hash,
-        )
-	}
-}
-
-impl From<OmnityTicket> for pending_ticket::Model {
-	fn from(ticket: OmnityTicket) -> Self {
-		pending_ticket::Model {
-			ticket_id: ticket.ticket_id,
-			ticket_seq: Default::default(),
-			ticket_type: ticket.ticket_type.into(),
-			ticket_time: ticket.ticket_time as i64,
-			src_chain: ticket.src_chain,
-			dst_chain: ticket.dst_chain,
-			action: ticket.action.into(),
-			token: ticket.token,
-			amount: ticket.amount.parse::<i64>().unwrap_or(0),
-			sender: ticket.sender,
-			receiver: ticket.receiver,
-			memo: ticket.memo,
-			// tx_hash: ticket.tx_hash,
-		}
-	}
-}
-
-impl From<pending_ticket::Model> for OmnityTicket {
-	fn from(model: pending_ticket::Model) -> Self {
-		OmnityTicket {
-			ticket_id: model.ticket_id,
-			ticket_type: model.ticket_type.into(),
-			ticket_time: model.ticket_time as u64,
-			src_chain: model.src_chain,
-			dst_chain: model.dst_chain,
-			action: model.action.into(),
-			token: model.token,
-			amount: model.amount.to_string(),
-			sender: model.sender,
-			receiver: model.receiver,
-			memo: model.memo,
-			// tx_hash: model.tx_hash,
-		}
-	}
-}
-
-impl core::fmt::Display for pending_ticket::Model {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-		write!(
-            f,
-            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
-            self.ticket_id,
-			self.ticket_seq,
-            self.ticket_type,
-            self.ticket_time,
-            self.src_chain,
-            self.dst_chain,
-            self.action,
-            self.token,
-            self.amount,
-            self.sender,
-            self.receiver,
-            self.memo,
-			// self.tx_hash,
         )
 	}
 }

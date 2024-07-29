@@ -1,8 +1,9 @@
 use crate::hub::{
-	CHAIN_SYNC_INTERVAL, PENDING_TICKET_SYNC_INTERVAL, TICKET_SYNC_INTERVAL,
-	TICKET_UPDATE_INTERVAL, TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
+	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TICKET_UPDATE_INTERVAL,
+	TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
+use crate::Delete;
 use crate::{customs::bitcoin, evm, hub, routes::icp};
 use futures::Future;
 use log::error;
@@ -30,6 +31,14 @@ where
 }
 
 pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
+	let remove_database = async {
+		let _ = Delete::remove_chains(&db_conn).await;
+		let _ = Delete::remove_tokens(&db_conn).await;
+		let _ = Delete::remove_tickets(&db_conn).await;
+		let _ = Delete::remove_token_on_chains(&db_conn).await;
+		let _ = Delete::remove_token_ledger_id_on_chain(&db_conn).await;
+	};
+
 	let sync_chains_task =
 		spawn_sync_task(db_conn.clone(), CHAIN_SYNC_INTERVAL, |db_conn| async move {
 			hub::sync_chains(&db_conn).await
@@ -74,13 +83,13 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 
 	let update_mint_tickets_from_btc = spawn_sync_task(
 		db_conn.clone(),
-		TICKET_UPDATE_INTERVAL,
+		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { bitcoin::update_mint_tickets(&db_conn).await },
 	);
 
 	let update_sender_tickets_from_hub = spawn_sync_task(
 		db_conn.clone(),
-		TICKET_UPDATE_INTERVAL,
+		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { hub::update_sender(&db_conn).await },
 	);
 
@@ -90,13 +99,8 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { icp::sync_all_icp_token_ledger_id_on_chain(&db_conn).await },
 	);
 
-	let sync_pending_tickets_task = spawn_sync_task(
-		db_conn.clone(),
-		PENDING_TICKET_SYNC_INTERVAL,
-		|db_conn| async move { hub::sync_pending_tickets(&db_conn).await },
-	);
-
 	let _ = tokio::join!(
+		remove_database,
 		sync_chains_task,
 		sync_tokens_task,
 		sync_tickets_task,
@@ -107,6 +111,5 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		update_mint_tickets_from_btc,
 		update_sender_tickets_from_hub,
 		sync_all_token_ledger_id_on_chain_from_icp,
-		sync_pending_tickets_task
 	);
 }
