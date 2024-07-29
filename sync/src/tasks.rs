@@ -3,8 +3,8 @@ use crate::hub::{
 	TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
-use crate::{customs::bitcoin, evm, hub, routes::icp};
 use crate::Delete;
+use crate::{customs::bitcoin, evm, hub, routes::icp};
 use futures::Future;
 use log::error;
 use sea_orm::DbConn;
@@ -83,13 +83,13 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 
 	let update_mint_tickets_from_btc = spawn_sync_task(
 		db_conn.clone(),
-		TICKET_UPDATE_INTERVAL,
+		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { bitcoin::update_mint_tickets(&db_conn).await },
 	);
 
 	let update_sender_tickets_from_hub = spawn_sync_task(
 		db_conn.clone(),
-		TICKET_UPDATE_INTERVAL,
+		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { hub::update_sender(&db_conn).await },
 	);
 

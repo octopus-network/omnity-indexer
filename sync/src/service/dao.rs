@@ -166,7 +166,7 @@ impl Delete {
 
 	pub async fn remove_tickets(db: &DbConn) -> Result<DeleteResult, DbErr> {
 		Ticket::delete_many()
-			.filter(Condition::all().add(ticket::Column::TicketSeq.is_not_null()))
+			.filter(Condition::all().add(ticket::Column::TicketId.is_not_null()))
 			.exec(db)
 			.await
 	}

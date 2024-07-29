@@ -8,11 +8,11 @@ use sea_orm::DbConn;
 use std::error::Error;
 
 pub const FETCH_LIMIT: u64 = 50;
-pub const CHAIN_SYNC_INTERVAL: u64 = 60;
-pub const TOKEN_SYNC_INTERVAL: u64 = 60;
+pub const CHAIN_SYNC_INTERVAL: u64 = 120;
+pub const TOKEN_SYNC_INTERVAL: u64 = 120;
 pub const TICKET_SYNC_INTERVAL: u64 = 5;
 pub const TICKET_UPDATE_INTERVAL: u64 = 130;
-pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 60;
+pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 120;
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
