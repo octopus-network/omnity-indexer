@@ -301,7 +301,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 			for (_ticket_id, pending_ticket) in new_pending_tickets.clone() {
 				let ticket_model =
-					Ticket::from_omnity_pending_ticket(_ticket_id, pending_ticket).into();
+					Ticket::from_omnity_pending_ticket(pending_ticket).into();
 				Mutation::save_ticket(db, ticket_model).await?;
 			}
 			from_seq += new_pending_tickets.clone().len() as u64;

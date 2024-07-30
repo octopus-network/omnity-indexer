@@ -5,16 +5,13 @@ use entity::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sha2::Digest;
 use std::collections::HashMap;
 use thiserror::Error;
 
-pub type Signature = Vec<u8>;
 pub type Seq = u64;
 pub type Account = String;
 pub type Amount = u128;
 pub type ChainId = String;
-pub type DstChain = ChainId;
 pub type TokenId = String;
 pub type Timestamp = u64;
 pub type TicketId = String;
@@ -227,76 +224,6 @@ impl core::fmt::Display for TokenResp {
 	}
 }
 
-#[derive(CandidType, Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
-pub enum Directive {
-	AddChain(Chain),
-	AddToken(Token),
-	UpdateChain(Chain),
-	UpdateToken(Token),
-	ToggleChainState(ToggleState),
-	UpdateFee(Factor),
-}
-
-impl Directive {
-	pub fn to_topic(&self) -> Topic {
-		match self {
-			Self::AddChain(_) => Topic::AddChain,
-			Self::AddToken(_) => Topic::AddToken,
-			Self::ToggleChainState(_) => Topic::ToggleChainState,
-			Self::UpdateFee(_) => Topic::UpdateFee,
-			Self::UpdateChain(_) => Topic::UpdateChain,
-			Self::UpdateToken(_) => Topic::UpdateToken,
-		}
-	}
-}
-
-impl core::fmt::Display for Directive {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		match self {
-			Directive::AddChain(chain) => write!(f, "AddChain({})", chain),
-			Directive::AddToken(token) => write!(f, "AddToken({})", token),
-			Directive::ToggleChainState(toggle_state) => {
-				write!(f, "ToggleChainState({})", toggle_state)
-			}
-			Directive::UpdateFee(factor) => write!(f, "UpdateFee({})", factor),
-			Directive::UpdateChain(chain) => write!(f, "UpdateChain({})", chain),
-			Directive::UpdateToken(token) => write!(f, "UpdateToken({})", token),
-		}
-	}
-}
-impl Directive {
-	pub fn hash(&self) -> String {
-		let mut hasher = sha2::Sha256::new();
-		hasher.update(self.to_string().as_bytes());
-		let bytes: [u8; 32] = hasher.finalize().into();
-		bytes.iter().map(|byte| format!("{:02x}", byte)).collect()
-	}
-}
-
-#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Topic {
-	AddChain,
-	AddToken,
-	UpdateChain,
-	UpdateToken,
-	ToggleChainState,
-	UpdateFee,
-}
-impl core::fmt::Display for Topic {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		match self {
-			Topic::AddChain => write!(f, "AddChain"),
-			Topic::AddToken => write!(f, "AddToken"),
-			Topic::ToggleChainState => {
-				write!(f, "ToggleChainState",)
-			}
-			Topic::UpdateFee => write!(f, "UpdateFee"),
-			Topic::UpdateChain => write!(f, "UpdateChain"),
-			Topic::UpdateToken => write!(f, "UpdateToken"),
-		}
-	}
-}
-
 #[derive(
 	CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
@@ -456,10 +383,10 @@ impl Ticket {
 		}
 	}
 
-	pub fn from_omnity_pending_ticket(tx_hash: TicketId, pending_ticket: OmnityTicket) -> Self {
+	pub fn from_omnity_pending_ticket(pending_ticket: OmnityTicket) -> Self {
 		Self {
 			ticket_id: pending_ticket.ticket_id.to_owned(),
-			ticket_seq: Some(00),
+			ticket_seq: None,
 			ticket_type: pending_ticket.ticket_type.to_owned(),
 			ticket_time: pending_ticket.ticket_time,
 			src_chain: pending_ticket.src_chain.to_owned(),
@@ -471,7 +398,7 @@ impl Ticket {
 			receiver: pending_ticket.receiver.to_owned(),
 			memo: pending_ticket.memo.to_owned(),
 			status: TicketStatus::Pending,
-			tx_hash: tx_hash,
+			tx_hash: " ".to_string(),
 		}
 	}
 }
@@ -591,22 +518,6 @@ impl From<sea_orm_active_enums::ChainState> for ChainState {
 	}
 }
 
-#[derive(CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq)]
-pub enum ToggleAction {
-	#[default]
-	Activate,
-	Deactivate,
-}
-
-impl From<ToggleAction> for ChainState {
-	fn from(value: ToggleAction) -> Self {
-		match value {
-			ToggleAction::Activate => ChainState::Active,
-			ToggleAction::Deactivate => ChainState::Deactive,
-		}
-	}
-}
-
 #[derive(
 	CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash,
 )]
@@ -636,52 +547,6 @@ impl From<sea_orm_active_enums::TxAction> for TxAction {
 			sea_orm_active_enums::TxAction::Burn => TxAction::Burn,
 			sea_orm_active_enums::TxAction::Mint => TxAction::Mint,
 		}
-	}
-}
-
-#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
-pub enum Factor {
-	UpdateTargetChainFactor(TargetChainFactor),
-	UpdateFeeTokenFactor(FeeTokenFactor),
-}
-
-impl core::fmt::Display for Factor {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-		match self {
-			Factor::UpdateTargetChainFactor(chain_factor) => write!(f, "{}", chain_factor),
-			Factor::UpdateFeeTokenFactor(token_factor) => write!(f, "{}", token_factor),
-		}
-	}
-}
-#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Default)]
-pub struct TargetChainFactor {
-	pub target_chain_id: ChainId,
-	pub target_chain_factor: u128,
-}
-
-impl core::fmt::Display for TargetChainFactor {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-		write!(
-			f,
-			"\nchain id:{},\nchain factor:{}",
-			self.target_chain_id, self.target_chain_factor,
-		)
-	}
-}
-
-#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Default)]
-pub struct FeeTokenFactor {
-	pub fee_token: TokenId,
-	pub fee_token_factor: u128,
-}
-
-impl core::fmt::Display for FeeTokenFactor {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-		write!(
-			f,
-			"\nfee token:{},\nfee_token_factor:{}",
-			self.fee_token, self.fee_token_factor,
-		)
 	}
 }
 
@@ -742,23 +607,6 @@ impl core::fmt::Display for Chain {
             "\nchain id:{} \ncanister id:{} \nchain type:{:?} \nchain state:{:?} \ncontract address:{:?} \ncounterparties:{:?} \nfee_token:{:?}",
             self.chain_id,self.canister_id, self.chain_type, self.chain_state, self.contract_address,self.counterparties,self.fee_token,
         )
-	}
-}
-
-//TODO: update chain and token info
-#[derive(CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq)]
-pub struct ToggleState {
-	pub chain_id: ChainId,
-	pub action: ToggleAction,
-}
-
-impl core::fmt::Display for ToggleState {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-		write!(
-			f,
-			"\nchain:{},\nchain state:{:?}",
-			self.chain_id, self.action,
-		)
 	}
 }
 
