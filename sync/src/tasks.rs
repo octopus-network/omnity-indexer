@@ -60,7 +60,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { bitcoin::sync_ticket_status_from_bitcoin(&db_conn).await },
 	);
-	// tothink
+
 	let sync_ticket_status_from_icp = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
