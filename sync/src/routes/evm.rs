@@ -18,7 +18,6 @@ pub enum MintEvmTokenStatus {
 	Unknown,
 }
 
-
 pub async fn sync_all_tickets_status_and_token_ledger_id_from_evm_route(
 	db: &DbConn,
 ) -> Result<(), Box<dyn Error>> {
