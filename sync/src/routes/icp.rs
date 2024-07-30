@@ -124,14 +124,6 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						);
 					}
 					MintTokenStatus::Finalized { block_index } => {
-						//3: update ticket status to finalized
-						let ticket_model = Mutation::update_ticket_status(
-							db,
-							unconfirmed_ticket.clone(),
-							TicketStatus::Finalized,
-						)
-						.await?;
-
 						let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
 							db,
 							ROUTE_CHAIN_ID.to_owned(),
@@ -143,16 +135,18 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 							None => block_index.to_string(),
 						};
 
-						let index_ticket_model = Mutation::update_tikcet_tx_hash(
+						//3: update ticket status to finalized
+						let ticket_model = Mutation::update_ticket_status_n_txhash(
 							db,
 							unconfirmed_ticket.clone(),
+							TicketStatus::Finalized,
 							tx_hash,
 						)
 						.await?;
 
 						info!(
 							"Ticket id({:?}) status:{:?} and finalized on block {:?}",
-							ticket_model.ticket_id, ticket_model.status, index_ticket_model.tx_hash
+							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 						);
 					}
 				}

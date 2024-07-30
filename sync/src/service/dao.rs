@@ -341,36 +341,33 @@ impl Mutation {
 			}
 			Err(_) => {
 				info!("the ticket already exited, need to update ticket !");
-
 				let res = Ticket::update(active_model)
-					.filter(ticket::Column::TicketId.eq(ticket.ticket_id.to_owned()))
+					.filter(ticket::Column::TicketId.eq(&ticket.ticket_id.to_owned()))
 					.exec(db)
 					.await
 					.map(|ticket| ticket);
 				info!("update ticket result : {:?}", res);
+
+				if let Some(t) = Query::get_ticket_by_id(db, ticket.clone().ticket_id).await? {
+					if t.ticket_seq == None && t.status == TicketStatus::Finalized{
+						let model = Mutation::update_tikcet_seq(db, ticket.clone(), ticket.clone().ticket_seq).await?;
+						info!("update ticket seq result {:?}", model.ticket_seq);
+					}
+				}
 			}
 		}
 
 		Ok(ticket::Model { ..ticket })
 	}
 
-	pub async fn update_ticket_status(
+	pub async fn update_ticket_status_n_txhash(
 		db: &DbConn,
 		ticket: ticket::Model,
 		status: TicketStatus,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.status = Set(status.to_owned());
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
-
-	pub async fn update_tikcet_tx_hash(
-		db: &DbConn,
-		ticket: ticket::Model,
 		tx_hash: TxHash,
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
+		active_model.status = Set(status.to_owned());
 		active_model.tx_hash = Set(tx_hash.to_owned());
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
@@ -394,6 +391,17 @@ impl Mutation {
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
 		active_model.sender = Set(Some(sender.to_owned()));
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
+	}
+
+	pub async fn update_tikcet_seq(
+		db: &DbConn,
+		ticket: ticket::Model,
+		seq: Option<i64>,
+	) -> Result<ticket::Model, DbErr> {
+		let mut active_model: ticket::ActiveModel = ticket.into();
+		active_model.ticket_seq = Set(Some(seq.to_owned().expect("no seq")));
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}

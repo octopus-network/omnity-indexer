@@ -136,20 +136,17 @@ async fn sync_ticket_status_from_evm_route(
 					);
 				}
 				MintEvmTokenStatus::Finalized { tx_hash } => {
-					let ticket_tx_hash =
-						Mutation::update_tikcet_tx_hash(db, unconfirmed_ticket.clone(), tx_hash)
-							.await?;
-
-					let ticket_model = Mutation::update_ticket_status(
+					let ticket_model = Mutation::update_ticket_status_n_txhash(
 						db,
 						unconfirmed_ticket.clone(),
 						TicketStatus::Finalized,
+						tx_hash,
 					)
 					.await?;
 
 					info!(
 						"Ticket id({:?}) status:{:?} and its hash is {:?} ",
-						ticket_model.ticket_id, ticket_model.status, ticket_tx_hash.tx_hash
+						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 					);
 				}
 			}
