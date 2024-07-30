@@ -144,15 +144,6 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 						)
 						.await?;
 
-						
-
-						// let index_ticket_model = Mutation::update_tikcet_tx_hash(
-						// 	db,
-						// 	unconfirmed_ticket.clone(),
-						// 	tx_hash,
-						// )
-						// .await?;
-
 						info!(
 							"Ticket id({:?}) status:{:?} and finalized on block {:?}",
 							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash

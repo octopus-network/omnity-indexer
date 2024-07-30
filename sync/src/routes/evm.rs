@@ -1,3 +1,4 @@
+
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
 use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg, ChainId};
@@ -5,6 +6,7 @@ use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+
 
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct EvmRoutes {
@@ -17,6 +19,34 @@ pub enum MintEvmTokenStatus {
 	Finalized { tx_hash: String },
 	Unknown,
 }
+
+// pub const EVM_ROUTES: [EvmRoutes;6] = 
+// [
+// 	EvmRoutes {
+// 		canister: "BEVM_CHAIN_ID",
+// 		chain: "bevm".to_string(),
+// 	},
+// 	EvmRoutes {
+// 		canister: "BITLAYER_CHAIN_ID",
+// 		chain: "Bitlayer".to_owned(),
+// 	},
+// 	EvmRoutes {
+// 		canister: "XLAYER_CHAIN_ID",
+// 		chain: "X Layer".to_owned(),
+// 	},
+// 	EvmRoutes {
+// 		canister: "BSQUARE_CHAIN_ID",
+// 		chain: "B² Network".to_owned(),
+// 	},
+// 	EvmRoutes {
+// 		canister: "MERLIN_CHAIN_ID",
+// 		chain: "Merlin".to_owned(),
+// 	},
+// 	EvmRoutes {
+// 		canister: "BOB_CHAIN_ID",
+// 		chain: "Bob".to_owned(),
+// 	},
+// ];
 
 pub async fn sync_all_tickets_status_and_token_ledger_id_from_evm_route(
 	db: &DbConn,

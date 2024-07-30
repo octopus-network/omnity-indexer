@@ -367,17 +367,6 @@ impl Mutation {
 		Ok(ticket)
 	}
 
-	// pub async fn update_tikcet_tx_hash(
-	// 	db: &DbConn,
-	// 	ticket: ticket::Model,
-	// 	tx_hash: TxHash,
-	// ) -> Result<ticket::Model, DbErr> {
-	// 	let mut active_model: ticket::ActiveModel = ticket.into();
-	// 	active_model.tx_hash = Set(tx_hash.to_owned());
-	// 	let ticket = active_model.update(db).await?;
-	// 	Ok(ticket)
-	// }
-
 	pub async fn update_tikcet_amount(
 		db: &DbConn,
 		ticket: ticket::Model,

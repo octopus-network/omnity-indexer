@@ -296,10 +296,6 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 					)
 					.await?;
 
-					// let ticket_tx_hash =
-					// 	Mutation::update_tikcet_tx_hash(db, unconfirmed_ticket.clone(), tx_hash)
-					// 		.await?;
-
 					info!(
 						"Ticket id({:?}) finally status:{:?} and its ICP hash is {:?} ",
 						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
