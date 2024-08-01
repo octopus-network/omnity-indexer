@@ -348,12 +348,12 @@ impl Mutation {
 					.map(|ticket| ticket);
 				info!("update ticket result : {:?}", res);
 
-				if let Some(t) = Query::get_ticket_by_id(db, ticket.clone().ticket_id).await? {
-					if t.ticket_seq == None && t.status == TicketStatus::Finalized{
-						let model = Mutation::update_tikcet_seq(db, ticket.clone(), ticket.clone().ticket_seq).await?;
-						info!("update ticket seq result {:?}", model.ticket_seq);
-					}
-				}
+				// if let Some(t) = Query::get_ticket_by_id(db, ticket.clone().ticket_id).await? {
+				// 	if t.ticket_seq == None && t.status == TicketStatus::Finalized{
+				// 		let model = Mutation::update_tikcet_seq(db, ticket.clone(), ticket.clone().ticket_seq).await?;
+				// 		info!("update ticket seq result {:?}", model.ticket_seq);
+				// 	}
+				// }
 			}
 		}
 
