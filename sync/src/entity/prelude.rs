@@ -4,3 +4,4 @@ pub use super::ticket::Entity as Ticket;
 pub use super::token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain;
 pub use super::token_meta::Entity as TokenMeta;
 pub use super::token_on_chain::Entity as TokenOnChain;
+pub use super::deleted_mint_ticket::Entity as DeletedMintTicket;

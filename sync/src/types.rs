@@ -1,7 +1,7 @@
 use crate::entity;
 use candid::CandidType;
 use entity::{
-	chain_meta, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
+	chain_meta, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain, deleted_mint_ticket
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -465,6 +465,27 @@ impl core::fmt::Display for Ticket {
             self.status,
 			self.tx_hash,
         )
+	}
+}
+
+impl From<ticket::Model> for deleted_mint_ticket::Model {
+	fn from(ticket: ticket::Model) -> Self {
+		deleted_mint_ticket::Model {
+			ticket_id: ticket.ticket_id,
+			ticket_seq: ticket.ticket_seq.map(|seq| seq as i64),
+			ticket_type: ticket.ticket_type.into(),
+			ticket_time: ticket.ticket_time as i64,
+			src_chain: ticket.src_chain,
+			dst_chain: ticket.dst_chain,
+			action: ticket.action.into(),
+			token: ticket.token,
+			amount: ticket.amount,
+			sender: ticket.sender,
+			receiver: ticket.receiver,
+			memo: ticket.memo,
+			status: ticket.status.into(),
+			tx_hash: ticket.tx_hash,
+		}
 	}
 }
 

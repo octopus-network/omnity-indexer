@@ -337,6 +337,9 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 		if let Some(ticket_should_be_removed) =
 			Query::get_ticket_by_id(db, mint_ticket.clone().tx_hash).await?
 		{
+			// Save the ticket that contains the tx_hash as the ticket_id to DeletedMintTicket
+			let _ = Mutation::save_deleted_mint_ticket(db, ticket_should_be_removed.clone().into()).await?;
+
 			// Remove the ticket that contains the tx_hash as the ticket_id
 			let row =
 				Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await?;

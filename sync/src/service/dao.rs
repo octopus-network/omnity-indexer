@@ -9,6 +9,8 @@ use crate::entity::token_meta;
 use crate::entity::token_meta::Entity as TokenMeta;
 use crate::entity::token_on_chain;
 use crate::entity::token_on_chain::Entity as TokenOnChain;
+use crate::entity::deleted_mint_ticket;
+use crate::entity::deleted_mint_ticket::Entity as DeletedMintTicket;
 use crate::TxHash;
 use log::info;
 use sea_orm::sea_query::OnConflict;
@@ -358,6 +360,33 @@ impl Mutation {
 		}
 
 		Ok(ticket::Model { ..ticket })
+	}
+
+	pub async fn save_deleted_mint_ticket(db: &DbConn, deleted_ticket: deleted_mint_ticket::Model) -> Result<deleted_mint_ticket::Model, DbErr> {
+		let active_model: deleted_mint_ticket::ActiveModel = deleted_ticket.clone().into();
+		let on_conflict = OnConflict::column(deleted_mint_ticket::Column::TicketId)
+			.do_nothing()
+			.to_owned();
+		let insert_result = DeletedMintTicket::insert(active_model.clone())
+			.on_conflict(on_conflict)
+			.exec(db)
+			.await;
+		match insert_result {
+			Ok(ret) => {
+				info!("insert deleted mint ticket result : {:?}", ret);
+			}
+			Err(_) => {
+				info!("the deleted mint ticket already exited, need to update ticket !");
+				let res = DeletedMintTicket::update(active_model)
+					.filter(deleted_mint_ticket::Column::TicketId.eq(&deleted_ticket.ticket_id.to_owned()))
+					.exec(db)
+					.await
+					.map(|ticket| ticket);
+				info!("update deleted mint ticket result : {:?}", res);
+			}
+		}
+
+		Ok(deleted_mint_ticket::Model { ..deleted_ticket })
 	}
 
 	pub async fn update_ticket_status_n_txhash(
