@@ -1,7 +1,8 @@
 use crate::entity;
 use candid::CandidType;
 use entity::{
-	chain_meta, sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain, deleted_mint_ticket
+	chain_meta, deleted_mint_ticket, sea_orm_active_enums, ticket, token_ledger_id_on_chain,
+	token_meta, token_on_chain,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -420,6 +421,7 @@ impl From<Ticket> for ticket::Model {
 			memo: ticket.memo,
 			status: ticket.status.into(),
 			tx_hash: ticket.tx_hash,
+			intermediate_tx_hash: None,
 		}
 	}
 }
@@ -485,6 +487,7 @@ impl From<ticket::Model> for deleted_mint_ticket::Model {
 			memo: ticket.memo,
 			status: ticket.status.into(),
 			tx_hash: ticket.tx_hash,
+			intermediate_tx_hash: None,
 		}
 	}
 }

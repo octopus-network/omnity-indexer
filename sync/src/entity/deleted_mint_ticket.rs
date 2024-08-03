@@ -24,6 +24,7 @@ pub struct Model {
 	pub memo: Option<Vec<u8>>,
 	pub status: TicketStatus,
 	pub tx_hash: String,
+	pub intermediate_tx_hash: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -1,5 +1,7 @@
 use crate::entity::chain_meta;
 use crate::entity::chain_meta::Entity as ChainMeta;
+use crate::entity::deleted_mint_ticket;
+use crate::entity::deleted_mint_ticket::Entity as DeletedMintTicket;
 use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
 use crate::entity::ticket;
 use crate::entity::ticket::Entity as Ticket;
@@ -9,8 +11,6 @@ use crate::entity::token_meta;
 use crate::entity::token_meta::Entity as TokenMeta;
 use crate::entity::token_on_chain;
 use crate::entity::token_on_chain::Entity as TokenOnChain;
-use crate::entity::deleted_mint_ticket;
-use crate::entity::deleted_mint_ticket::Entity as DeletedMintTicket;
 use crate::TxHash;
 use log::info;
 use sea_orm::sea_query::OnConflict;
@@ -359,9 +359,9 @@ impl Mutation {
 
 				// if let Some(t) = Query::get_ticket_by_id(db, ticket.clone().ticket_id).await? {
 				// 	if t.ticket_seq == None && t.status == TicketStatus::Finalized{
-				// 		let model = Mutation::update_tikcet_seq(db, ticket.clone(), ticket.clone().ticket_seq).await?;
-				// 		info!("update ticket seq result {:?}", model.ticket_seq);
-				// 	}
+				// 		let model = Mutation::update_tikcet_seq(db, ticket.clone(),
+				// ticket.clone().ticket_seq).await?; 		info!("update ticket seq result {:?}",
+				// model.ticket_seq); 	}
 				// }
 			}
 		}
@@ -369,7 +369,10 @@ impl Mutation {
 		Ok(ticket::Model { ..ticket })
 	}
 
-	pub async fn save_deleted_mint_ticket(db: &DbConn, deleted_ticket: deleted_mint_ticket::Model) -> Result<deleted_mint_ticket::Model, DbErr> {
+	pub async fn save_deleted_mint_ticket(
+		db: &DbConn,
+		deleted_ticket: deleted_mint_ticket::Model,
+	) -> Result<deleted_mint_ticket::Model, DbErr> {
 		let active_model: deleted_mint_ticket::ActiveModel = deleted_ticket.clone().into();
 		let on_conflict = OnConflict::column(deleted_mint_ticket::Column::TicketId)
 			.do_nothing()
@@ -385,7 +388,10 @@ impl Mutation {
 			Err(_) => {
 				info!("the deleted mint ticket already exited, need to update ticket !");
 				let res = DeletedMintTicket::update(active_model)
-					.filter(deleted_mint_ticket::Column::TicketId.eq(&deleted_ticket.ticket_id.to_owned()))
+					.filter(
+						deleted_mint_ticket::Column::TicketId
+							.eq(&deleted_ticket.ticket_id.to_owned()),
+					)
 					.exec(db)
 					.await
 					.map(|ticket| ticket);

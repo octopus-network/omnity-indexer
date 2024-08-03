@@ -1,5 +1,5 @@
+use super::m20240507_055143_one::{TicketStatus, TicketType, TxAction};
 use sea_orm_migration::prelude::*;
-use super::m20240507_055143_one::{TicketType, TxAction, TicketStatus};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -20,38 +20,79 @@ impl MigrationTrait for Migration {
 							.primary_key(),
 					)
 					.col(ColumnDef::new(DeletedMintTicket::TicketSeq).big_unsigned())
-					.col(ColumnDef::new(DeletedMintTicket::TicketType).not_null().enumeration(
-						Alias::new("ticket_type"),
-						[TicketType::Normal, TicketType::Resubmit],
-					))
-					.col(ColumnDef::new(DeletedMintTicket::TicketTime).big_unsigned().not_null())
-					.col(ColumnDef::new(DeletedMintTicket::SrcChain).string().not_null())
-					.col(ColumnDef::new(DeletedMintTicket::DstChain).string().not_null())
-					.col(ColumnDef::new(DeletedMintTicket::Action).not_null().enumeration(
-						Alias::new("tx_action"),
-						[
-							TxAction::Transfer,
-							TxAction::Redeem,
-							TxAction::Burn,
-							TxAction::Mint,
-						],
-					))
+					.col(
+						ColumnDef::new(DeletedMintTicket::TicketType)
+							.not_null()
+							.enumeration(
+								Alias::new("ticket_type"),
+								[TicketType::Normal, TicketType::Resubmit],
+							),
+					)
+					.col(
+						ColumnDef::new(DeletedMintTicket::TicketTime)
+							.big_unsigned()
+							.not_null(),
+					)
+					.col(
+						ColumnDef::new(DeletedMintTicket::SrcChain)
+							.string()
+							.not_null(),
+					)
+					.col(
+						ColumnDef::new(DeletedMintTicket::DstChain)
+							.string()
+							.not_null(),
+					)
+					.col(
+						ColumnDef::new(DeletedMintTicket::Action)
+							.not_null()
+							.enumeration(
+								Alias::new("tx_action"),
+								[
+									TxAction::Transfer,
+									TxAction::Redeem,
+									TxAction::Burn,
+									TxAction::Mint,
+								],
+							),
+					)
 					.col(ColumnDef::new(DeletedMintTicket::Token).string().not_null())
-					.col(ColumnDef::new(DeletedMintTicket::Amount).big_unsigned().not_null())
+					.col(
+						ColumnDef::new(DeletedMintTicket::Amount)
+							.big_unsigned()
+							.not_null(),
+					)
 					.col(ColumnDef::new(DeletedMintTicket::Sender).string().null())
-					.col(ColumnDef::new(DeletedMintTicket::Receiver).string().not_null())
+					.col(
+						ColumnDef::new(DeletedMintTicket::Receiver)
+							.string()
+							.not_null(),
+					)
 					.col(ColumnDef::new(DeletedMintTicket::Memo).binary().null())
-					.col(ColumnDef::new(DeletedMintTicket::Status).not_null().enumeration(
-						Alias::new("ticket_status"),
-						[
-							TicketStatus::Unknown,
-							TicketStatus::WaitingForConfirmBySrc,
-							TicketStatus::WaitingForConfirmByDest,
-							TicketStatus::Finalized,
-							TicketStatus::Pending,
-						],
-					))
-					.col(ColumnDef::new(DeletedMintTicket::TxHash).string().not_null())
+					.col(
+						ColumnDef::new(DeletedMintTicket::Status)
+							.not_null()
+							.enumeration(
+								Alias::new("ticket_status"),
+								[
+									TicketStatus::Unknown,
+									TicketStatus::WaitingForConfirmBySrc,
+									TicketStatus::WaitingForConfirmByDest,
+									TicketStatus::Finalized,
+									TicketStatus::Pending,
+								],
+							),
+					)
+					.col(
+						ColumnDef::new(DeletedMintTicket::TxHash)
+							.string()
+							.not_null(),
+					)
+					.col(
+						ColumnDef::new(DeletedMintTicket::IntermediateTxHash)
+							.string()
+							.null(),
+					)
 					.to_owned(),
 			)
 			.await?;
@@ -98,4 +139,5 @@ enum DeletedMintTicket {
 	Memo,
 	Status,
 	TxHash,
+	IntermediateTxHash,
 }
