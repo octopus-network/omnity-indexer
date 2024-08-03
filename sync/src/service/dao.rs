@@ -172,6 +172,13 @@ impl Delete {
 			.exec(db)
 			.await
 	}
+
+	pub async fn remove_deleted_mint_tickets(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		DeletedMintTicket::delete_many()
+			.filter(Condition::all().add(deleted_mint_ticket::Column::TicketId.is_not_null()))
+			.exec(db)
+			.await
+	}
 }
 
 pub struct Mutation;
