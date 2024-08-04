@@ -487,7 +487,6 @@ impl From<ticket::Model> for deleted_mint_ticket::Model {
 			memo: ticket.memo,
 			status: ticket.status.into(),
 			tx_hash: ticket.tx_hash,
-			intermediate_tx_hash: None,
 		}
 	}
 }

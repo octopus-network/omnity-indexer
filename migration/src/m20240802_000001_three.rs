@@ -88,11 +88,6 @@ impl MigrationTrait for Migration {
 							.string()
 							.not_null(),
 					)
-					.col(
-						ColumnDef::new(DeletedMintTicket::IntermediateTxHash)
-							.string()
-							.null(),
-					)
 					.to_owned(),
 			)
 			.await?;
@@ -139,5 +134,4 @@ enum DeletedMintTicket {
 	Memo,
 	Status,
 	TxHash,
-	IntermediateTxHash,
 }
