@@ -140,7 +140,7 @@ async fn sync_ticket_status_from_evm_route(
 						db,
 						unconfirmed_ticket.clone(),
 						TicketStatus::Finalized,
-						tx_hash,
+						Some(tx_hash),
 					)
 					.await?;
 

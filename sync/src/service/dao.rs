@@ -11,7 +11,6 @@ use crate::entity::token_meta;
 use crate::entity::token_meta::Entity as TokenMeta;
 use crate::entity::token_on_chain;
 use crate::entity::token_on_chain::Entity as TokenOnChain;
-use crate::TxHash;
 use log::info;
 use sea_orm::sea_query::OnConflict;
 use sea_orm::*;
@@ -32,6 +31,11 @@ impl Query {
 		db: &DbConn,
 	) -> Result<Vec<token_on_chain::Model>, DbErr> {
 		TokenOnChain::find().all(db).await
+	}
+	pub async fn get_all_deleted_mint_ticket(
+		db: &DbConn,
+	) -> Result<Vec<deleted_mint_ticket::Model>, DbErr> {
+		DeletedMintTicket::find().all(db).await
 	}
 	pub async fn get_ticket_by_id(
 		db: &DbConn,
@@ -73,6 +77,20 @@ impl Query {
 					.add(ticket::Column::Status.ne(TicketStatus::Finalized))
 					// The ticket's destination chain matches `dest`
 					.add(ticket::Column::DstChain.eq(dest)),
+			)
+			.all(db)
+			.await
+	}
+
+	pub async fn get_unconfirmed_deleted_mint_tickets(
+		db: &DbConn,
+		dest: String,
+	) -> Result<Vec<deleted_mint_ticket::Model>, DbErr> {
+		DeletedMintTicket::find()
+			.filter(
+				Condition::all()
+					.add(deleted_mint_ticket::Column::Status.ne(TicketStatus::Finalized))
+					.add(deleted_mint_ticket::Column::DstChain.eq(dest)),
 			)
 			.all(db)
 			.await
@@ -406,9 +424,22 @@ impl Mutation {
 		db: &DbConn,
 		ticket: ticket::Model,
 		status: TicketStatus,
-		tx_hash: TxHash,
+		tx_hash: Option<String>,
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
+		active_model.status = Set(status.to_owned());
+		active_model.tx_hash = Set(tx_hash.to_owned());
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
+	}
+
+	pub async fn update_deleted_mint_ticket_status_n_txhash(
+		db: &DbConn,
+		ticket: deleted_mint_ticket::Model,
+		status: TicketStatus,
+		tx_hash: Option<String>,
+	) -> Result<deleted_mint_ticket::Model, DbErr> {
+		let mut active_model: deleted_mint_ticket::ActiveModel = ticket.into();
 		active_model.status = Set(status.to_owned());
 		active_model.tx_hash = Set(tx_hash.to_owned());
 		let ticket = active_model.update(db).await?;
@@ -444,6 +475,29 @@ impl Mutation {
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
 		active_model.ticket_seq = Set(Some(seq.to_owned().expect("no seq")));
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
+	}
+
+	pub async fn update_ticket_intermediate_tx_hash(
+		db: &DbConn,
+		ticket: ticket::Model,
+		intermediate_tx_hash: Option<String>,
+	) -> Result<ticket::Model, DbErr> {
+		let mut active_model: ticket::ActiveModel = ticket.into();
+		active_model.intermediate_tx_hash =
+			Set(Some(intermediate_tx_hash.to_owned().expect("no hash")));
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
+	}
+
+	pub async fn update_ticket_tx_hash(
+		db: &DbConn,
+		ticket: ticket::Model,
+		tx_hash: Option<String>,
+	) -> Result<ticket::Model, DbErr> {
+		let mut active_model: ticket::ActiveModel = ticket.into();
+		active_model.tx_hash = Set(Some(tx_hash.to_owned().expect("no hash")));
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}

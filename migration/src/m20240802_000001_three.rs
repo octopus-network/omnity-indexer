@@ -83,11 +83,7 @@ impl MigrationTrait for Migration {
 								],
 							),
 					)
-					.col(
-						ColumnDef::new(DeletedMintTicket::TxHash)
-							.string()
-							.not_null(),
-					)
+					.col(ColumnDef::new(DeletedMintTicket::TxHash).string().null())
 					.to_owned(),
 			)
 			.await?;

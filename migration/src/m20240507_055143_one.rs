@@ -161,7 +161,7 @@ impl MigrationTrait for Migration {
 							TicketStatus::Pending,
 						],
 					))
-					.col(ColumnDef::new(Ticket::TxHash).string().not_null())
+					.col(ColumnDef::new(Ticket::TxHash).string().null())
 					.col(ColumnDef::new(Ticket::IntermediateTxHash).string().null())
 					.to_owned(),
 			)

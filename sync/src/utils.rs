@@ -329,7 +329,7 @@ impl ReturnType {
 }
 pub enum Arg {
 	V(Vec<u8>),
-	T(types::Ticket),
+	// T(types::Ticket),
 	U(u64),
 	TI(TicketId),
 	CHA(Option<ChainId>),
@@ -353,7 +353,7 @@ impl Arg {
 		let encoded_args: Vec<u8> = match args_two {
 			Some(arg) => match self {
 				Arg::V(v) => Encode!(&v, &arg)?,
-				Arg::T(t) => Encode!(&t, &arg)?,
+				// Arg::T(t) => Encode!(&t, &arg)?,
 				Arg::U(u) => Encode!(&u, &arg)?,
 				Arg::TI(ti) => Encode!(&ti, &arg)?,
 				Arg::CHA(ci) => Encode!(&ci, &args_three, &arg, &FETCH_LIMIT)?,
@@ -361,7 +361,7 @@ impl Arg {
 			},
 			None => match self {
 				Arg::V(v) => Encode!(&v)?,
-				Arg::T(t) => Encode!(&t)?,
+				// Arg::T(t) => Encode!(&t)?,
 				Arg::U(u) => Encode!(&u)?,
 				Arg::TI(ti) => Encode!(&ti)?,
 				Arg::CHA(ci) => Encode!(&ci)?,
