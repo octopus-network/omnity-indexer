@@ -99,11 +99,11 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { icp::sync_all_icp_token_ledger_id_on_chain(&db_conn).await },
 	);
 
-	// let update_from_deleted_mint_ticket_from_hub = spawn_sync_task(
-	// 	db_conn.clone(),
-	// 	TICKET_SYNC_INTERVAL,
-	// 	|db_conn| async move { hub::update_from_deleted_mint_ticket(&db_conn).await },
-	// );
+	let update_from_deleted_mint_ticket_from_hub = spawn_sync_task(
+		db_conn.clone(),
+		TICKET_SYNC_INTERVAL,
+		|db_conn| async move { hub::update_from_deleted_mint_ticket(&db_conn).await },
+	);
 
 	let _ = tokio::join!(
 		remove_database,
@@ -117,6 +117,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		update_mint_tickets_from_btc,
 		update_sender_tickets_from_hub,
 		sync_all_token_ledger_id_on_chain_from_icp,
-		// update_from_deleted_mint_ticket_from_hub,
+		update_from_deleted_mint_ticket_from_hub,
 	);
 }
