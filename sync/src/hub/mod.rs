@@ -386,24 +386,3 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	})
 	.await
 }
-
-// // mocking
-// pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
-// 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-// 		let _ = Arg::T(ticket)
-// 			.query_method(
-// 				agent.clone(),
-// 				canister_id,
-// 				"send_ticket",
-// 				"Send tickets to hub...",
-// 				"Send ticket result: ",
-// 				None,
-// 				None,
-// 				"()",
-// 			)
-// 			.await?;
-
-// 		Ok(())
-// 	})
-// 	.await
-// }

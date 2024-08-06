@@ -16,68 +16,6 @@ pub type ChainId = String;
 pub type TokenId = String;
 pub type Timestamp = u64;
 pub type TicketId = String;
-// pub type TxHash = String;
-
-// #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
-// pub struct Chain {
-// 	pub chain_id: ChainId,
-// 	pub canister_id: String,
-// 	pub chain_type: ChainType,
-// 	pub chain_state: ChainState,
-// 	pub contract_address: Option<String>,
-// 	pub counterparties: Option<Vec<ChainId>>,
-// 	pub fee_token: Option<TokenId>,
-// }
-
-// // impl Chain {
-// // 	pub fn chain_name(&self) -> Option<&str> {
-// // 		match self.chain_type {
-// // 			ChainType::SettlementChain => Some(&self.chain_id),
-// // 			ChainType::ExecutionChain => self.chain_id.split('-').last(),
-// // 		}
-// // 	}
-// // }
-
-// impl From<Chain> for chain_meta::Model {
-// 	fn from(chain: Chain) -> Self {
-// 		chain_meta::Model {
-// 			chain_id: chain.chain_id,
-// 			canister_id: chain.canister_id,
-// 			chain_type: chain.chain_type.into(),
-// 			chain_state: chain.chain_state.into(),
-// 			contract_address: chain.contract_address,
-// 			counterparties: chain.counterparties.map(|cs| json!(cs)),
-// 			fee_token: chain.fee_token,
-// 		}
-// 	}
-// }
-
-// impl From<chain_meta::Model> for Chain {
-// 	fn from(model: chain_meta::Model) -> Self {
-// 		Chain {
-// 			chain_id: model.chain_id,
-// 			canister_id: model.canister_id,
-// 			chain_type: model.chain_type.into(),
-// 			chain_state: model.chain_state.into(),
-// 			contract_address: model.contract_address,
-// 			counterparties: model
-// 				.counterparties
-// 				.map(|cs| serde_json::from_value(cs).expect("Failed to parse counterparties")),
-// 			fee_token: model.fee_token,
-// 		}
-// 	}
-// }
-
-// impl core::fmt::Display for Chain {
-// 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-// 		write!(
-//             f,
-//             "\nchain id:{} \ncanister id:{} \nchain type:{:?} \nchain state:{:?} \ncontract
-// address:{:?} \ncounterparties:{:?} \nfee_token:{:?}",             self.chain_id,self.canister_id,
-// self.chain_type, self.chain_state, self.contract_address,self.counterparties,self.fee_token,
-//         )
-// 	}
-// }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ChainMeta {
@@ -99,20 +37,6 @@ impl core::fmt::Display for ChainMeta {
         )
 	}
 }
-
-// impl Into<Chain> for ChainMeta {
-// 	fn into(self) -> Chain {
-// 		Chain {
-// 			chain_id: self.chain_id,
-// 			canister_id: self.canister_id,
-// 			chain_type: self.chain_type,
-// 			chain_state: self.chain_state,
-// 			contract_address: self.contract_address,
-// 			counterparties: self.counterparties,
-// 			fee_token: self.fee_token,
-// 		}
-// 	}
-// }
 
 impl From<ChainMeta> for chain_meta::Model {
 	fn from(chain: ChainMeta) -> Self {
@@ -144,32 +68,6 @@ impl From<chain_meta::Model> for ChainMeta {
 	}
 }
 
-// #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
-// pub struct Token {
-// 	pub token_id: TokenId,
-// 	pub name: String,
-// 	pub symbol: String,
-// 	pub decimals: u8,
-// 	pub icon: Option<String>,
-// 	pub metadata: HashMap<String, String>,
-// }
-
-// impl Token {
-// 	/// return (settlmentchain,token protocol, token symbol)
-// 	pub fn token_id_info(&self) -> Vec<&str> {
-// 		self.token_id.split('-').collect()
-// 	}
-// }
-// impl core::fmt::Display for Token {
-// 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-// 		write!(
-// 			f,
-// 			"\ttoken id:{} \ntoken name:{} \nsymbol:{:?} \ndecimals:{} \nicon:{:?} \nmetadata:{:?}",
-// 			self.token_id, self.name, self.symbol, self.decimals, self.icon, self.metadata
-// 		)
-// 	}
-// }
-
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct TokenMeta {
 	pub token_id: TokenId,
@@ -191,19 +89,6 @@ impl core::fmt::Display for TokenMeta {
         )
 	}
 }
-
-// impl Into<Token> for TokenMeta {
-// 	fn into(self) -> Token {
-// 		Token {
-// 			token_id: self.token_id,
-// 			name: self.name,
-// 			symbol: self.symbol,
-// 			decimals: self.decimals,
-// 			icon: self.icon,
-// 			metadata: self.metadata,
-// 		}
-// 	}
-// }
 
 impl From<TokenMeta> for token_meta::Model {
 	fn from(token_meta: TokenMeta) -> Self {
@@ -398,62 +283,7 @@ pub struct OmnityTicket {
 	pub memo: Option<Vec<u8>>,
 }
 
-// #[derive(
-// 	CandidType, Deserialize, Serialize, Default, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash,
-// )]
-// pub struct Ticket {
-// 	pub ticket_id: TicketId,
-// 	pub ticket_seq: Option<u64>,
-// 	pub ticket_type: TicketType,
-// 	pub ticket_time: Timestamp,
-// 	pub src_chain: ChainId,
-// 	pub dst_chain: ChainId,
-// 	pub action: TxAction,
-// 	pub token: TokenId,
-// 	pub amount: String,
-// 	pub sender: Option<Account>,
-// 	pub receiver: Account,
-// 	pub memo: Option<Vec<u8>>,
-// 	pub status: TicketStatus,
-// 	pub tx_hash: Option<TxHash>,
-// }
-
-// Ticket
 impl ticket::Model {
-	// pub fn new(
-	// 	ticket_id: TicketId,
-	// 	ticket_seq: Option<u64>,
-	// 	ticket_type: TicketType,
-	// 	ticket_time: Timestamp,
-	// 	src_chain: ChainId,
-	// 	dst_chain: ChainId,
-	// 	action: TxAction,
-	// 	token: TokenId,
-	// 	amount: String,
-	// 	sender: Option<Account>,
-	// 	receiver: Account,
-	// 	memo: Option<Vec<u8>>,
-	// 	status: TicketStatus,
-	// ) -> Self {
-	// 	Self {
-	// 		ticket_id,
-	// 		ticket_seq,
-	// 		ticket_type,
-	// 		ticket_time,
-	// 		src_chain,
-	// 		dst_chain,
-	// 		action,
-	// 		token,
-	// 		amount,
-	// 		sender,
-	// 		receiver,
-	// 		memo,
-	// 		status,
-	// 		tx_hash: None,
-	// 		intermediate_tx_hash: None,
-	// 	}
-	// }
-
 	pub fn from_omnity_ticket(seq: u64, omnity_ticket: OmnityTicket) -> Self {
 		Self {
 			ticket_id: omnity_ticket.ticket_id.to_owned(),
@@ -495,54 +325,11 @@ impl ticket::Model {
 	}
 }
 
-// impl From<OmnityTicket> for ticket::Model {
-// 	fn from(ticket: OmnityTicket) -> Self {
-// 		ticket::Model {
-// 			ticket_id: ticket.ticket_id,
-// 			ticket_seq: ticket.ticket_seq.map(|seq| seq as i64),
-// 			ticket_type: ticket.ticket_type.into(),
-// 			ticket_time: ticket.ticket_time as i64,
-// 			src_chain: ticket.src_chain,
-// 			dst_chain: ticket.dst_chain,
-// 			action: ticket.action.into(),
-// 			token: ticket.token,
-// 			amount: ticket.amount.parse::<i64>().unwrap_or(0),
-// 			sender: ticket.sender,
-// 			receiver: ticket.receiver,
-// 			memo: ticket.memo,
-// 			status: ticket.status.into(),
-// 			tx_hash: None,
-// 			intermediate_tx_hash: None,
-// 		}
-// 	}
-// }
-
-// impl From<ticket::Model> for Ticket {
-// 	fn from(model: ticket::Model) -> Self {
-// 		Ticket {
-// 			ticket_id: model.ticket_id,
-// 			ticket_seq: model.ticket_seq.map(|seq| seq as u64),
-// 			ticket_type: model.ticket_type.into(),
-// 			ticket_time: model.ticket_time as u64,
-// 			src_chain: model.src_chain,
-// 			dst_chain: model.dst_chain,
-// 			action: model.action.into(),
-// 			token: model.token,
-// 			amount: model.amount.to_string(),
-// 			sender: model.sender,
-// 			receiver: model.receiver,
-// 			memo: model.memo,
-// 			status: model.status.into(),
-// 			tx_hash: model.tx_hash,
-// 		}
-// 	}
-// }
-
 impl core::fmt::Display for ticket::Model {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
 		write!(
             f,
-            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?} \nstatus:{:?} \ntx hash:{:?}",
+            "\nticket id:{} \nticket seq:{:?} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?} \nstatus:{:?} \ntx hash:{:?} \nintermediate tx hash:{:?}",
             self.ticket_id,
             self.ticket_seq,
             self.ticket_type,
@@ -557,6 +344,7 @@ impl core::fmt::Display for ticket::Model {
             self.memo,
             self.status,
 			self.tx_hash,
+			self.intermediate_tx_hash,
         )
 	}
 }

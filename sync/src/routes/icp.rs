@@ -1,6 +1,6 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
-use crate::{token_ledger_id_on_chain, types::TicketId, with_omnity_canister, Arg};
+use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -13,33 +13,6 @@ pub enum MintTokenStatus {
 	Finalized { block_index: u64 },
 	Unknown,
 }
-
-// //This function only used for mock test
-// pub async fn mock_finalized_mint_token(
-// 	ticket_id: TicketId,
-// 	block_index: u64,
-// ) -> Result<(), Box<dyn Error>> {
-// 	with_omnity_canister(
-// 		"OMNITY_ROUTES_ICP_CANISTER_ID",
-// 		|agent, canister_id| async move {
-// 			let _ = Arg::TI(ticket_id)
-// 				.query_method(
-// 					agent.clone(),
-// 					canister_id,
-// 					"mock_finalized_mint_token",
-// 					"Mock finalized mint token on icp route ...",
-// 					"Mock finalized mint token on icp route ret: ",
-// 					Some(block_index),
-// 					None,
-// 					"()",
-// 				)
-// 				.await?;
-
-// 			Ok(())
-// 		},
-// 	)
-// 	.await
-// }
 
 pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(
