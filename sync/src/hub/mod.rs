@@ -85,7 +85,6 @@ pub async fn update_from_deleted_mint_ticket(db: &DbConn) -> Result<(), Box<dyn 
 				}
 			}
 		}
-		// Update sender/seq and remove intermediate_tx_hash field only if they are needed
 	}
 	Ok(())
 }

@@ -1,6 +1,6 @@
 use crate::graphql::terms_amount::query_terms_amount;
 use crate::service::{Delete, Mutation, Query};
-use crate::{with_omnity_canister, Arg};
+use crate::{with_omnity_canister, Arg, };
 use candid::CandidType;
 use ic_btc_interface::Txid;
 use log::info;
@@ -11,6 +11,7 @@ use std::{
 	fmt::{self, Display, Formatter},
 	str::FromStr,
 };
+use crate::routes::icp::ROUTE_CHAIN_ID;
 
 pub const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
 
@@ -191,7 +192,15 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 		if let Some(ticket_should_be_removed) =
 			Query::get_ticket_by_id(db, mint_ticket.clone().tx_hash.unwrap()).await?
 		{
+			// update the ticket_should_be_removed status, then move the mint ticket tx_hash to the
+			// intermedieate tx_hash and then the tx_hash to mint ticket tx_hash
+			match ticket_should_be_removed.clone().dst_chain{
+				ROUTE_CHAIN_ID => {},
+				_ => {},
+			}
+
 			// Save the ticket that contains the tx_hash as the ticket_id to DeletedMintTicket
+			// Update sender/seq only if they are needed
 			let _ = Mutation::save_deleted_mint_ticket(db, ticket_should_be_removed.clone().into())
 				.await?;
 
