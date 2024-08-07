@@ -1,6 +1,4 @@
 use crate::graphql::terms_amount::query_terms_amount;
-use crate::routes::evm::sync_ticket_status_from_evm_route;
-use crate::routes::icp::{ticket_status_from_icp_route, ROUTE_CHAIN_ID};
 use crate::service::{Delete, Mutation, Query};
 use crate::{with_omnity_canister, Arg};
 use candid::CandidType;
@@ -187,75 +185,60 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 		}
 	}
 
+	// let updated_mint_tickets = Query::get_updated_mint_tickets(db).await?;
+	// for mint_ticket in updated_mint_tickets {
+	// 	// Retrieval the tx_hash from each mint tickets
+	// 	if let Some(ticket_should_be_removed) =
+	// 		Query::get_ticket_by_id(db, mint_ticket.clone().tx_hash.unwrap()).await?
+	// 	{
+	// 		println!("Tingggggggg222");
+	// 		println!("{:?}", ticket_should_be_removed.clone().ticket_id);
+	// 		// update the ticket_should_be_removed status, then move the mint ticket tx_hash to the
+	// 		// intermedieate tx_hash and then the tx_hash to mint ticket tx_hash
+	// 		if let Some(tx_hash) = ticket_should_be_removed.clone().tx_hash {
+	// 			// fetch the tx_hash from the mint ticket and put it in intermediate_tx_hash
+	// 			let intermediate_tx_hash = mint_ticket.clone().tx_hash;
+	// 			let _ = Mutation::update_ticket_intermediate_tx_hash(
+	// 				db,
+	// 				mint_ticket.clone(),
+	// 				intermediate_tx_hash,
+	// 			)
+	// 			.await?;
+	// 			// put the hash to mint ticket tx_hash
+	// 			let _ =
+	// 				Mutation::update_ticket_tx_hash(db, mint_ticket, Some(tx_hash.clone())).await?;
+
+	// 			// Save the ticket that contains the tx_hash as the ticket_id to DeletedMintTicket
+	// 			// Update sender/seq only if they are needed
+	// 			let _ =
+	// 				Mutation::save_deleted_mint_ticket(db, ticket_should_be_removed.clone().into())
+	// 					.await?;
+
+	// 			// Remove the ticket that contains the tx_hash as the ticket_id
+	// 			let row =
+	// 				Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id)
+	// 					.await?;
+	// 			info!(
+	// 				"Ticket id({:?}) has been removed and {:?} row has been deleted",
+	// 				ticket_should_be_removed.clone().ticket_id,
+	// 				row
+	// 			);
+	// 		}
+	// 	}
+	// }
+	Ok(())
+}
+
+pub async fn update_mint_tickets_2(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	println!("Tingggggggg111");
 	let updated_mint_tickets = Query::get_updated_mint_tickets(db).await?;
 	for mint_ticket in updated_mint_tickets {
 		// Retrieval the tx_hash from each mint tickets
 		if let Some(ticket_should_be_removed) =
 			Query::get_ticket_by_id(db, mint_ticket.clone().tx_hash.unwrap()).await?
 		{
-			// update the ticket_should_be_removed status, then move the mint ticket tx_hash to the
-			// intermedieate tx_hash and then the tx_hash to mint ticket tx_hash
-			match ticket_should_be_removed.clone().dst_chain.as_str() {
-				ROUTE_CHAIN_ID => {
-					let _ =
-						ticket_status_from_icp_route(db, ticket_should_be_removed.clone()).await?;
-				}
-				"BEVM_CHAIN_ID" => {
-					let _ = sync_ticket_status_from_evm_route(
-						db,
-						"BEVM_CHAIN_ID",
-						"bevm".to_owned(),
-						ticket_should_be_removed.clone(),
-					)
-					.await?;
-				}
-				"BITLAYER_CHAIN_ID" => {
-					let _ = sync_ticket_status_from_evm_route(
-						db,
-						"BITLAYER_CHAIN_ID",
-						"Bitlayer".to_owned(),
-						ticket_should_be_removed.clone(),
-					)
-					.await?;
-				}
-				"XLAYER_CHAIN_ID" => {
-					let _ = sync_ticket_status_from_evm_route(
-						db,
-						"XLAYER_CHAIN_ID",
-						"X Layer".to_owned(),
-						ticket_should_be_removed.clone(),
-					)
-					.await?;
-				}
-				"BSQUARE_CHAIN_ID" => {
-					let _ = sync_ticket_status_from_evm_route(
-						db,
-						"BSQUARE_CHAIN_ID",
-						"B² Network".to_owned(),
-						ticket_should_be_removed.clone(),
-					)
-					.await?;
-				}
-				"MERLIN_CHAIN_ID" => {
-					let _ = sync_ticket_status_from_evm_route(
-						db,
-						"MERLIN_CHAIN_ID",
-						"Merlin".to_owned(),
-						ticket_should_be_removed.clone(),
-					)
-					.await?;
-				}
-				"BOB_CHAIN_ID" => {
-					let _ = sync_ticket_status_from_evm_route(
-						db,
-						"BOB_CHAIN_ID",
-						"Bob".to_owned(),
-						ticket_should_be_removed.clone(),
-					)
-					.await?;
-				}
-				_ => {}
-			}
+			println!("Tingggggggg222");
+			println!("{:?}", ticket_should_be_removed.clone().ticket_id);
 
 			if let Some(tx_hash) = ticket_should_be_removed.clone().tx_hash {
 				// fetch the tx_hash from the mint ticket and put it in intermediate_tx_hash
@@ -269,21 +252,23 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				// put the hash to mint ticket tx_hash
 				let _ =
 					Mutation::update_ticket_tx_hash(db, mint_ticket, Some(tx_hash.clone())).await?;
+
+				// Save the ticket that contains the tx_hash as the ticket_id to DeletedMintTicket
+				// Update sender/seq only if they are needed
+				let _ =
+					Mutation::save_deleted_mint_ticket(db, ticket_should_be_removed.clone().into())
+						.await?;
+
+				// Remove the ticket that contains the tx_hash as the ticket_id
+				let row =
+					Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id)
+						.await?;
+				info!(
+					"Ticket id({:?}) has been removed and {:?} row has been deleted",
+					ticket_should_be_removed.clone().ticket_id,
+					row
+				);
 			}
-
-			// Save the ticket that contains the tx_hash as the ticket_id to DeletedMintTicket
-			// Update sender/seq only if they are needed
-			let _ = Mutation::save_deleted_mint_ticket(db, ticket_should_be_removed.clone().into())
-				.await?;
-
-			// Remove the ticket that contains the tx_hash as the ticket_id
-			let row =
-				Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await?;
-			info!(
-				"Ticket id({:?}) has been removed and {:?} row has been deleted",
-				ticket_should_be_removed.clone().ticket_id,
-				row
-			);
 		}
 	}
 	Ok(())
