@@ -49,6 +49,10 @@ impl EvmRoutes {
 				canister: "BOB_CHAIN_ID",
 				chain: "Bob".to_owned(),
 			},
+			EvmRoute {
+				canister: "ROOTSTOCK_CHAIN_ID",
+				chain: "RootStock".to_owned(),
+			},
 		] }
 	}
 }
