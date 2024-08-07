@@ -1,5 +1,4 @@
 use crate::{
-	routes::icp::{MintTokenStatus, ROUTE_CHAIN_ID},
 	service::{Mutation, Query},
 	ticket, with_omnity_canister, Arg, ChainId, TokenId,
 };
@@ -12,82 +11,6 @@ pub const CHAIN_SYNC_INTERVAL: u64 = 300;
 pub const TOKEN_SYNC_INTERVAL: u64 = 300;
 pub const TICKET_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 120;
-
-pub async fn update_from_deleted_mint_ticket(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	// Fetch the deleted mint tickets
-	let deleted_tickets = Query::get_all_deleted_mint_ticket(db).await?;
-
-	for ticket in deleted_tickets {
-		// ICP side // todo: EVM side(use match)
-		if ticket.dst_chain == ROUTE_CHAIN_ID {
-			let _ = with_omnity_canister(
-				"OMNITY_ROUTES_ICP_CANISTER_ID",
-				|agent, canister_id| async move {
-					let unconfirmed_tickets =
-						Query::get_unconfirmed_deleted_mint_tickets(db, ROUTE_CHAIN_ID.to_owned())
-							.await?;
-
-					for unconfirmed_ticket in unconfirmed_tickets {
-						let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-							.query_method(
-								agent.clone(),
-								canister_id,
-								"mint_token_status",
-								"Syncing mint token status in deleted mint ticket from icp route ...",
-								"Mint token status in deleted mint ticket from icp route result: ",
-								None,
-								None,
-								"MintTokenStatus",
-							)
-							.await?
-							.convert_to_mint_token_status();
-
-						if let MintTokenStatus::Finalized { block_index } = mint_token_status {
-							let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
-								db,
-								ROUTE_CHAIN_ID.to_owned(),
-								unconfirmed_ticket.clone().token,
-							)
-							.await?
-							{
-								Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
-								None => block_index.to_string(),
-							};
-
-							let _ = Mutation::update_deleted_mint_ticket_status_n_txhash(
-								db,
-								unconfirmed_ticket.clone(),
-								crate::entity::sea_orm_active_enums::TicketStatus::Finalized,
-								Some(tx_hash),
-							)
-							.await?;
-						}
-					}
-					Ok(())
-				},
-			)
-			.await?;
-
-			if let Some(tx_hash) = ticket.tx_hash {
-				let updated_mint_tickets = Query::get_updated_mint_tickets(db).await?;
-				for mint_ticket in updated_mint_tickets {
-					// fetch the tx_hash from the mint ticket and put it in intermediate_tx_hash
-					let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-					let _ = Mutation::update_ticket_intermediate_tx_hash(
-						db,
-						mint_ticket.clone(),
-						intermediate_tx_hash,
-					)
-					.await?;
-					// put the hash to mint ticket tx_hash
-					let _ = Mutation::update_ticket_tx_hash(db, mint_ticket, Some(tx_hash.clone()))
-						.await?;
-				}
-			}
-		}
-	}
-	Ok(())
-}
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender

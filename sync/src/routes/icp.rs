@@ -75,7 +75,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 	Ok(())
 }
 
-async fn ticket_status_from_icp_route(
+pub async fn ticket_status_from_icp_route(
 	db: &DbConn,
 	ticket: ticket::Model,
 ) -> Result<(), Box<dyn Error>> {

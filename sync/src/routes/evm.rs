@@ -143,7 +143,7 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 	.await
 }
 
-async fn sync_ticket_status_from_evm_route(
+pub async fn sync_ticket_status_from_evm_route(
 	db: &DbConn,
 	canister: &str,
 	chain: ChainId,
