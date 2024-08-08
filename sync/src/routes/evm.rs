@@ -19,41 +19,43 @@ pub enum MintEvmTokenStatus {
 }
 
 pub struct EvmRoutes {
-	routes: Vec<EvmRoute>
+	routes: Vec<EvmRoute>,
 }
 
 impl EvmRoutes {
-	pub fn new() -> Self{
-		Self { routes: vec![
-			EvmRoute {
-				canister: "BEVM_CHAIN_ID",
-				chain: "bevm".to_owned(),
-			},
-			EvmRoute {
-				canister: "BITLAYER_CHAIN_ID",
-				chain: "Bitlayer".to_owned(),
-			},
-			EvmRoute {
-				canister: "XLAYER_CHAIN_ID",
-				chain: "X Layer".to_owned(),
-			},
-			EvmRoute {
-				canister: "BSQUARE_CHAIN_ID",
-				chain: "B² Network".to_owned(),
-			},
-			EvmRoute {
-				canister: "MERLIN_CHAIN_ID",
-				chain: "Merlin".to_owned(),
-			},
-			EvmRoute {
-				canister: "BOB_CHAIN_ID",
-				chain: "Bob".to_owned(),
-			},
-			EvmRoute {
-				canister: "ROOTSTOCK_CHAIN_ID",
-				chain: "RootStock".to_owned(),
-			},
-		] }
+	pub fn new() -> Self {
+		Self {
+			routes: vec![
+				EvmRoute {
+					canister: "BEVM_CHAIN_ID",
+					chain: "bevm".to_owned(),
+				},
+				EvmRoute {
+					canister: "BITLAYER_CHAIN_ID",
+					chain: "Bitlayer".to_owned(),
+				},
+				EvmRoute {
+					canister: "XLAYER_CHAIN_ID",
+					chain: "X Layer".to_owned(),
+				},
+				EvmRoute {
+					canister: "BSQUARE_CHAIN_ID",
+					chain: "B² Network".to_owned(),
+				},
+				EvmRoute {
+					canister: "MERLIN_CHAIN_ID",
+					chain: "Merlin".to_owned(),
+				},
+				EvmRoute {
+					canister: "BOB_CHAIN_ID",
+					chain: "Bob".to_owned(),
+				},
+				EvmRoute {
+					canister: "ROOTSTOCK_CHAIN_ID",
+					chain: "RootStock".to_owned(),
+				},
+			],
+		}
 	}
 }
 
