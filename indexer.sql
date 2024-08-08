@@ -43,6 +43,23 @@ CREATE TABLE public.chain_meta (
     fee_token character varying
 );
 
+CREATE TABLE public.deleted_mint_ticket (
+    ticket_id text NOT NULL,
+    ticket_seq bigint,
+    ticket_type public.ticket_type NOT NULL,
+    ticket_time bigint NOT NULL,
+    src_chain character varying NOT NULL,
+    dst_chain character varying NOT NULL,
+    action public.tx_action NOT NULL,
+    token character varying NOT NULL,
+    amount bigint NOT NULL,
+    sender character varying,
+    receiver character varying NOT NULL,
+    memo bytea,
+    status public.ticket_status NOT NULL,
+    tx_hash character varying
+);
+
 CREATE TABLE public.seaql_migrations (
     version character varying NOT NULL,
     applied_at bigint NOT NULL
@@ -62,7 +79,8 @@ CREATE TABLE public.ticket (
     receiver character varying NOT NULL,
     memo bytea,
     status public.ticket_status NOT NULL,
-    tx_hash character varying NOT NULL
+    tx_hash character varying,
+    intermediate_tx_hash character varying
 );
 
 CREATE TABLE public.token_ledger_id_on_chain (
@@ -91,6 +109,8 @@ CREATE TABLE public.token_on_chain (
 ALTER TABLE ONLY public.chain_meta
     ADD CONSTRAINT chain_meta_pkey PRIMARY KEY (chain_id);
 
+ALTER TABLE ONLY public.deleted_mint_ticket
+    ADD CONSTRAINT deleted_mint_ticket_pkey PRIMARY KEY (ticket_id);
 
 ALTER TABLE ONLY public.token_on_chain
     ADD CONSTRAINT pk_chain_token PRIMARY KEY (chain_id, token_id);
@@ -111,6 +131,7 @@ ALTER TABLE ONLY public.ticket
 ALTER TABLE ONLY public.token_meta
     ADD CONSTRAINT token_meta_pkey PRIMARY KEY (token_id);
 
+CREATE INDEX "idx-mint-ticket_seq" ON public.deleted_mint_ticket USING btree (ticket_seq);
 
 CREATE INDEX "idx-ticket_seq" ON public.ticket USING btree (ticket_seq);
 

@@ -1,10 +1,7 @@
 use crate::graphql::terms_amount::query_terms_amount;
 use crate::service::{Delete, Mutation, Query};
-use crate::{
-	types::{Ticket, TicketId, TicketStatus, TicketType, TxAction},
-	with_omnity_canister, Arg,
-};
-use candid::{CandidType, Decode, Encode};
+use crate::{with_omnity_canister, Arg};
+use candid::CandidType;
 use ic_btc_interface::Txid;
 use log::info;
 use sea_orm::DbConn;
@@ -16,7 +13,6 @@ use std::{
 };
 
 pub const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
-const FETCH_LIMIT: u64 = 50;
 
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GenTicketRequest {
@@ -115,148 +111,6 @@ pub enum FinalizedStatus {
 	Confirmed(Txid),
 }
 
-// mock: generate ticket from customs
-pub async fn gen_bitcoin_ticket(args: GenerateTicketArgs) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister(
-		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
-		|agent, canister_id| async move {
-			info!(
-				"{:?} Generate ticket on bitcion customs ... ",
-				chrono::Utc::now()
-			);
-			let args: Vec<u8> = Encode!(&args)?;
-			let ret = agent
-				.update(&canister_id, "generate_ticket")
-				.with_arg(args)
-				.call_and_wait()
-				.await?;
-			info!(" Mock generate ticket on bitcion customs ret: {:?}  ", ret);
-
-			Ok(())
-		},
-	)
-	.await
-}
-
-// mock: finalizd release token
-pub async fn mock_finalized_ticket(ticket_id: TicketId) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister(
-		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
-		|agent, canister_id| async move {
-			info!(
-				"{:?} Mock finalized ticket on bitcion customs ... ",
-				chrono::Utc::now()
-			);
-			let args: Vec<u8> = Encode!(&ticket_id)?;
-			agent
-				.update(&canister_id, "mock_finalized_ticket")
-				.with_arg(args)
-				.call()
-				.await?;
-
-			Ok(())
-		},
-	)
-	.await
-}
-// mock: finalizd release token
-pub async fn mock_finalized_release_token(
-	ticket_id: TicketId,
-	status: FinalizedStatus,
-) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister(
-		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
-		|agent, canister_id| async move {
-			info!(
-				"{:?} Mock finalized release token on bitcion customs ... ",
-				chrono::Utc::now()
-			);
-			let args: Vec<u8> = Encode!(&ticket_id, &status)?;
-			let ret = agent
-				.update(&canister_id, "mock_finalized_release_token")
-				.with_arg(args)
-				.call_and_wait()
-				.await?;
-			let ret = Decode!(&ret, ())?;
-			info!("Mock finalized release token ret: {:?}  ", ret);
-
-			Ok(())
-		},
-	)
-	.await
-}
-
-// mock: sync tickets that transfered from customs to routes
-pub async fn sync_pending_tickets_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister(
-		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
-		|agent, canister_id| async move {
-			let ticket_size = Arg::query_method(
-				Arg::V(Vec::<u8>::new()),
-				agent.clone(),
-				canister_id,
-				"get_pending_gen_ticket_size",
-				"Syncing tickets from bitcoin custom ...",
-				"Pending ticket size: ",
-				None,
-				None,
-				"u64",
-			)
-			.await?
-			.convert_to_u64();
-
-			let mut offset = 0u64;
-			let limit = FETCH_LIMIT;
-			while offset < ticket_size {
-				let pending_tickets = Arg::U(offset)
-					.query_method(
-						agent.clone(),
-						canister_id,
-						"get_pending_gen_tickets",
-						" ",
-						" ",
-						Some(limit),
-						None,
-						"Vec<GenTicketRequest>",
-					)
-					.await?
-					.convert_to_vec_gen_ticket_request();
-
-				info!(
-					"Need to sync pending tickets {}: {:?}",
-					offset, pending_tickets
-				);
-				for pending_ticket in pending_tickets.iter() {
-					let ticket_modle = Ticket::new(
-						pending_ticket.txid.to_string(),
-						None,
-						TicketType::Normal,
-						pending_ticket.received_at,
-						CUSTOMS_CHAIN_ID.to_owned(),
-						pending_ticket.target_chain_id.to_owned(),
-						TxAction::Transfer,
-						pending_ticket.token_id.to_string(),
-						pending_ticket.amount.to_string(),
-						None,
-						pending_ticket.receiver.to_owned(),
-						None,
-						TicketStatus::WaitingForConfirmByDest,
-						" ".to_string(),
-					)
-					.into();
-					Mutation::save_ticket(db, ticket_modle).await?;
-				}
-				offset += pending_tickets.len() as u64;
-				if pending_tickets.is_empty() {
-					break;
-				}
-			}
-			Ok(())
-		},
-	)
-	.await
-}
-
 // sync tickets status that transfered from routes to customs
 pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(
@@ -292,7 +146,7 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 						db,
 						unconfirmed_ticket.clone(),
 						crate::entity::sea_orm_active_enums::TicketStatus::Finalized,
-						tx_hash,
+						Some(tx_hash),
 					)
 					.await?;
 
@@ -335,16 +189,56 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	for mint_ticket in updated_mint_tickets {
 		// Retrieval the tx_hash from each mint tickets
 		if let Some(ticket_should_be_removed) =
-			Query::get_ticket_by_id(db, mint_ticket.clone().tx_hash).await?
+			Query::get_ticket_by_id(db, mint_ticket.clone().tx_hash.unwrap()).await?
 		{
-			// Remove the ticket that contains the tx_hash as the ticket_id
-			let row =
-				Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await?;
-			info!(
-				"Ticket id({:?}) has been removed and {:?} row has been deleted",
-				ticket_should_be_removed.clone().ticket_id,
-				row
-			);
+			println!("Tingggggggg222");
+			println!("{:?}", ticket_should_be_removed.clone().ticket_id);
+
+			// update the ticket_should_be_removed status, then move the mint ticket tx_hash to the
+			// intermedieate tx_hash and then the tx_hash to mint ticket tx_hash
+			match ticket_should_be_removed.clone().tx_hash {
+				Some(tx_hash) => {
+					// fetch the tx_hash from the mint ticket and put it in intermediate_tx_hash
+					let intermediate_tx_hash = mint_ticket.clone().tx_hash;
+					let _ = Mutation::update_ticket_intermediate_tx_hash(
+						db,
+						mint_ticket.clone(),
+						intermediate_tx_hash,
+					)
+					.await?;
+					// put the hash to mint ticket tx_hash
+					let _ = Mutation::update_ticket_tx_hash(db, mint_ticket, Some(tx_hash.clone()))
+						.await?;
+
+					// Save the ticket that contains the tx_hash as the ticket_id to
+					// DeletedMintTicket Update sender/seq only if they are needed
+					let _ = Mutation::save_deleted_mint_ticket(
+						db,
+						ticket_should_be_removed.clone().into(),
+					)
+					.await?;
+
+					// Remove the ticket that contains the tx_hash as the ticket_id
+					let row =
+						Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id)
+							.await?;
+					info!(
+						"Ticket id({:?}) has been removed and {:?} row has been deleted",
+						ticket_should_be_removed.clone().ticket_id,
+						row
+					);
+				}
+				None => {
+					let intermediate_tx_hash = mint_ticket.clone().tx_hash;
+					let _ = Mutation::update_ticket_intermediate_tx_hash(
+						db,
+						mint_ticket.clone(),
+						intermediate_tx_hash,
+					)
+					.await?;
+					let _ = Mutation::update_ticket_tx_hash(db, mint_ticket, None).await?;
+				}
+			}
 		}
 	}
 	Ok(())

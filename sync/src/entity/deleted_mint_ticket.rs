@@ -6,7 +6,7 @@ use super::sea_orm_active_enums::TxAction;
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "ticket")]
+#[sea_orm(table_name = "deleted_mint_ticket")]
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
 	pub ticket_id: String,
@@ -24,7 +24,6 @@ pub struct Model {
 	pub memo: Option<Vec<u8>>,
 	pub status: TicketStatus,
 	pub tx_hash: Option<String>,
-	pub intermediate_tx_hash: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

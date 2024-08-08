@@ -1,6 +1,6 @@
-use crate::entity::sea_orm_active_enums::TicketStatus;
+use crate::entity::{sea_orm_active_enums::TicketStatus, ticket};
 use crate::service::{Mutation, Query};
-use crate::{token_ledger_id_on_chain, types::TicketId, with_omnity_canister, Arg};
+use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -12,33 +12,6 @@ pub const ROUTE_CHAIN_ID: &str = "eICP";
 pub enum MintTokenStatus {
 	Finalized { block_index: u64 },
 	Unknown,
-}
-
-//This function only used for mock test
-pub async fn mock_finalized_mint_token(
-	ticket_id: TicketId,
-	block_index: u64,
-) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister(
-		"OMNITY_ROUTES_ICP_CANISTER_ID",
-		|agent, canister_id| async move {
-			let _ = Arg::TI(ticket_id)
-				.query_method(
-					agent.clone(),
-					canister_id,
-					"mock_finalized_mint_token",
-					"Mock finalized mint token on icp route ...",
-					"Mock finalized mint token on icp route ret: ",
-					Some(block_index),
-					None,
-					"()",
-				)
-				.await?;
-
-			Ok(())
-		},
-	)
-	.await
 }
 
 pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Box<dyn Error>> {
@@ -92,63 +65,70 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 }
 
 pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	// get ticket that dest is icp route and status is waiting for comformation by dst
+	let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await?;
+
+	// get mint_token_status by ticket id
+	for unconfirmed_ticket in unconfirmed_tickets {
+		let _ = ticket_status_from_icp_route(db, unconfirmed_ticket).await?;
+	}
+	Ok(())
+}
+
+pub async fn ticket_status_from_icp_route(
+	db: &DbConn,
+	ticket: ticket::Model,
+) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			//1: get ticket that dest is icp route and status is waiting for comformation by dst
-			let unconfirmed_tickets =
-				Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await?;
+			let mint_token_status = Arg::TI(ticket.ticket_id.clone())
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"mint_token_status",
+					"Syncing mint token status from icp route ...",
+					"Mint token status from icp route result: ",
+					None,
+					None,
+					"MintTokenStatus",
+				)
+				.await?
+				.convert_to_mint_token_status();
 
-			//2: get mint_token_status by ticket id
-			for unconfirmed_ticket in unconfirmed_tickets {
-				let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-					.query_method(
-						agent.clone(),
-						canister_id,
-						"mint_token_status",
-						"Syncing mint token status from icp route ...",
-						"Mint token status from icp route result: ",
-						None,
-						None,
-						"MintTokenStatus",
+			match mint_token_status {
+				MintTokenStatus::Unknown => {
+					info!(
+						"Ticket id({:?}) mint token status {:?}",
+						ticket.ticket_id,
+						MintTokenStatus::Unknown
+					);
+				}
+				MintTokenStatus::Finalized { block_index } => {
+					let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
+						db,
+						ROUTE_CHAIN_ID.to_owned(),
+						ticket.clone().token,
 					)
 					.await?
-					.convert_to_mint_token_status();
+					{
+						Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
+						None => block_index.to_string(),
+					};
 
-				match mint_token_status {
-					MintTokenStatus::Unknown => {
-						info!(
-							"Ticket id({:?}) mint token status {:?}",
-							unconfirmed_ticket.ticket_id,
-							MintTokenStatus::Unknown
-						);
-					}
-					MintTokenStatus::Finalized { block_index } => {
-						let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
-							db,
-							ROUTE_CHAIN_ID.to_owned(),
-							unconfirmed_ticket.clone().token,
-						)
-						.await?
-						{
-							Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
-							None => block_index.to_string(),
-						};
+					// update ticket status to finalized
+					let ticket_model = Mutation::update_ticket_status_n_txhash(
+						db,
+						ticket.clone(),
+						TicketStatus::Finalized,
+						Some(tx_hash),
+					)
+					.await?;
 
-						//3: update ticket status to finalized
-						let ticket_model = Mutation::update_ticket_status_n_txhash(
-							db,
-							unconfirmed_ticket.clone(),
-							TicketStatus::Finalized,
-							tx_hash,
-						)
-						.await?;
-
-						info!(
-							"Ticket id({:?}) status:{:?} and finalized on block {:?}",
-							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-						);
-					}
+					info!(
+						"Ticket id({:?}) status:{:?} and finalized on block {:?}",
+						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+					);
 				}
 			}
 			Ok(())

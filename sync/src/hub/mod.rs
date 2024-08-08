@@ -1,7 +1,6 @@
 use crate::{
 	service::{Mutation, Query},
-	types::{self, Ticket},
-	with_omnity_canister, Arg, ChainId, TokenId,
+	ticket, with_omnity_canister, Arg, ChainId, TokenId,
 };
 use log::info;
 use sea_orm::DbConn;
@@ -254,7 +253,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			}
 
 			for (seq, ticket) in new_tickets.iter() {
-				let ticket_modle = Ticket::from_omnity_ticket(*seq, ticket.clone()).into();
+				let ticket_modle = ticket::Model::from_omnity_ticket(*seq, ticket.clone()).into();
 				Mutation::save_ticket(db, ticket_modle).await?;
 			}
 		}
@@ -299,32 +298,11 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			}
 
 			for (_ticket_id, pending_ticket) in new_pending_tickets.clone() {
-				let ticket_model = Ticket::from_omnity_pending_ticket(pending_ticket).into();
+				let ticket_model = ticket::Model::from_omnity_pending_ticket(pending_ticket).into();
 				Mutation::save_ticket(db, ticket_model).await?;
 			}
 			from_seq += new_pending_tickets.clone().len() as u64;
 		}
-
-		Ok(())
-	})
-	.await
-}
-
-// mocking
-pub async fn send_tickets(ticket: types::Ticket) -> Result<(), Box<dyn Error>> {
-	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		let _ = Arg::T(ticket)
-			.query_method(
-				agent.clone(),
-				canister_id,
-				"send_ticket",
-				"Send tickets to hub...",
-				"Send ticket result: ",
-				None,
-				None,
-				"()",
-			)
-			.await?;
 
 		Ok(())
 	})
