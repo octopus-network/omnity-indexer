@@ -27,7 +27,7 @@ impl MigrationTrait for Migration {
 					)
 					.col(
 						ColumnDef::new(TokenOnChain::Amount)
-							.big_unsigned()
+							.string()
 							.not_null(),
 					)
 					.primary_key(
