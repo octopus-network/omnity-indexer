@@ -212,12 +212,14 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 						.await?;
 
 					// Save the ticket that contains the tx_hash as the ticket_id to
-					// DeletedMintTicket Update sender/seq only if they are needed
+					// DeletedMintTicket
 					let _ = Mutation::save_deleted_mint_ticket(
 						db,
 						ticket_should_be_removed.clone().into(),
 					)
 					.await?;
+
+					// Update sender/seq only if they are needed
 
 					// Remove the ticket that contains the tx_hash as the ticket_id
 					let row =
