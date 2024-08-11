@@ -1,3 +1,4 @@
+use crate::customs::UPDATE_DELETED_MINT_TICKET_SYNC_INTERVAL;
 use crate::hub::{
 	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
 };
@@ -103,6 +104,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { bitcoin::update_mint_tickets(&db_conn).await },
 	);
 
+	let update_deleted_mint_tickets_from_btc = spawn_sync_task(
+		db_conn.clone(),
+		UPDATE_DELETED_MINT_TICKET_SYNC_INTERVAL,
+		|db_conn| async move { bitcoin::update_deleted_mint_tickets(&db_conn).await },
+	);
+
 	let _ = tokio::join!(
 		remove_database,
 		sync_chains_task,
@@ -116,5 +123,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_all_tickets_status_from_evm,
 		update_sender_tickets_from_hub,
 		update_mint_tickets_from_btc,
+		update_deleted_mint_tickets_from_btc,
 	);
 }

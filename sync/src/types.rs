@@ -153,7 +153,7 @@ impl From<token_on_chain::Model> for OmnityTokenOnChain {
 		OmnityTokenOnChain {
 			chain_id: model.chain_id,
 			token_id: model.token_id,
-			amount: model.amount.parse::<u128>().unwrap()
+			amount: model.amount.parse::<u128>().unwrap(),
 		}
 	}
 }
