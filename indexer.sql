@@ -103,7 +103,7 @@ CREATE TABLE public.token_meta (
 CREATE TABLE public.token_on_chain (
     chain_id character varying NOT NULL,
     token_id character varying NOT NULL,
-    amount bigint NOT NULL
+    amount character varying NOT NULL
 );
 
 ALTER TABLE ONLY public.chain_meta

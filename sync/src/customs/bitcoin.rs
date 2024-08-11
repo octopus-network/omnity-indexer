@@ -184,16 +184,17 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			);
 		}
 	}
+	Ok(())
+}
 
+// update deleted mint tickets meta
+pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	let updated_mint_tickets = Query::get_updated_mint_tickets(db).await?;
 	for mint_ticket in updated_mint_tickets {
 		// Retrieval the tx_hash from each mint tickets
 		if let Some(ticket_should_be_removed) =
 			Query::get_ticket_by_id(db, mint_ticket.clone().tx_hash.unwrap()).await?
 		{
-			println!("Tingggggggg222");
-			println!("{:?}", ticket_should_be_removed.clone().ticket_id);
-
 			// update the ticket_should_be_removed status, then move the mint ticket tx_hash to the
 			// intermedieate tx_hash and then the tx_hash to mint ticket tx_hash
 			match ticket_should_be_removed.clone().tx_hash {
@@ -211,12 +212,14 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 						.await?;
 
 					// Save the ticket that contains the tx_hash as the ticket_id to
-					// DeletedMintTicket Update sender/seq only if they are needed
+					// DeletedMintTicket
 					let _ = Mutation::save_deleted_mint_ticket(
 						db,
 						ticket_should_be_removed.clone().into(),
 					)
 					.await?;
+
+					// Update sender/seq only if they are needed
 
 					// Remove the ticket that contains the tx_hash as the ticket_id
 					let row =
