@@ -54,6 +54,10 @@ impl EvmRoutes {
 					canister: "ROOTSTOCK_CHAIN_ID",
 					chain: "RootStock".to_owned(),
 				},
+				EvmRoute {
+					canister: "BITFINITY_CHAIN_ID",
+					chain: "Bitfinity".to_owned(),
+				},
 			],
 		}
 	}
