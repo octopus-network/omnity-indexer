@@ -140,7 +140,7 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 					.await?
 					.convert_to_release_token_status();
 
-				if let ReleaseTokenStatus::Confirmed(tx_hash) = mint_token_status {
+				if let ReleaseTokenStatus::Submitted(tx_hash) | ReleaseTokenStatus::Confirmed(tx_hash) = mint_token_status {
 					//step3: update ticket status to finalized
 					let ticket_model = Mutation::update_ticket_status_n_txhash(
 						db,
