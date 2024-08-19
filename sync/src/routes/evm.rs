@@ -58,6 +58,10 @@ impl EvmRoutes {
 					canister: "BITFINITY_CHAIN_ID",
 					chain: "Bitfinity".to_owned(),
 				},
+				EvmRoute {
+					canister: "AILAYER_CHAIN_ID",
+					chain: "AILayer".to_owned(),
+				},
 			],
 		}
 	}
