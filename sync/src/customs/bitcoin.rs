@@ -12,7 +12,7 @@ use std::{
 	str::FromStr,
 };
 
-pub const CUSTOMS_CHAIN_ID: &str = "Bitcoin";
+pub const BTC_CUSTOM_CHAIN_ID: &str = "Bitcoin";
 
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GenTicketRequest {
@@ -111,7 +111,7 @@ pub enum FinalizedStatus {
 	Confirmed(Txid),
 }
 
-// sync tickets status that transfered from routes to customs
+// sync tickets status that transfered from routes to BTC custom
 pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
@@ -122,7 +122,7 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 			);
 			//step1: get ticket that dest is bitcion and status is waiting for comformation by dst
 			let unconfirmed_tickets =
-				Query::get_unconfirmed_tickets(db, CUSTOMS_CHAIN_ID.to_owned()).await?;
+				Query::get_unconfirmed_tickets(db, BTC_CUSTOM_CHAIN_ID.to_owned()).await?;
 
 			//step2: get release_token_status by ticket id
 			for unconfirmed_ticket in unconfirmed_tickets {
@@ -140,7 +140,9 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 					.await?
 					.convert_to_release_token_status();
 
-				if let ReleaseTokenStatus::Submitted(tx_hash) | ReleaseTokenStatus::Confirmed(tx_hash) = mint_token_status {
+				if let ReleaseTokenStatus::Submitted(tx_hash)
+				| ReleaseTokenStatus::Confirmed(tx_hash) = mint_token_status
+				{
 					//step3: update ticket status to finalized
 					let ticket_model = Mutation::update_ticket_status_n_txhash(
 						db,

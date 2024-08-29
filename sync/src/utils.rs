@@ -1,8 +1,9 @@
 use crate::types::*;
 use crate::{
-	bitcoin::{GenTicketRequest, ReleaseTokenStatus},
-	evm::MintEvmTokenStatus,
-	icp::MintTokenStatus,
+	customs::bitcoin::{GenTicketRequest, ReleaseTokenStatus},
+	customs::sicp::ICPCustomRelaseTokenStatus,
+	routes::evm::MintEvmTokenStatus,
+	routes::icp::MintTokenStatus,
 	Error as OmnityError, FETCH_LIMIT,
 };
 // use anyhow::{Error as AnyError, Result, anyhow};
@@ -250,6 +251,7 @@ pub enum ReturnType {
 	CanisterId(Option<Principal>),
 	VecTokenResp(Vec<TokenResp>),
 	VecOmnityPendingTicket(Vec<(TicketId, OmnityTicket)>),
+	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
 	Non(()),
 }
 
@@ -324,6 +326,12 @@ impl ReturnType {
 		match self {
 			Self::VecOmnityPendingTicket(o) => return o.to_vec(),
 			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_release_icp_token_status(&self) -> ICPCustomRelaseTokenStatus {
+		match self {
+			Self::ICPCustomRelaseTokenStatus(icp) => return icp.clone(),
+			_ => return ICPCustomRelaseTokenStatus::Unknown,
 		}
 	}
 }
@@ -443,6 +451,13 @@ impl Arg {
 				.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::VecOmnityPendingTicket(decoded_return_output));
+			}
+			"ICPCustomRelaseTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, ICPCustomRelaseTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::ICPCustomRelaseTokenStatus(
+					decoded_return_output,
+				));
 			}
 			_ => {
 				let decoded_return_output =
