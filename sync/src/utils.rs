@@ -1,6 +1,6 @@
 use crate::types::*;
 use crate::{
-	customs::bitcoin::{GenTicketRequest, ReleaseTokenStatus},
+	customs::bitcoin::ReleaseTokenStatus,
 	customs::sicp::ICPCustomRelaseTokenStatus,
 	routes::evm::MintEvmTokenStatus,
 	routes::icp::MintTokenStatus,
@@ -243,7 +243,6 @@ pub enum ReturnType {
 	VecChainMeta(Vec<ChainMeta>),
 	VecTokenMeta(Vec<TokenMeta>),
 	VecOmnityTicket(Vec<(u64, OmnityTicket)>),
-	VecGenTicketRequest(Vec<GenTicketRequest>),
 	MintTokenStatus(MintTokenStatus),
 	MintEvmTokenStatus(MintEvmTokenStatus),
 	ReleaseTokenStatus(ReleaseTokenStatus),
@@ -277,12 +276,6 @@ impl ReturnType {
 	pub fn convert_to_vec_omnity_ticket(&self) -> Vec<(u64, OmnityTicket)> {
 		match self {
 			Self::VecOmnityTicket(o) => return o.to_vec(),
-			_ => return Vec::new(),
-		}
-	}
-	pub fn convert_to_vec_gen_ticket_request(&self) -> Vec<GenTicketRequest> {
-		match self {
-			Self::VecGenTicketRequest(g) => return g.to_vec(),
 			_ => return Vec::new(),
 		}
 	}
@@ -406,11 +399,6 @@ impl Arg {
 				.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::VecOmnityTicket(decoded_return_output));
-			}
-			"Vec<GenTicketRequest>" => {
-				let decoded_return_output = Decode!(&return_output, Vec<GenTicketRequest>)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
-				return Ok(ReturnType::VecGenTicketRequest(decoded_return_output));
 			}
 			"MintTokenStatus" => {
 				let decoded_return_output = Decode!(&return_output, MintTokenStatus)?;

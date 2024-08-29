@@ -14,7 +14,7 @@ pub enum ICPCustomRelaseTokenStatus {
 }
 
 // sync tickets status that transfered from routes to icp custom
-pub async fn sync_ticket_status_from_icp(db: &DbConn) -> Result<(), Box<dyn Error>> {
+pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_ICP_CANISTER_ID",
 		|agent, canister_id| async move {

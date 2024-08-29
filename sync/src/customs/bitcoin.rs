@@ -1,82 +1,12 @@
 use crate::graphql::terms_amount::query_terms_amount;
 use crate::service::{Delete, Mutation, Query};
 use crate::{with_omnity_canister, Arg};
-use candid::CandidType;
-use ic_btc_interface::Txid;
 use log::info;
 use sea_orm::DbConn;
-use serde::{Deserialize, Serialize};
-use std::{
-	error::Error,
-	fmt::{self, Display, Formatter},
-	str::FromStr,
-};
+use serde::Deserialize;
+use std::error::Error;
 
 pub const BTC_CUSTOM_CHAIN_ID: &str = "Bitcoin";
-
-#[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct GenTicketRequest {
-	pub address: String,
-	pub target_chain_id: String,
-	pub receiver: String,
-	pub token_id: String,
-	pub rune_id: RuneId,
-	pub amount: u128,
-	pub txid: Txid,
-	pub received_at: u64,
-}
-
-#[derive(
-	candid::CandidType,
-	Clone,
-	Debug,
-	PartialEq,
-	Eq,
-	PartialOrd,
-	Ord,
-	Copy,
-	Default,
-	Serialize,
-	Deserialize,
-)]
-pub struct RuneId {
-	pub block: u64,
-	pub tx: u32,
-}
-
-impl Display for RuneId {
-	fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-		write!(f, "{}:{}", self.block, self.tx,)
-	}
-}
-
-impl FromStr for RuneId {
-	type Err = ParseRuneIdError;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		let (height, index) = s.split_once(':').ok_or_else(|| ParseRuneIdError)?;
-
-		Ok(Self {
-			block: height.parse().map_err(|_| ParseRuneIdError)?,
-			tx: index.parse().map_err(|_| ParseRuneIdError)?,
-		})
-	}
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ParseRuneIdError;
-
-impl fmt::Display for ParseRuneIdError {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		"Provided rune_id was not valid".fmt(f)
-	}
-}
-
-impl Error for ParseRuneIdError {
-	fn description(&self) -> &str {
-		"Failed to parse rune_id"
-	}
-}
 
 /// The status of a release_token request.
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Deserialize)]
@@ -94,21 +24,6 @@ pub enum ReleaseTokenStatus {
 	Submitted(String),
 	/// Confirmed a transaction satisfying this request.
 	Confirmed(String),
-}
-
-#[derive(CandidType, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct GenerateTicketArgs {
-	pub target_chain_id: String,
-	pub receiver: String,
-	pub rune_id: String,
-	pub amount: u128,
-	pub txid: String,
-}
-
-#[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum FinalizedStatus {
-	/// The transaction that release token got enough confirmations.
-	Confirmed(Txid),
 }
 
 // sync tickets status that transfered from routes to BTC custom
