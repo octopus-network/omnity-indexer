@@ -5,7 +5,7 @@ mod tests {
 	use omnity_indexer_sync::customs::bitcoin::{
 		gen_bitcoin_ticket, mock_finalized_release_token, mock_finalized_ticket,
 		sync_pending_tickets_from_bitcoin, sync_ticket_status_from_bitcoin, FinalizedStatus,
-		GenerateTicketArgs, CUSTOMS_CHAIN_ID,
+		GenerateTicketArgs, BTC_CUSTOM_CHAIN_ID,
 	};
 	use omnity_indexer_sync::{
 		entity::sea_orm_active_enums,
@@ -107,7 +107,7 @@ mod tests {
 				ticket_type: TicketType::Normal,
 				ticket_time: get_timestamp(),
 				src_chain: "eICP".to_owned(),
-				dst_chain: CUSTOMS_CHAIN_ID.to_owned(),
+				dst_chain: BTC_CUSTOM_CHAIN_ID.to_owned(),
 				action: TxAction::Redeem,
 				token: TOKEN_ID.into(),
 				amount: 1000.to_string(),
