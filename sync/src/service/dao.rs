@@ -119,7 +119,7 @@ impl Query {
 					// The ticket is for minting action
 					.add(ticket::Column::Action.eq(TxAction::Mint))
 					// The ticket amount is not updated yet
-					.add(ticket::Column::Amount.eq(0)),
+					.add(ticket::Column::Amount.eq(0.to_string())),
 			)
 			.all(db)
 			.await
@@ -132,7 +132,7 @@ impl Query {
 					// The ticket is for minting action
 					.add(ticket::Column::Action.eq(TxAction::Mint))
 					// The ticket amount is updated
-					.add(ticket::Column::Amount.ne(0)),
+					.add(ticket::Column::Amount.ne(0.to_string())),
 			)
 			.all(db)
 			.await
@@ -450,7 +450,7 @@ impl Mutation {
 	pub async fn update_tikcet_amount(
 		db: &DbConn,
 		ticket: ticket::Model,
-		amount: i64,
+		amount: String,
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
 		active_model.amount = Set(amount.to_owned());
