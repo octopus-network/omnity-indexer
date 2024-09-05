@@ -4,7 +4,11 @@ use crate::hub::{
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
 use crate::Delete;
-use crate::{customs::{bitcoin, sicp}, evm, hub, routes::icp};
+use crate::{
+	customs::{bitcoin, sicp},
+	evm, hub,
+	routes::icp,
+};
 use futures::Future;
 use log::error;
 use sea_orm::DbConn;
@@ -83,7 +87,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 	let sync_ticket_status_from_sicp = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
-		|db_conn| async move {sicp::sync_ticket_status_from_sicp(&db_conn).await},
+		|db_conn| async move { sicp::sync_ticket_status_from_sicp(&db_conn).await },
 	);
 
 	let sync_ticket_status_from_eicp = spawn_sync_task(

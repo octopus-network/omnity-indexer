@@ -75,6 +75,7 @@ impl Query {
 				Condition::all()
 					// The ticket is not finalized
 					.add(ticket::Column::Status.ne(TicketStatus::Finalized))
+					.add(ticket::Column::Status.ne(TicketStatus::Unknown))
 					// The ticket's destination chain matches `dest`
 					.add(ticket::Column::DstChain.eq(dest)),
 			)
@@ -435,15 +436,13 @@ impl Mutation {
 		Ok(ticket)
 	}
 
-	pub async fn update_deleted_mint_ticket_status_n_txhash(
+	pub async fn update_ticket_status(
 		db: &DbConn,
-		ticket: deleted_mint_ticket::Model,
+		ticket: ticket::Model,
 		status: TicketStatus,
-		tx_hash: Option<String>,
-	) -> Result<deleted_mint_ticket::Model, DbErr> {
-		let mut active_model: deleted_mint_ticket::ActiveModel = ticket.into();
+	) -> Result<ticket::Model, DbErr> {
+		let mut active_model: ticket::ActiveModel = ticket.into();
 		active_model.status = Set(status.to_owned());
-		active_model.tx_hash = Set(tx_hash.to_owned());
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}
