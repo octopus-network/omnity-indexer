@@ -59,7 +59,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(DeletedMintTicket::Token).string().not_null())
 					.col(
 						ColumnDef::new(DeletedMintTicket::Amount)
-							.big_unsigned()
+							.string()
 							.not_null(),
 					)
 					.col(ColumnDef::new(DeletedMintTicket::Sender).string().null())

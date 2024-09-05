@@ -94,7 +94,7 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			// Fetch the amount from the runescan graphql api
 			let amount = query_terms_amount(token_id).await.unwrap();
 			// Insert the amount into the ticket meta
-			let updated_ticket = Mutation::update_tikcet_amount(db, ticket, amount).await?;
+			let updated_ticket = Mutation::update_tikcet_amount(db, ticket, amount.to_string()).await?;
 			info!(
 				"Ticket id({:?}) has changed its amount to {:?}",
 				updated_ticket.ticket_id, updated_ticket.amount

@@ -17,7 +17,7 @@ pub struct Model {
 	pub dst_chain: String,
 	pub action: TxAction,
 	pub token: String,
-	pub amount: i64,
+	pub amount: String,
 	pub sender: Option<String>,
 	pub receiver: String,
 	#[sea_orm(column_type = "Binary(BlobSize::Blob(None))", nullable)]
