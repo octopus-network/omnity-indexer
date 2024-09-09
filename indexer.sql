@@ -26,7 +26,8 @@ CREATE TYPE public.tx_action AS ENUM (
     'Transfer',
     'Redeem',
     'Burn',
-    'Mint'
+    'Mint',
+    'RedeemIcpChainKeyAssets'
 );
 
 SET default_tablespace = '';

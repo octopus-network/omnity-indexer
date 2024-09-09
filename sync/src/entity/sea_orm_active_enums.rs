@@ -51,4 +51,6 @@ pub enum TxAction {
 	Burn,
 	#[sea_orm(string_value = "Mint")]
 	Mint,
+	#[sea_orm(string_value = "RedeemIcpChainKeyAssets")]
+	RedeemIcpChainKeyAssets,
 }

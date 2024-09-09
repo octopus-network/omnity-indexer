@@ -40,6 +40,7 @@ impl MigrationTrait for Migration {
 						TxAction::Redeem,
 						TxAction::Burn,
 						TxAction::Mint,
+						TxAction::RedeemIcpChainKeyAssets,
 					])
 					.to_owned(),
 			)
@@ -144,6 +145,7 @@ impl MigrationTrait for Migration {
 							TxAction::Redeem,
 							TxAction::Burn,
 							TxAction::Mint,
+							TxAction::RedeemIcpChainKeyAssets,
 						],
 					))
 					.col(ColumnDef::new(Ticket::Token).string().not_null())
@@ -300,6 +302,8 @@ pub enum TxAction {
 	Burn,
 	#[iden = "Mint"]
 	Mint,
+	#[iden = "RedeemIcpChainKeyAssets"]
+	RedeemIcpChainKeyAssets,
 }
 
 #[derive(Iden, EnumIter)]
