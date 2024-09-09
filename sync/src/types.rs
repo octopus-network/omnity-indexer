@@ -429,6 +429,26 @@ pub enum TxAction {
 	Redeem,
 	Burn,
 	Mint,
+	RedeemIcpChainKeyAssets(IcpChainKeyToken),
+}
+
+#[derive(
+	CandidType,
+	Deserialize,
+	Serialize,
+	Default,
+	Clone,
+	Copy,
+	Debug,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Hash,
+)]
+pub enum IcpChainKeyToken {
+	#[default]
+	CKBTC,
 }
 
 impl From<TxAction> for sea_orm_active_enums::TxAction {
@@ -438,6 +458,9 @@ impl From<TxAction> for sea_orm_active_enums::TxAction {
 			TxAction::Redeem => sea_orm_active_enums::TxAction::Redeem,
 			TxAction::Burn => sea_orm_active_enums::TxAction::Burn,
 			TxAction::Mint => sea_orm_active_enums::TxAction::Mint,
+			TxAction::RedeemIcpChainKeyAssets(_) => {
+				sea_orm_active_enums::TxAction::RedeemIcpChainKeyAssets
+			}
 		}
 	}
 }
@@ -448,6 +471,9 @@ impl From<sea_orm_active_enums::TxAction> for TxAction {
 			sea_orm_active_enums::TxAction::Redeem => TxAction::Redeem,
 			sea_orm_active_enums::TxAction::Burn => TxAction::Burn,
 			sea_orm_active_enums::TxAction::Mint => TxAction::Mint,
+			sea_orm_active_enums::TxAction::RedeemIcpChainKeyAssets => {
+				TxAction::RedeemIcpChainKeyAssets(IcpChainKeyToken::CKBTC)
+			}
 		}
 	}
 }

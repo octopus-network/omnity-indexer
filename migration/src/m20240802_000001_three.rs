@@ -53,6 +53,7 @@ impl MigrationTrait for Migration {
 									TxAction::Redeem,
 									TxAction::Burn,
 									TxAction::Mint,
+									TxAction::RedeemIcpChainKeyAssets,
 								],
 							),
 					)
