@@ -52,7 +52,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 						.await?;
 
 						info!(
-							"Ticket id({:?}) finally status:{:?} and its Osmosis hash is {:?} ",
+							"Ticket id({:?}) finally status:{:?} and its ICP custom hash is {:?} ",
 							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 						);
 					}
