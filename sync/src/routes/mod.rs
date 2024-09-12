@@ -1,3 +1,4 @@
+pub mod cosmwasm;
 pub mod evm;
 pub mod icp;
 

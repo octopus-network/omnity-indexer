@@ -33,7 +33,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 						canister_id,
 						"mint_token_status",
 						"Unconfirmed ICP custom ticket: ",
-						"Release token status result: ",
+						"Release ICP token status result: ",
 						None,
 						None,
 						"ICPCustomRelaseTokenStatus",
@@ -52,7 +52,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 						.await?;
 
 						info!(
-							"Ticket id({:?}) finally status:{:?} and its ICP hash is {:?} ",
+							"Ticket id({:?}) finally status:{:?} and its ICP custom hash is {:?} ",
 							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 						);
 					}
