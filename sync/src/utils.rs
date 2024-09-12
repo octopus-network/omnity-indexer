@@ -1,8 +1,8 @@
 use crate::types::*;
 use crate::{
 	customs::bitcoin::ReleaseTokenStatus, customs::sicp::ICPCustomRelaseTokenStatus,
-	routes::evm::MintEvmTokenStatus, routes::icp::MintTokenStatus, Error as OmnityError,
-	FETCH_LIMIT,
+	routes::cosmwasm::MintCosmwasmTokenStatus, routes::evm::MintEvmTokenStatus,
+	routes::icp::MintTokenStatus, Error as OmnityError, FETCH_LIMIT,
 };
 // use anyhow::{Error as AnyError, Result, anyhow};
 use anyhow::{anyhow, Result};
@@ -249,6 +249,7 @@ pub enum ReturnType {
 	VecTokenResp(Vec<TokenResp>),
 	VecOmnityPendingTicket(Vec<(TicketId, OmnityTicket)>),
 	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
+	MintCosmwasmTokenStatus(MintCosmwasmTokenStatus),
 	Non(()),
 }
 
@@ -323,6 +324,12 @@ impl ReturnType {
 		match self {
 			Self::ICPCustomRelaseTokenStatus(icp) => return icp.clone(),
 			_ => return ICPCustomRelaseTokenStatus::Unknown,
+		}
+	}
+	pub fn convert_to_mint_cosmwasm_token_status(&self) -> MintCosmwasmTokenStatus {
+		match self {
+			Self::MintCosmwasmTokenStatus(m) => return m.clone(),
+			_ => return MintCosmwasmTokenStatus::Unknown,
 		}
 	}
 }
@@ -444,6 +451,11 @@ impl Arg {
 				return Ok(ReturnType::ICPCustomRelaseTokenStatus(
 					decoded_return_output,
 				));
+			}
+			"MintCosmwasmTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, MintCosmwasmTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::MintCosmwasmTokenStatus(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output =
