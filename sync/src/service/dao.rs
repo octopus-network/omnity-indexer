@@ -43,6 +43,12 @@ impl Query {
 	) -> Result<Option<ticket::Model>, DbErr> {
 		Ticket::find_by_id(ticket_id).one(db).await
 	}
+	pub async fn get_deleted_ticket_by_id(
+		db: &DbConn,
+		ticket_id: String,
+	) -> Result<Option<deleted_mint_ticket::Model>, DbErr> {
+		DeletedMintTicket::find_by_id(ticket_id).one(db).await
+	}
 	pub async fn get_token_on_chain_by_id(
 		db: &DbConn,
 		chain_id: String,
