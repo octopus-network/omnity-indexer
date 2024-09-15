@@ -165,10 +165,7 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 			}
 			None => {
 				//update mint tickets status if there is no corresponding transfer tickets.
-				if let None =
-					Query::get_deleted_ticket_by_id(db, mint_ticket.clone().tx_hash.unwrap())
-						.await?
-				{
+				if let None = mint_ticket.clone().intermediate_tx_hash {
 					let _ = Mutation::update_ticket_status(
 						db,
 						mint_ticket.clone(),
