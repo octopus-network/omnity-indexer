@@ -7,7 +7,7 @@ use crate::Delete;
 use crate::{
 	customs::{bitcoin, sicp},
 	evm, hub,
-	routes::{cosmwasm, icp},
+	routes::{cosmwasm, icp, solana},
 };
 use futures::Future;
 use log::error;
@@ -108,6 +108,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { cosmwasm::sync_all_tickets_status_from_cosmwasm_route(&db_conn).await },
 	);
 
+	let sync_ticket_status_from_solana = spawn_sync_task(
+		db_conn.clone(),
+		TICKET_SYNC_INTERVAL,
+		|db_conn| async move { solana::sync_ticket_status_from_solana_route(&db_conn).await },
+	);
+
 	let update_sender_tickets_from_hub = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
@@ -139,6 +145,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_ticket_status_from_eicp,
 		sync_all_tickets_status_from_evm,
 		sync_all_tickets_status_from_cosmwasm,
+		sync_ticket_status_from_solana,
 		update_sender_tickets_from_hub,
 		update_mint_tickets_from_btc,
 		update_deleted_mint_tickets_from_btc,
