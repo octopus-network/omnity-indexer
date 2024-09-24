@@ -251,6 +251,7 @@ pub enum ReturnType {
 	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
 	MintCosmwasmTokenStatus(MintCosmwasmTokenStatus),
 	TxStatus(TxStatus),
+	OptionString(Option<String>),
 	Non(()),
 }
 
@@ -339,7 +340,14 @@ impl ReturnType {
 			_ => return TxStatus::Unknown,
 		}
 	}
+	pub fn convert_to_mint_solana_token_status_hash(&self) -> Option<String> {
+		match self {
+			Self::OptionString(s) => return s.clone(),
+			_ => return None,
+		}
+	}
 }
+
 pub enum Arg {
 	V(Vec<u8>),
 	U(u64),
@@ -465,9 +473,16 @@ impl Arg {
 				return Ok(ReturnType::MintCosmwasmTokenStatus(decoded_return_output));
 			}
 			"TxStatus" => {
-				let decoded_return_output = Decode!(&return_output, Result<TxStatus, CallError>)?.unwrap();
+				let decoded_return_output =
+					Decode!(&return_output, Result<TxStatus, CallError>)?.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::TxStatus(decoded_return_output));
+			}
+			"Option<String>" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<Option<String>, CallError>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::OptionString(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output =
