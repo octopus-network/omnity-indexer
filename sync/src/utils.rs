@@ -2,7 +2,7 @@ use crate::types::*;
 use crate::{
 	customs::bitcoin::ReleaseTokenStatus, customs::sicp::ICPCustomRelaseTokenStatus,
 	routes::cosmwasm::MintCosmwasmTokenStatus, routes::evm::MintEvmTokenStatus,
-	routes::icp::MintTokenStatus, Error as OmnityError, FETCH_LIMIT,
+	routes::icp::MintTokenStatus, routes::solana::TxStatus, Error as OmnityError, FETCH_LIMIT,
 };
 // use anyhow::{Error as AnyError, Result, anyhow};
 use anyhow::{anyhow, Result};
@@ -250,6 +250,8 @@ pub enum ReturnType {
 	VecOmnityPendingTicket(Vec<(TicketId, OmnityTicket)>),
 	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
 	MintCosmwasmTokenStatus(MintCosmwasmTokenStatus),
+	TxStatus(TxStatus),
+	OptionString(Option<String>),
 	Non(()),
 }
 
@@ -332,7 +334,20 @@ impl ReturnType {
 			_ => return MintCosmwasmTokenStatus::Unknown,
 		}
 	}
+	pub fn convert_to_mint_solana_token_status(&self) -> TxStatus {
+		match self {
+			Self::TxStatus(t) => return t.clone(),
+			_ => return TxStatus::Unknown,
+		}
+	}
+	pub fn convert_to_mint_solana_token_status_hash(&self) -> Option<String> {
+		match self {
+			Self::OptionString(s) => return s.clone(),
+			_ => return None,
+		}
+	}
 }
+
 pub enum Arg {
 	V(Vec<u8>),
 	U(u64),
@@ -456,6 +471,18 @@ impl Arg {
 				let decoded_return_output = Decode!(&return_output, MintCosmwasmTokenStatus)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::MintCosmwasmTokenStatus(decoded_return_output));
+			}
+			"TxStatus" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<TxStatus, CallError>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::TxStatus(decoded_return_output));
+			}
+			"Option<String>" => {
+				let decoded_return_output =
+					Decode!(&return_output, Result<Option<String>, CallError>)?.unwrap();
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::OptionString(decoded_return_output));
 			}
 			_ => {
 				let decoded_return_output =
