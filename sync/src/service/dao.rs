@@ -502,4 +502,15 @@ impl Mutation {
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}
+
+	pub async fn update_ticket_memo(
+		db: &DbConn,
+		ticket: ticket::Model,
+		memo: String,
+	) -> Result<ticket::Model, DbErr> {
+		let mut active_model: ticket::ActiveModel = ticket.into();
+		active_model.memo = Set(Some(memo));
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
+	}
 }

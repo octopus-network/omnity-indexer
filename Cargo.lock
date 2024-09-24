@@ -2736,6 +2736,7 @@ dependencies = [
  "env_logger",
  "futures",
  "graphql_client",
+ "hex",
  "ic-agent",
  "ic-btc-interface",
  "ic-cdk",
