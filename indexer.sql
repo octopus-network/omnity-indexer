@@ -56,7 +56,7 @@ CREATE TABLE public.deleted_mint_ticket (
     amount character varying NOT NULL,
     sender character varying,
     receiver character varying NOT NULL,
-    memo bytea,
+    memo character varying,
     status public.ticket_status NOT NULL,
     tx_hash character varying
 );
@@ -78,7 +78,7 @@ CREATE TABLE public.ticket (
     amount character varying NOT NULL,
     sender character varying,
     receiver character varying NOT NULL,
-    memo bytea,
+    memo character varying,
     status public.ticket_status NOT NULL,
     tx_hash character varying,
     intermediate_tx_hash character varying
