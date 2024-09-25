@@ -152,7 +152,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(Ticket::Amount).string().not_null())
 					.col(ColumnDef::new(Ticket::Sender).string().null())
 					.col(ColumnDef::new(Ticket::Receiver).string().not_null())
-					.col(ColumnDef::new(Ticket::Memo).string().null())
+					.col(ColumnDef::new(Ticket::Memo).binary().null())
 					.col(ColumnDef::new(Ticket::Status).not_null().enumeration(
 						Alias::new("ticket_status"),
 						[

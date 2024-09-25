@@ -4,13 +4,43 @@ use crate::{
 };
 use log::info;
 use sea_orm::DbConn;
-use std::error::Error;
+use std::{error::Error, str};
 
 pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 300;
 pub const TOKEN_SYNC_INTERVAL: u64 = 300;
 pub const TICKET_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 120;
+
+pub async fn update_memo(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	let non_null_memo_tickets = Query::get_not_null_memo_tickets(db).await?;
+	info!("There are {:?} memo are not null", non_null_memo_tickets.len());
+	for ticket in non_null_memo_tickets.clone() {
+		if let Some(memo) = ticket.clone().memo {
+			if memo.len() > 0 {
+				println!("TINGGGG222");
+				if let Ok(decoded_memo) = hex::decode(memo) {
+					if let Ok(new_ticket_memo) = str::from_utf8(&decoded_memo) {
+						let new_memo = new_ticket_memo.to_string();
+						let _ = Mutation::update_ticket_memo(db, ticket.clone(), Some(new_memo.into())).await?;
+					}
+				} else {
+					let mut new_ticket_memo = ticket.clone().memo.unwrap();
+					new_ticket_memo.drain(0..2);
+					let _ = Mutation::update_ticket_memo(db, ticket.clone(), Some(new_ticket_memo)).await?;
+				}
+			}
+		}
+		
+		
+		// let mut new_ticket_memo = ticket.clone().memo.unwrap();
+		// if new_ticket_memo.len() > 0 {
+		// 	new_ticket_memo.drain(0..2);
+		// 	let _ = Mutation::update_ticket_memo(db, ticket.clone(), Some(new_ticket_memo)).await?;
+		// }
+	}
+	Ok(())
+}
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender

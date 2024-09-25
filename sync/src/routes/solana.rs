@@ -24,12 +24,6 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 				Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 
 			for unconfirmed_ticket in unconfirmed_tickets {
-				unconfirmed_ticket.clone().memo.unwrap().replace_range(0..2, "");
-				let decoded_memo = hex::decode(unconfirmed_ticket.clone().memo.unwrap()).unwrap();
-				let memo = str::from_utf8(&decoded_memo).unwrap().to_string();
-
-				let _ = Mutation::update_ticket_memo(db, unconfirmed_ticket.clone(), memo).await?;
-
 				let mint_token_status = Arg::TI(unconfirmed_ticket.clone().ticket_id.clone())
 					.query_method(
 						agent.clone(),

@@ -69,7 +69,7 @@ impl MigrationTrait for Migration {
 							.string()
 							.not_null(),
 					)
-					.col(ColumnDef::new(DeletedMintTicket::Memo).string().null())
+					.col(ColumnDef::new(DeletedMintTicket::Memo).binary().null())
 					.col(
 						ColumnDef::new(DeletedMintTicket::Status)
 							.not_null()

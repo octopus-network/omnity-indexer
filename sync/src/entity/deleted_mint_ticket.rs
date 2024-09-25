@@ -20,7 +20,8 @@ pub struct Model {
 	pub amount: String,
 	pub sender: Option<String>,
 	pub receiver: String,
-	pub memo: Option<String>,
+	#[sea_orm(column_type = "Binary(BlobSize::Blob(None))", nullable)]
+	pub memo: Option<Vec<u8>>,
 	pub status: TicketStatus,
 	pub tx_hash: Option<String>,
 }
