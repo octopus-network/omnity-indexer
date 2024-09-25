@@ -5,6 +5,7 @@ use candid::CandidType;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::str;
 
 pub const SOLANA_ROUTE_CHAIN_ID: &str = "eSolana";
 
@@ -23,7 +24,7 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 				Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 
 			for unconfirmed_ticket in unconfirmed_tickets {
-				let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
+				let mint_token_status = Arg::TI(unconfirmed_ticket.clone().ticket_id.clone())
 					.query_method(
 						agent.clone(),
 						canister_id,

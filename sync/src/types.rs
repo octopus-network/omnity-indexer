@@ -286,7 +286,7 @@ pub struct OmnityTicket {
 }
 
 impl ticket::Model {
-	pub fn from_omnity_ticket(seq: u64, omnity_ticket: OmnityTicket) -> Self {
+	pub fn from_omnity_ticket(seq: u64, omnity_ticket: OmnityTicket, updated_memo: Option<String>) -> Self {
 		Self {
 			ticket_id: omnity_ticket.ticket_id.to_owned(),
 			ticket_seq: Some(seq as i64),
@@ -299,14 +299,14 @@ impl ticket::Model {
 			amount: omnity_ticket.amount.to_owned(),
 			sender: omnity_ticket.sender.to_owned(),
 			receiver: omnity_ticket.receiver.to_owned(),
-			memo: omnity_ticket.memo.to_owned(),
+			memo: updated_memo,
 			status: TicketStatus::WaitingForConfirmByDest.into(),
 			tx_hash: None,
 			intermediate_tx_hash: None,
 		}
 	}
 
-	pub fn from_omnity_pending_ticket(pending_ticket: OmnityTicket) -> Self {
+	pub fn from_omnity_pending_ticket(pending_ticket: OmnityTicket, updated_memo: Option<String>) -> Self {
 		Self {
 			ticket_id: pending_ticket.ticket_id.to_owned(),
 			ticket_seq: None,
@@ -319,7 +319,7 @@ impl ticket::Model {
 			amount: pending_ticket.amount.to_owned(),
 			sender: pending_ticket.sender.to_owned(),
 			receiver: pending_ticket.receiver.to_owned(),
-			memo: pending_ticket.memo.to_owned(),
+			memo: updated_memo,
 			status: TicketStatus::Pending.into(),
 			tx_hash: None,
 			intermediate_tx_hash: None,

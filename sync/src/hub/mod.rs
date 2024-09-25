@@ -4,7 +4,7 @@ use crate::{
 };
 use log::info;
 use sea_orm::DbConn;
-use std::error::Error;
+use std::{error::Error, str};
 
 pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 300;
@@ -253,7 +253,16 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			}
 
 			for (seq, ticket) in new_tickets.iter() {
-				let ticket_modle = ticket::Model::from_omnity_ticket(*seq, ticket.clone()).into();
+				let mut updated_memo = None;
+				if let Some(memo) = ticket.clone().memo {
+					if memo.len() > 0 {
+						if let Ok(new_ticket_memo) = str::from_utf8(&memo) {
+							updated_memo = Some(new_ticket_memo.to_string());
+						}
+					}
+				}
+
+				let ticket_modle = ticket::Model::from_omnity_ticket(*seq, ticket.clone(), updated_memo).into();
 				Mutation::save_ticket(db, ticket_modle).await?;
 			}
 		}
@@ -298,7 +307,16 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			}
 
 			for (_ticket_id, pending_ticket) in new_pending_tickets.clone() {
-				let ticket_model = ticket::Model::from_omnity_pending_ticket(pending_ticket).into();
+				let mut updated_memo = None;
+				if let Some(memo) = pending_ticket.clone().memo {
+					if memo.len() > 0 {
+						if let Ok(new_ticket_memo) = str::from_utf8(&memo) {
+							updated_memo = Some(new_ticket_memo.to_string());
+						}
+					}
+				}
+
+				let ticket_model = ticket::Model::from_omnity_pending_ticket(pending_ticket, updated_memo).into();
 				Mutation::save_ticket(db, ticket_model).await?;
 			}
 			from_seq += new_pending_tickets.clone().len() as u64;
