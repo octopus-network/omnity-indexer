@@ -132,12 +132,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { bitcoin::update_deleted_mint_tickets(&db_conn).await },
 	);
 
-	let update_memo_tickets_from_hub = spawn_sync_task(
-		db_conn.clone(),
-		TICKET_SYNC_INTERVAL,
-		|db_conn| async move { hub::update_memo(&db_conn).await },
-	);
-
 	let _ = tokio::join!(
 		remove_database,
 		sync_chains_task,
@@ -155,6 +149,5 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		update_sender_tickets_from_hub,
 		update_mint_tickets_from_btc,
 		update_deleted_mint_tickets_from_btc,
-		update_memo_tickets_from_hub,
 	);
 }

@@ -12,36 +12,6 @@ pub const TOKEN_SYNC_INTERVAL: u64 = 300;
 pub const TICKET_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 120;
 
-pub async fn update_memo(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	let non_null_memo_tickets = Query::get_not_null_memo_tickets(db).await?;
-	info!("There are {:?} memo are not null", non_null_memo_tickets.len());
-	for ticket in non_null_memo_tickets.clone() {
-		if let Some(memo) = ticket.clone().memo {
-			if memo.len() > 0 {
-				println!("TINGGGG222");
-				if let Ok(decoded_memo) = hex::decode(memo) {
-					if let Ok(new_ticket_memo) = str::from_utf8(&decoded_memo) {
-						let new_memo = new_ticket_memo.to_string();
-						let _ = Mutation::update_ticket_memo(db, ticket.clone(), Some(new_memo.into())).await?;
-					}
-				} else {
-					let mut new_ticket_memo = ticket.clone().memo.unwrap();
-					new_ticket_memo.drain(0..2);
-					let _ = Mutation::update_ticket_memo(db, ticket.clone(), Some(new_ticket_memo)).await?;
-				}
-			}
-		}
-		
-		
-		// let mut new_ticket_memo = ticket.clone().memo.unwrap();
-		// if new_ticket_memo.len() > 0 {
-		// 	new_ticket_memo.drain(0..2);
-		// 	let _ = Mutation::update_ticket_memo(db, ticket.clone(), Some(new_ticket_memo)).await?;
-		// }
-	}
-	Ok(())
-}
-
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
 	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
@@ -283,7 +253,16 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			}
 
 			for (seq, ticket) in new_tickets.iter() {
-				let ticket_modle = ticket::Model::from_omnity_ticket(*seq, ticket.clone()).into();
+				let mut updated_memo = None;
+				if let Some(memo) = ticket.clone().memo {
+					if memo.len() > 0 {
+						if let Ok(new_ticket_memo) = str::from_utf8(&memo) {
+							updated_memo = Some(new_ticket_memo.to_string());
+						}
+					}
+				}
+
+				let ticket_modle = ticket::Model::from_omnity_ticket(*seq, ticket.clone(), updated_memo).into();
 				Mutation::save_ticket(db, ticket_modle).await?;
 			}
 		}
@@ -328,7 +307,16 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			}
 
 			for (_ticket_id, pending_ticket) in new_pending_tickets.clone() {
-				let ticket_model = ticket::Model::from_omnity_pending_ticket(pending_ticket).into();
+				let mut updated_memo = None;
+				if let Some(memo) = pending_ticket.clone().memo {
+					if memo.len() > 0 {
+						if let Ok(new_ticket_memo) = str::from_utf8(&memo) {
+							updated_memo = Some(new_ticket_memo.to_string());
+						}
+					}
+				}
+
+				let ticket_model = ticket::Model::from_omnity_pending_ticket(pending_ticket, updated_memo).into();
 				Mutation::save_ticket(db, ticket_model).await?;
 			}
 			from_seq += new_pending_tickets.clone().len() as u64;

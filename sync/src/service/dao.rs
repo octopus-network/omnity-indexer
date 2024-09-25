@@ -145,14 +145,6 @@ impl Query {
 			.all(db)
 			.await
 	}
-
-	pub async fn get_not_null_memo_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
-		Ticket::find()
-			.filter(ticket::Column::Memo.is_not_null())
-			.order_by_desc(ticket::Column::TicketSeq)
-			.all(db)
-			.await
-	}
 }
 
 pub struct Delete;
@@ -511,14 +503,14 @@ impl Mutation {
 		Ok(ticket)
 	}
 
-	pub async fn update_ticket_memo(
-		db: &DbConn,
-		ticket: ticket::Model,
-		memo: Option<Vec<u8>>,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.memo = Set(memo);
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
+	// pub async fn update_ticket_memo(
+	// 	db: &DbConn,
+	// 	ticket: ticket::Model,
+	// 	memo: Option<Vec<u8>>,
+	// ) -> Result<ticket::Model, DbErr> {
+	// 	let mut active_model: ticket::ActiveModel = ticket.into();
+	// 	active_model.memo = Set(memo);
+	// 	let ticket = active_model.update(db).await?;
+	// 	Ok(ticket)
+	// }
 }
