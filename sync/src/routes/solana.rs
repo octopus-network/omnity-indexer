@@ -2,6 +2,7 @@ use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
 use crate::{with_omnity_canister, Arg};
 use candid::CandidType;
+use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -38,28 +39,34 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 					.await?
 					.convert_to_mint_solana_token_status();
 
-				if let TxStatus::Finalized = mint_token_status {
-					let solana_hash = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-						.query_method(
-							agent.clone(),
-							canister_id,
-							"mint_token_tx_hash",
-							"",
-							"",
-							None,
-							None,
-							"Option<String>",
-						)
-						.await?
-						.convert_to_mint_solana_token_status_hash();
+				match mint_token_status {
+					TxStatus::Finalized => {
+						let solana_hash = Arg::TI(unconfirmed_ticket.ticket_id.clone())
+							.query_method(
+								agent.clone(),
+								canister_id,
+								"mint_token_tx_hash",
+								"",
+								"",
+								None,
+								None,
+								"Option<String>",
+							)
+							.await?
+							.convert_to_mint_solana_token_status_hash();
 
-					let _ = Mutation::update_ticket_status_n_txhash(
-						db,
-						unconfirmed_ticket.clone(),
-						TicketStatus::Finalized,
-						Some(solana_hash.unwrap()),
-					)
-					.await?;
+						let _ = Mutation::update_ticket_status_n_txhash(
+							db,
+							unconfirmed_ticket.clone(),
+							TicketStatus::Finalized,
+							Some(solana_hash.unwrap()),
+						)
+						.await?;
+					}
+					TxStatus::Unknown => {}
+					TxStatus::TxFailed { e } => {
+						info!("{:?}  ", e)
+					}
 				}
 			}
 

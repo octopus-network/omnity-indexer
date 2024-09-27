@@ -262,7 +262,8 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					}
 				}
 
-				let ticket_modle = ticket::Model::from_omnity_ticket(*seq, ticket.clone(), updated_memo).into();
+				let ticket_modle =
+					ticket::Model::from_omnity_ticket(*seq, ticket.clone(), updated_memo).into();
 				Mutation::save_ticket(db, ticket_modle).await?;
 			}
 		}
@@ -316,7 +317,8 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					}
 				}
 
-				let ticket_model = ticket::Model::from_omnity_pending_ticket(pending_ticket, updated_memo).into();
+				let ticket_model =
+					ticket::Model::from_omnity_pending_ticket(pending_ticket, updated_memo).into();
 				Mutation::save_ticket(db, ticket_model).await?;
 			}
 			from_seq += new_pending_tickets.clone().len() as u64;

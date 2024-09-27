@@ -286,7 +286,11 @@ pub struct OmnityTicket {
 }
 
 impl ticket::Model {
-	pub fn from_omnity_ticket(seq: u64, omnity_ticket: OmnityTicket, updated_memo: Option<String>) -> Self {
+	pub fn from_omnity_ticket(
+		seq: u64,
+		omnity_ticket: OmnityTicket,
+		updated_memo: Option<String>,
+	) -> Self {
 		Self {
 			ticket_id: omnity_ticket.ticket_id.to_owned(),
 			ticket_seq: Some(seq as i64),
@@ -306,7 +310,10 @@ impl ticket::Model {
 		}
 	}
 
-	pub fn from_omnity_pending_ticket(pending_ticket: OmnityTicket, updated_memo: Option<String>) -> Self {
+	pub fn from_omnity_pending_ticket(
+		pending_ticket: OmnityTicket,
+		updated_memo: Option<String>,
+	) -> Self {
 		Self {
 			ticket_id: pending_ticket.ticket_id.to_owned(),
 			ticket_seq: None,
