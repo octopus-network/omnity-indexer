@@ -1,6 +1,6 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
-use crate::{with_omnity_canister, Arg};
+use crate::{with_omnity_canister, Arg, TicketId};
 use candid::CandidType;
 use log::info;
 use sea_orm::DbConn;
@@ -17,6 +17,31 @@ pub enum TxStatus {
 	TxFailed { e: String },
 }
 
+#[derive(CandidType, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct MintTokenRequest {
+    pub ticket_id: TicketId,
+    pub associated_account: String,
+    pub amount: u64,
+    pub token_mint: String,
+    pub status: TxStatus,
+    pub signature: Option<String>,
+    pub retry:u64,
+}
+
+impl MintTokenRequest {
+	pub fn new() -> Self {
+		Self {
+			ticket_id: "".to_string(),
+			associated_account: "".to_string(),
+			amount: 0,
+			token_mint: "".to_string(),
+			status: TxStatus::Unknown,
+			signature: Some("00000000".to_string()),
+			retry: 0,
+		}
+	}
+}
+
 pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(
 		"OMNITY_ROUTES_SOLANA_CANISTER_ID",
@@ -25,41 +50,41 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 				Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 
 			for unconfirmed_ticket in unconfirmed_tickets {
-				let mint_token_status = Arg::TI(unconfirmed_ticket.clone().ticket_id.clone())
+				let mint_token_req = Arg::TI(unconfirmed_ticket.clone().ticket_id.clone())
 					.query_method(
 						agent.clone(),
 						canister_id,
-						"mint_token_status",
+						"mint_token_req",
 						"Syncing mint token status from solana route ...",
 						"Mint token status from solana route result: ",
 						None,
 						None,
-						"TxStatus",
+						"MintTokenRequest",
 					)
 					.await?
-					.convert_to_mint_solana_token_status();
+					.convert_to_solana_mint_token_req();
 
-				match mint_token_status {
+				match mint_token_req.status {
 					TxStatus::Finalized => {
-						let solana_hash = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-							.query_method(
-								agent.clone(),
-								canister_id,
-								"mint_token_tx_hash",
-								"",
-								"",
-								None,
-								None,
-								"Option<String>",
-							)
-							.await?
-							.convert_to_mint_solana_token_status_hash();
+						// let solana_hash = Arg::TI(unconfirmed_ticket.ticket_id.clone())
+						// 	.query_method(
+						// 		agent.clone(),
+						// 		canister_id,
+						// 		"mint_token_tx_hash",
+						// 		"",
+						// 		"",
+						// 		None,
+						// 		None,
+						// 		"Option<String>",
+						// 	)
+						// 	.await?
+						// 	.convert_to_mint_solana_token_status_hash();
 
 						let _ = Mutation::update_ticket_status_n_txhash(
 							db,
 							unconfirmed_ticket.clone(),
 							TicketStatus::Finalized,
-							Some(solana_hash.unwrap()),
+							mint_token_req.signature,
 						)
 						.await?;
 					}

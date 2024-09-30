@@ -2,7 +2,7 @@ use crate::types::*;
 use crate::{
 	customs::bitcoin::ReleaseTokenStatus, customs::sicp::ICPCustomRelaseTokenStatus,
 	routes::cosmwasm::MintCosmwasmTokenStatus, routes::evm::MintEvmTokenStatus,
-	routes::icp::MintTokenStatus, routes::solana::TxStatus, Error as OmnityError, FETCH_LIMIT,
+	routes::icp::MintTokenStatus, routes::solana::MintTokenRequest, Error as OmnityError, FETCH_LIMIT,
 };
 // use anyhow::{Error as AnyError, Result, anyhow};
 use anyhow::{anyhow, Result};
@@ -250,8 +250,8 @@ pub enum ReturnType {
 	VecOmnityPendingTicket(Vec<(TicketId, OmnityTicket)>),
 	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
 	MintCosmwasmTokenStatus(MintCosmwasmTokenStatus),
-	TxStatus(TxStatus),
-	OptionString(Option<String>),
+	MintTokenRequest(MintTokenRequest),
+	// OptionString(Option<String>),
 	Non(()),
 }
 
@@ -334,18 +334,18 @@ impl ReturnType {
 			_ => return MintCosmwasmTokenStatus::Unknown,
 		}
 	}
-	pub fn convert_to_mint_solana_token_status(&self) -> TxStatus {
+	pub fn convert_to_solana_mint_token_req(&self) -> MintTokenRequest {
 		match self {
-			Self::TxStatus(t) => return t.clone(),
-			_ => return TxStatus::Finalized,
+			Self::MintTokenRequest(t) => return t.clone(),
+			_ => return MintTokenRequest::new(),
 		}
 	}
-	pub fn convert_to_mint_solana_token_status_hash(&self) -> Option<String> {
-		match self {
-			Self::OptionString(s) => return s.clone(),
-			_ => return None,
-		}
-	}
+	// pub fn convert_to_mint_solana_token_status_hash(&self) -> Option<String> {
+	// 	match self {
+	// 		Self::OptionString(s) => return s.clone(),
+	// 		_ => return None,
+	// 	}
+	// }
 }
 
 pub enum Arg {
@@ -472,18 +472,18 @@ impl Arg {
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::MintCosmwasmTokenStatus(decoded_return_output));
 			}
-			"TxStatus" => {
+			"MintTokenRequest" => {
 				let decoded_return_output =
-					Decode!(&return_output, Result<TxStatus, CallError>)?.unwrap();
+					Decode!(&return_output, Result<MintTokenRequest, CallError>)?.unwrap();
 				info!("{:?} {:?}", log_two, decoded_return_output);
-				return Ok(ReturnType::TxStatus(decoded_return_output));
+				return Ok(ReturnType::MintTokenRequest(decoded_return_output));
 			}
-			"Option<String>" => {
-				let decoded_return_output =
-					Decode!(&return_output, Result<Option<String>, CallError>)?.unwrap();
-				info!("{:?} {:?}", log_two, decoded_return_output);
-				return Ok(ReturnType::OptionString(decoded_return_output));
-			}
+			// "Option<String>" => {
+			// 	let decoded_return_output =
+			// 		Decode!(&return_output, Result<Option<String>, CallError>)?.unwrap();
+			// 	info!("{:?} {:?}", log_two, decoded_return_output);
+			// 	return Ok(ReturnType::OptionString(decoded_return_output));
+			// }
 			_ => {
 				let decoded_return_output =
 					Decode!(&return_output, Result<(), OmnityError>)?.unwrap();
