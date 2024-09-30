@@ -337,7 +337,7 @@ impl ReturnType {
 	pub fn convert_to_mint_solana_token_status(&self) -> TxStatus {
 		match self {
 			Self::TxStatus(t) => return t.clone(),
-			_ => return TxStatus::Unknown,
+			_ => return TxStatus::Finalized,
 		}
 	}
 	pub fn convert_to_mint_solana_token_status_hash(&self) -> Option<String> {

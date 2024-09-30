@@ -63,7 +63,9 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 						)
 						.await?;
 					}
-					TxStatus::Unknown => {}
+					TxStatus::Unknown => {
+						info!("{:?} is Unknown in Solana", unconfirmed_ticket.clone())
+					}
 					TxStatus::TxFailed { e } => {
 						info!("{:?}  ", e)
 					}
