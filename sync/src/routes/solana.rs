@@ -35,7 +35,7 @@ impl MintTokenRequest {
 			associated_account: "".to_string(),
 			amount: 0,
 			token_mint: "".to_string(),
-			status: TxStatus::Unknown,
+			status: TxStatus::Finalized,
 			signature: Some("00000000".to_string()),
 			retry: 0,
 		}

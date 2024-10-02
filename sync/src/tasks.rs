@@ -110,7 +110,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 
 	let sync_ticket_status_from_solana = spawn_sync_task(
 		db_conn.clone(),
-		20,
+		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { solana::sync_ticket_status_from_solana_route(&db_conn).await },
 	);
 
