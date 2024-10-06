@@ -1,54 +1,26 @@
-use crate::entity::chain_meta;
-use crate::entity::chain_meta::Entity as ChainMeta;
-use crate::entity::deleted_mint_ticket;
-use crate::entity::deleted_mint_ticket::Entity as DeletedMintTicket;
 use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
-use crate::entity::ticket;
-use crate::entity::ticket::Entity as Ticket;
-use crate::entity::token_ledger_id_on_chain;
-use crate::entity::token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain;
-use crate::entity::token_meta;
-use crate::entity::token_meta::Entity as TokenMeta;
-use crate::entity::token_on_chain;
-use crate::entity::token_on_chain::Entity as TokenOnChain;
+use crate::entity::{
+	chain_meta, deleted_mint_ticket, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
+};
+use crate::entity::{
+	chain_meta::Entity as ChainMeta, deleted_mint_ticket::Entity as DeletedMintTicket,
+	ticket::Entity as Ticket, token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain,
+	token_meta::Entity as TokenMeta, token_on_chain::Entity as TokenOnChain,
+};
 use log::info;
-use sea_orm::sea_query::OnConflict;
-use sea_orm::*;
+use sea_orm::{sea_query::OnConflict, *};
 
 pub struct Query;
 
 impl Query {
-	pub async fn get_all_chains(db: &DbConn) -> Result<Vec<chain_meta::Model>, DbErr> {
-		ChainMeta::find().all(db).await
-	}
 	pub async fn get_all_tokens(db: &DbConn) -> Result<Vec<token_meta::Model>, DbErr> {
 		TokenMeta::find().all(db).await
-	}
-	pub async fn get_all_tickets(db: &DbConn) -> Result<Vec<ticket::Model>, DbErr> {
-		Ticket::find().all(db).await
-	}
-	pub async fn get_all_tokens_on_chains(
-		db: &DbConn,
-	) -> Result<Vec<token_on_chain::Model>, DbErr> {
-		TokenOnChain::find().all(db).await
-	}
-	pub async fn get_all_deleted_mint_ticket(
-		db: &DbConn,
-	) -> Result<Vec<deleted_mint_ticket::Model>, DbErr> {
-		DeletedMintTicket::find().all(db).await
 	}
 	pub async fn get_ticket_by_id(
 		db: &DbConn,
 		ticket_id: String,
 	) -> Result<Option<ticket::Model>, DbErr> {
 		Ticket::find_by_id(ticket_id).one(db).await
-	}
-	pub async fn get_token_on_chain_by_id(
-		db: &DbConn,
-		chain_id: String,
-		token_id: String,
-	) -> Result<Option<token_on_chain::Model>, DbErr> {
-		TokenOnChain::find_by_id((chain_id, token_id)).one(db).await
 	}
 	pub async fn get_token_ledger_id_on_chain_by_id(
 		db: &DbConn,
@@ -423,71 +395,36 @@ impl Mutation {
 		Ok(deleted_mint_ticket::Model { ..deleted_ticket })
 	}
 
-	pub async fn update_ticket_status_n_txhash(
+	pub async fn update_ticket(
 		db: &DbConn,
 		ticket: ticket::Model,
-		status: TicketStatus,
-		tx_hash: Option<String>,
+		status: Option<TicketStatus>,
+		tx_hash: Option<Option<String>>,
+		amount: Option<String>,
+		sender: Option<String>,
+		intermediate_tx_hash: Option<Option<String>>,
+		seq: Option<Option<i64>>,
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.status = Set(status.to_owned());
-		active_model.tx_hash = Set(tx_hash.to_owned());
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
-
-	pub async fn update_ticket_status(
-		db: &DbConn,
-		ticket: ticket::Model,
-		status: TicketStatus,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.status = Set(status.to_owned());
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
-
-	pub async fn update_tikcet_amount(
-		db: &DbConn,
-		ticket: ticket::Model,
-		amount: String,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.amount = Set(amount.to_owned());
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
-
-	pub async fn update_tikcet_sender(
-		db: &DbConn,
-		ticket: ticket::Model,
-		sender: String,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.sender = Set(Some(sender.to_owned()));
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
-
-	pub async fn update_tikcet_seq(
-		db: &DbConn,
-		ticket: ticket::Model,
-		seq: Option<i64>,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.ticket_seq = Set(Some(seq.to_owned().expect("no seq")));
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
-
-	pub async fn update_ticket_intermediate_tx_hash(
-		db: &DbConn,
-		ticket: ticket::Model,
-		intermediate_tx_hash: Option<String>,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.intermediate_tx_hash =
-			Set(Some(intermediate_tx_hash.to_owned().expect("no hash")));
+		if let Some(_status) = status {
+			active_model.status = Set(_status.to_owned());
+		}
+		if let Some(_tx_hash) = tx_hash {
+			active_model.tx_hash = Set(_tx_hash.to_owned());
+		}
+		if let Some(_amount) = amount {
+			active_model.amount = Set(_amount.to_owned());
+		}
+		if let Some(_sender) = sender {
+			active_model.sender = Set(Some(_sender.to_owned()));
+		}
+		if let Some(_intermediate_tx_hash) = intermediate_tx_hash {
+			active_model.intermediate_tx_hash =
+				Set(Some(_intermediate_tx_hash.to_owned().expect("no hash")));
+		}
+		if let Some(_seq) = seq {
+			active_model.ticket_seq = Set(Some(_seq.to_owned().expect("no seq")));
+		}
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}
@@ -502,15 +439,4 @@ impl Mutation {
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}
-
-	// pub async fn update_ticket_memo(
-	// 	db: &DbConn,
-	// 	ticket: ticket::Model,
-	// 	memo: Option<Vec<u8>>,
-	// ) -> Result<ticket::Model, DbErr> {
-	// 	let mut active_model: ticket::ActiveModel = ticket.into();
-	// 	active_model.memo = Set(memo);
-	// 	let ticket = active_model.update(db).await?;
-	// 	Ok(ticket)
-	// }
 }

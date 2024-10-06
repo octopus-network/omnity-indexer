@@ -78,6 +78,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { hub::sync_tickets(&db_conn).await },
 	);
 
+	let sync_ticket_status_from_solana = spawn_sync_task(
+		db_conn.clone(),
+		TICKET_SYNC_INTERVAL,
+		|db_conn| async move { solana::sync_ticket_status_from_solana_route(&db_conn).await },
+	);
+
 	let sync_ticket_status_from_bitcoin = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
@@ -108,12 +114,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { cosmwasm::sync_all_tickets_status_from_cosmwasm_route(&db_conn).await },
 	);
 
-	let sync_ticket_status_from_solana = spawn_sync_task(
-		db_conn.clone(),
-		TICKET_SYNC_INTERVAL,
-		|db_conn| async move { solana::sync_ticket_status_from_solana_route(&db_conn).await },
-	);
-
 	let update_sender_tickets_from_hub = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
@@ -140,12 +140,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_all_token_ledger_id_from_evm,
 		sync_tokens_on_chains_from_hub,
 		sync_tickets_task,
+		sync_ticket_status_from_solana,
 		sync_ticket_status_from_bitcoin,
 		sync_ticket_status_from_sicp,
 		sync_ticket_status_from_eicp,
 		sync_all_tickets_status_from_evm,
 		sync_all_tickets_status_from_cosmwasm,
-		sync_ticket_status_from_solana,
 		update_sender_tickets_from_hub,
 		update_mint_tickets_from_btc,
 		update_deleted_mint_tickets_from_btc,

@@ -7,8 +7,8 @@ use sea_orm::DbConn;
 use std::{error::Error, str};
 
 pub const FETCH_LIMIT: u64 = 50;
-pub const CHAIN_SYNC_INTERVAL: u64 = 300;
-pub const TOKEN_SYNC_INTERVAL: u64 = 300;
+pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
+pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 120;
 
@@ -37,8 +37,17 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					.to_string();
 
 				// Insert the sender into the ticket meta
-				let updated_ticket =
-					Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
+				let updated_ticket = Mutation::update_ticket(
+					db,
+					ticket.clone(),
+					None,
+					None,
+					None,
+					Some(sender),
+					None,
+					None,
+				)
+				.await?;
 
 				info!(
 					"Ticket id({:?}) has changed its sender to {:?}",

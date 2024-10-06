@@ -60,30 +60,52 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 					.await?
 					.convert_to_mint_cosmwasm_token_status();
 
-				match mint_osmosis_token_status {
-					MintCosmwasmTokenStatus::Unknown => {
-						info!(
-							"Ticket id({:?}) from {:?} mint osmosis token status {:?}",
-							unconfirmed_ticket.ticket_id,
-							osmosis_route.chain.clone(),
-							MintCosmwasmTokenStatus::Unknown
-						);
-					}
-					MintCosmwasmTokenStatus::Finalized { tx_hash } => {
-						let ticket_model = Mutation::update_ticket_status_n_txhash(
-							db,
-							unconfirmed_ticket.clone(),
-							TicketStatus::Finalized,
-							Some(tx_hash),
-						)
-						.await?;
+				if let MintCosmwasmTokenStatus::Finalized { tx_hash } = mint_osmosis_token_status {
+					let ticket_model = Mutation::update_ticket(
+						db,
+						unconfirmed_ticket.clone(),
+						Some(TicketStatus::Finalized),
+						Some(Some(tx_hash)),
+						None,
+						None,
+						None,
+						None,
+					)
+					.await?;
 
-						info!(
-							"Ticket id({:?}) status:{:?} and its hash is {:?} ",
-							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-						);
-					}
+					info!(
+						"Ticket id({:?}) status:{:?} and its hash is {:?} ",
+						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+					);
 				}
+				// match mint_osmosis_token_status {
+				// 	MintCosmwasmTokenStatus::Unknown => {
+				// 		info!(
+				// 			"Ticket id({:?}) from {:?} mint osmosis token status {:?}",
+				// 			unconfirmed_ticket.ticket_id,
+				// 			osmosis_route.chain.clone(),
+				// 			MintCosmwasmTokenStatus::Unknown
+				// 		);
+				// 	}
+				// 	MintCosmwasmTokenStatus::Finalized { tx_hash } => {
+				// 		let ticket_model = Mutation::update_ticket(
+				// 			db,
+				// 			unconfirmed_ticket.clone(),
+				// 			Some(TicketStatus::Finalized),
+				// 			Some(Some(tx_hash)),
+				// 			None,
+				// 			None,
+				// 			None,
+				// 			None,
+				// 		)
+				// 		.await?;
+
+				// 		info!(
+				// 			"Ticket id({:?}) status:{:?} and its hash is {:?} ",
+				// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+				// 		);
+				// 	}
+				// }
 			}
 
 			Ok(())

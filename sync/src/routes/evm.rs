@@ -75,9 +75,8 @@ pub async fn sync_all_token_ledger_id_from_evm_route(db: &DbConn) -> Result<(), 
 	let evm_routes = EvmRoutes::new();
 
 	for evm_route in evm_routes.routes.iter() {
-		let _ =
-			sync_all_evm_token_ledger_id_on_chain(db, evm_route.canister, evm_route.chain.clone())
-				.await;
+		sync_all_evm_token_ledger_id_on_chain(db, evm_route.canister, evm_route.chain.clone())
+			.await?;
 	}
 	Ok(())
 }
@@ -89,13 +88,13 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 		let unconfirmed_tickets =
 			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await?;
 		for unconfirmed_ticket in unconfirmed_tickets {
-			let _ = sync_ticket_status_from_evm_route(
+			sync_ticket_status_from_evm_route(
 				db,
 				evm_route.canister,
 				evm_route.chain.clone(),
 				unconfirmed_ticket,
 			)
-			.await;
+			.await?;
 		}
 	}
 	Ok(())
@@ -149,7 +148,7 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 pub async fn sync_ticket_status_from_evm_route(
 	db: &DbConn,
 	canister: &str,
-	chain: ChainId,
+	_chain: ChainId,
 	ticket: ticket::Model,
 ) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(canister, |agent, canister_id| async move {
@@ -167,30 +166,52 @@ pub async fn sync_ticket_status_from_evm_route(
 			.await?
 			.convert_to_mint_evm_token_status();
 
-		match mint_evm_token_status {
-			MintEvmTokenStatus::Unknown => {
-				info!(
-					"Ticket id({:?}) from {:?} mint evm token status {:?}",
-					ticket.ticket_id,
-					chain.clone(),
-					MintEvmTokenStatus::Unknown
-				);
-			}
-			MintEvmTokenStatus::Finalized { tx_hash } => {
-				let ticket_model = Mutation::update_ticket_status_n_txhash(
-					db,
-					ticket.clone(),
-					TicketStatus::Finalized,
-					Some(tx_hash),
-				)
-				.await?;
+		if let MintEvmTokenStatus::Finalized { tx_hash } = mint_evm_token_status {
+			let ticket_model = Mutation::update_ticket(
+				db,
+				ticket.clone(),
+				Some(TicketStatus::Finalized),
+				Some(Some(tx_hash)),
+				None,
+				None,
+				None,
+				None,
+			)
+			.await?;
 
-				info!(
-					"Ticket id({:?}) status:{:?} and its hash is {:?} ",
-					ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-				);
-			}
+			info!(
+				"Ticket id({:?}) status:{:?} and its hash is {:?} ",
+				ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+			);
 		}
+		// match mint_evm_token_status {
+		// 	MintEvmTokenStatus::Unknown => {
+		// 		info!(
+		// 			"Ticket id({:?}) from {:?} mint evm token status {:?}",
+		// 			ticket.ticket_id,
+		// 			chain.clone(),
+		// 			MintEvmTokenStatus::Unknown
+		// 		);
+		// 	}
+		// 	MintEvmTokenStatus::Finalized { tx_hash } => {
+		// 		let ticket_model = Mutation::update_ticket(
+		// 			db,
+		// 			ticket.clone(),
+		// 			Some(TicketStatus::Finalized),
+		// 			Some(Some(tx_hash)),
+		// 			None,
+		// 			None,
+		// 			None,
+		// 			None,
+		// 		)
+		// 		.await?;
+
+		// 		info!(
+		// 			"Ticket id({:?}) status:{:?} and its hash is {:?} ",
+		// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+		// 		);
+		// 	}
+		// }
 		Ok(())
 	})
 	.await

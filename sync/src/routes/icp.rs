@@ -70,7 +70,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 
 	// get mint_token_status by ticket id
 	for unconfirmed_ticket in unconfirmed_tickets {
-		let _ = ticket_status_from_icp_route(db, unconfirmed_ticket).await?;
+		ticket_status_from_icp_route(db, unconfirmed_ticket).await?;
 	}
 	Ok(())
 }
@@ -96,41 +96,76 @@ pub async fn ticket_status_from_icp_route(
 				.await?
 				.convert_to_mint_token_status();
 
-			match mint_token_status {
-				MintTokenStatus::Unknown => {
-					info!(
-						"Ticket id({:?}) mint token status {:?}",
-						ticket.ticket_id,
-						MintTokenStatus::Unknown
-					);
-				}
-				MintTokenStatus::Finalized { block_index } => {
-					let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
-						db,
-						ROUTE_CHAIN_ID.to_owned(),
-						ticket.clone().token,
-					)
-					.await?
-					{
-						Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
-						None => block_index.to_string(),
-					};
+			if let MintTokenStatus::Finalized { block_index } = mint_token_status {
+				let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
+					db,
+					ROUTE_CHAIN_ID.to_owned(),
+					ticket.clone().token,
+				)
+				.await?
+				{
+					Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
+					None => block_index.to_string(),
+				};
 
-					// update ticket status to finalized
-					let ticket_model = Mutation::update_ticket_status_n_txhash(
-						db,
-						ticket.clone(),
-						TicketStatus::Finalized,
-						Some(tx_hash),
-					)
-					.await?;
+				// update ticket status to finalized
+				let ticket_model = Mutation::update_ticket(
+					db,
+					ticket.clone(),
+					Some(TicketStatus::Finalized),
+					Some(Some(tx_hash)),
+					None,
+					None,
+					None,
+					None,
+				)
+				.await?;
 
-					info!(
-						"Ticket id({:?}) status:{:?} and finalized on block {:?}",
-						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-					);
-				}
+				info!(
+					"Ticket id({:?}) status:{:?} and finalized on block {:?}",
+					ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+				);
 			}
+
+			// match mint_token_status {
+			// 	MintTokenStatus::Unknown => {
+			// 		info!(
+			// 			"Ticket id({:?}) mint token status {:?}",
+			// 			ticket.ticket_id,
+			// 			MintTokenStatus::Unknown
+			// 		);
+			// 	}
+			// 	MintTokenStatus::Finalized { block_index } => {
+			// 		let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
+			// 			db,
+			// 			ROUTE_CHAIN_ID.to_owned(),
+			// 			ticket.clone().token,
+			// 		)
+			// 		.await?
+			// 		{
+			// 			Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
+			// 			None => block_index.to_string(),
+			// 		};
+
+			// 		// update ticket status to finalized
+			// 		let ticket_model = Mutation::update_ticket(
+			// 			db,
+			// 			ticket.clone(),
+			// 			Some(TicketStatus::Finalized),
+			// 			Some(Some(tx_hash)),
+			// 			None,
+			// 			None,
+			// 			None,
+			// 			None,
+			// 		)
+			// 		.await?;
+
+			// 		info!(
+			// 			"Ticket id({:?}) status:{:?} and finalized on block {:?}",
+			// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+			// 		);
+			// 	}
+			// }
 			Ok(())
 		},
 	)

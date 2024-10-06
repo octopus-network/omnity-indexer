@@ -19,13 +19,13 @@ pub enum TxStatus {
 
 #[derive(CandidType, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct MintTokenRequest {
-    pub ticket_id: TicketId,
-    pub associated_account: String,
-    pub amount: u64,
-    pub token_mint: String,
-    pub status: TxStatus,
-    pub signature: Option<String>,
-    pub retry:u64,
+	pub ticket_id: TicketId,
+	pub associated_account: String,
+	pub amount: u64,
+	pub token_mint: String,
+	pub status: TxStatus,
+	pub signature: Option<String>,
+	pub retry: u64,
 }
 
 impl MintTokenRequest {
@@ -46,6 +46,10 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 	with_omnity_canister(
 		"OMNITY_ROUTES_SOLANA_CANISTER_ID",
 		|agent, canister_id| async move {
+			info!(
+				"{:?} Syncing release token status from Solana ... ",
+				chrono::Utc::now()
+			);
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 
@@ -64,37 +68,46 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 					.await?
 					.convert_to_solana_mint_token_req();
 
-				match mint_token_req.status {
-					TxStatus::Finalized => {
-						// let solana_hash = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-						// 	.query_method(
-						// 		agent.clone(),
-						// 		canister_id,
-						// 		"mint_token_tx_hash",
-						// 		"",
-						// 		"",
-						// 		None,
-						// 		None,
-						// 		"Option<String>",
-						// 	)
-						// 	.await?
-						// 	.convert_to_mint_solana_token_status_hash();
+				info!(
+					"Solana Mint Token Status: {:?} ",
+					mint_token_req.clone().status
+				);
 
-						let _ = Mutation::update_ticket_status_n_txhash(
-							db,
-							unconfirmed_ticket.clone(),
-							TicketStatus::Finalized,
-							mint_token_req.signature,
-						)
-						.await?;
-					}
-					TxStatus::Unknown => {
-						info!("{:?} is Unknown in Solana", unconfirmed_ticket.clone())
-					}
-					TxStatus::TxFailed { e } => {
-						info!("{:?}  ", e)
-					}
+				if let TxStatus::Finalized = mint_token_req.status {
+					Mutation::update_ticket(
+						db,
+						unconfirmed_ticket.clone(),
+						Some(TicketStatus::Finalized),
+						Some(mint_token_req.signature),
+						None,
+						None,
+						None,
+						None,
+					)
+					.await?;
 				}
+
+				// match mint_token_req.status {
+				// 	TxStatus::Finalized => {
+				// 		Mutation::update_ticket(
+				// 			db,
+				// 			unconfirmed_ticket.clone(),
+				// 			Some(TicketStatus::Finalized),
+				// 			Some(mint_token_req.signature),
+				// 			None,
+				// 			None,
+				// 			None,
+				// 			None,
+				// 		)
+				// 		.await?;
+				// 	}
+				// 	TxStatus::Unknown => {
+				// 		info!("{:?} is Unknown in Solana", unconfirmed_ticket.clone())
+				// 	}
+				// 	TxStatus::TxFailed { e } => {
+				// 		info!("Solana error: {:?}  ", e)
+				// 	}
+				// }
 			}
 
 			Ok(())
