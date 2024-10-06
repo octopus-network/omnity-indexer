@@ -66,20 +66,6 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 
 				match mint_token_req.status {
 					TxStatus::Finalized => {
-						// let solana_hash = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-						// 	.query_method(
-						// 		agent.clone(),
-						// 		canister_id,
-						// 		"mint_token_tx_hash",
-						// 		"",
-						// 		"",
-						// 		None,
-						// 		None,
-						// 		"Option<String>",
-						// 	)
-						// 	.await?
-						// 	.convert_to_mint_solana_token_status_hash();
-
 						let _ = Mutation::update_ticket_status_n_txhash(
 							db,
 							unconfirmed_ticket.clone(),
