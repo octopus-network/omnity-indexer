@@ -46,6 +46,10 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 	with_omnity_canister(
 		"OMNITY_ROUTES_SOLANA_CANISTER_ID",
 		|agent, canister_id| async move {
+			info!(
+				"{:?} Syncing release token status from Solana ... ",
+				chrono::Utc::now()
+			);
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 
@@ -64,27 +68,46 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 					.await?
 					.convert_to_solana_mint_token_req();
 
-				match mint_token_req.status {
-					TxStatus::Finalized => {
-						Mutation::update_ticket(
-							db,
-							unconfirmed_ticket.clone(),
-							Some(TicketStatus::Finalized),
-							Some(mint_token_req.signature),
-							None,
-							None,
-							None,
-							None,
-						)
-						.await?;
-					}
-					TxStatus::Unknown => {
-						info!("{:?} is Unknown in Solana", unconfirmed_ticket.clone())
-					}
-					TxStatus::TxFailed { e } => {
-						info!("{:?}  ", e)
-					}
+				info!(
+					"Solana Mint Token Status: {:?} ",
+					mint_token_req.clone().status
+				);
+
+				if let TxStatus::Finalized = mint_token_req.status {
+					Mutation::update_ticket(
+						db,
+						unconfirmed_ticket.clone(),
+						Some(TicketStatus::Finalized),
+						Some(mint_token_req.signature),
+						None,
+						None,
+						None,
+						None,
+					)
+					.await?;
 				}
+
+				// match mint_token_req.status {
+				// 	TxStatus::Finalized => {
+				// 		Mutation::update_ticket(
+				// 			db,
+				// 			unconfirmed_ticket.clone(),
+				// 			Some(TicketStatus::Finalized),
+				// 			Some(mint_token_req.signature),
+				// 			None,
+				// 			None,
+				// 			None,
+				// 			None,
+				// 		)
+				// 		.await?;
+				// 	}
+				// 	TxStatus::Unknown => {
+				// 		info!("{:?} is Unknown in Solana", unconfirmed_ticket.clone())
+				// 	}
+				// 	TxStatus::TxFailed { e } => {
+				// 		info!("Solana error: {:?}  ", e)
+				// 	}
+				// }
 			}
 
 			Ok(())

@@ -41,33 +41,52 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 					.await?
 					.convert_to_release_icp_token_status();
 
-				match release_icp_token_status {
-					ICPCustomRelaseTokenStatus::Finalized { tx_hash } => {
-						let ticket_model = Mutation::update_ticket(
-							db,
-							unconfirmed_ticket.clone(),
-							Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
-							Some(Some(tx_hash)),
-							None,
-							None,
-							None,
-							None,
-						)
-						.await?;
+				if let ICPCustomRelaseTokenStatus::Finalized { tx_hash } = release_icp_token_status
+				{
+					let ticket_model = Mutation::update_ticket(
+						db,
+						unconfirmed_ticket.clone(),
+						Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+						Some(Some(tx_hash)),
+						None,
+						None,
+						None,
+						None,
+					)
+					.await?;
 
-						info!(
-							"Ticket id({:?}) finally status:{:?} and its ICP custom hash is {:?} ",
-							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-						);
-					}
-
-					ICPCustomRelaseTokenStatus::Unknown => {
-						info!(
-							"Ticket id({:?}) current status {:?}",
-							unconfirmed_ticket.ticket_id, release_icp_token_status
-						);
-					}
+					info!(
+						"Ticket id({:?}) finally status:{:?} and its ICP custom hash is {:?} ",
+						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+					);
 				}
+				// match release_icp_token_status {
+				// 	ICPCustomRelaseTokenStatus::Finalized { tx_hash } => {
+				// 		let ticket_model = Mutation::update_ticket(
+				// 			db,
+				// 			unconfirmed_ticket.clone(),
+				// 			Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+				// 			Some(Some(tx_hash)),
+				// 			None,
+				// 			None,
+				// 			None,
+				// 			None,
+				// 		)
+				// 		.await?;
+
+				// 		info!(
+				// 			"Ticket id({:?}) finally status:{:?} and its ICP custom hash is {:?} ",
+				// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+				// 		);
+				// 	}
+
+				// 	ICPCustomRelaseTokenStatus::Unknown => {
+				// 		info!(
+				// 			"Ticket id({:?}) current status {:?}",
+				// 			unconfirmed_ticket.ticket_id, release_icp_token_status
+				// 		);
+				// 	}
+				// }
 			}
 
 			Ok(())
