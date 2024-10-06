@@ -43,7 +43,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					None,
 					None,
 					None,
-					Some(sender),
+					Some(Some(sender)),
 					None,
 					None,
 				)

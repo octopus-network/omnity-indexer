@@ -401,7 +401,7 @@ impl Mutation {
 		status: Option<TicketStatus>,
 		tx_hash: Option<Option<String>>,
 		amount: Option<String>,
-		sender: Option<String>,
+		sender: Option<Option<String>>,
 		intermediate_tx_hash: Option<Option<String>>,
 		seq: Option<Option<i64>>,
 	) -> Result<ticket::Model, DbErr> {
@@ -416,7 +416,7 @@ impl Mutation {
 			active_model.amount = Set(_amount.to_owned());
 		}
 		if let Some(_sender) = sender {
-			active_model.sender = Set(Some(_sender.to_owned()));
+			active_model.sender = Set(_sender.to_owned());
 		}
 		if let Some(_intermediate_tx_hash) = intermediate_tx_hash {
 			active_model.intermediate_tx_hash =

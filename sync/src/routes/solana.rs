@@ -68,6 +68,14 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 					.await?
 					.convert_to_solana_mint_token_req();
 
+				// let args = Encode!(&unconfirmed_ticket.clone().ticket_id.clone())?;
+				// let ret = agent
+				// 		.query(&canister_id, "mint_token_req")
+				// 		.with_arg(args)
+				// 		.call()
+				// 		.await?;
+				// let mint_token_req: MintTokenRequest = Decode!(&ret, MintTokenRequest)?;
+
 				info!(
 					"Solana Mint Token Status: {:?} ",
 					mint_token_req.clone().status
