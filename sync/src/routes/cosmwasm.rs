@@ -70,11 +70,15 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 						);
 					}
 					MintCosmwasmTokenStatus::Finalized { tx_hash } => {
-						let ticket_model = Mutation::update_ticket_status_n_txhash(
+						let ticket_model = Mutation::update_ticket(
 							db,
 							unconfirmed_ticket.clone(),
-							TicketStatus::Finalized,
-							Some(tx_hash),
+							Some(TicketStatus::Finalized),
+							Some(Some(tx_hash)),
+							None,
+							None,
+							None,
+							None,
 						)
 						.await?;
 

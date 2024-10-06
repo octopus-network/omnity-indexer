@@ -59,11 +59,15 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 				| ReleaseTokenStatus::Confirmed(tx_hash) = mint_token_status
 				{
 					//step3: update ticket status to finalized
-					let ticket_model = Mutation::update_ticket_status_n_txhash(
+					let ticket_model = Mutation::update_ticket(
 						db,
 						unconfirmed_ticket.clone(),
-						crate::entity::sea_orm_active_enums::TicketStatus::Finalized,
-						Some(tx_hash),
+						Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+						Some(Some(tx_hash)),
+						None,
+						None,
+						None,
+						None,
 					)
 					.await?;
 
@@ -94,8 +98,17 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			// Fetch the amount from the runescan graphql api
 			let amount = query_terms_amount(token_id).await.unwrap();
 			// Insert the amount into the ticket meta
-			let updated_ticket =
-				Mutation::update_tikcet_amount(db, ticket, amount.to_string()).await?;
+			let updated_ticket = Mutation::update_ticket(
+				db,
+				ticket,
+				None,
+				None,
+				Some(amount.to_string()),
+				None,
+				None,
+				None,
+			)
+			.await?;
 			info!(
 				"Ticket id({:?}) has changed its amount to {:?}",
 				updated_ticket.ticket_id, updated_ticket.amount
@@ -118,10 +131,15 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 					Some(tx_hash) => {
 						// fetch the tx_hash from the mint ticket and put it in intermediate_tx_hash
 						let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-						Mutation::update_ticket_intermediate_tx_hash(
+						Mutation::update_ticket(
 							db,
 							mint_ticket.clone(),
-							intermediate_tx_hash,
+							None,
+							None,
+							None,
+							None,
+							Some(intermediate_tx_hash),
+							None,
 						)
 						.await?;
 						// put the hash to mint ticket tx_hash
@@ -152,10 +170,15 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 					}
 					None => {
 						let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-						Mutation::update_ticket_intermediate_tx_hash(
+						Mutation::update_ticket(
 							db,
 							mint_ticket.clone(),
-							intermediate_tx_hash,
+							None,
+							None,
+							None,
+							None,
+							Some(intermediate_tx_hash),
+							None,
 						)
 						.await?;
 						Mutation::update_ticket_tx_hash(db, mint_ticket, None).await?;
@@ -165,10 +188,15 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 			None => {
 				//update mint tickets status if there is no corresponding transfer tickets.
 				if let None = mint_ticket.clone().intermediate_tx_hash {
-					Mutation::update_ticket_status(
+					Mutation::update_ticket(
 						db,
 						mint_ticket.clone(),
-						crate::entity::sea_orm_active_enums::TicketStatus::Unknown,
+						Some(crate::entity::sea_orm_active_enums::TicketStatus::Unknown),
+						None,
+						None,
+						None,
+						None,
+						None,
 					)
 					.await?;
 				}

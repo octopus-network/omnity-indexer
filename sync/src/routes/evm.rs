@@ -176,11 +176,15 @@ pub async fn sync_ticket_status_from_evm_route(
 				);
 			}
 			MintEvmTokenStatus::Finalized { tx_hash } => {
-				let ticket_model = Mutation::update_ticket_status_n_txhash(
+				let ticket_model = Mutation::update_ticket(
 					db,
 					ticket.clone(),
-					TicketStatus::Finalized,
-					Some(tx_hash),
+					Some(TicketStatus::Finalized),
+					Some(Some(tx_hash)),
+					None,
+					None,
+					None,
+					None,
 				)
 				.await?;
 

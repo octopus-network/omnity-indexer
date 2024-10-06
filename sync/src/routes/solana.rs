@@ -66,11 +66,15 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 
 				match mint_token_req.status {
 					TxStatus::Finalized => {
-						Mutation::update_ticket_status_n_txhash(
+						Mutation::update_ticket(
 							db,
 							unconfirmed_ticket.clone(),
-							TicketStatus::Finalized,
-							mint_token_req.signature,
+							Some(TicketStatus::Finalized),
+							Some(mint_token_req.signature),
+							None,
+							None,
+							None,
+							None,
 						)
 						.await?;
 					}

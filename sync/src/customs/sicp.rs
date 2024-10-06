@@ -43,11 +43,15 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 
 				match release_icp_token_status {
 					ICPCustomRelaseTokenStatus::Finalized { tx_hash } => {
-						let ticket_model = Mutation::update_ticket_status_n_txhash(
+						let ticket_model = Mutation::update_ticket(
 							db,
 							unconfirmed_ticket.clone(),
-							crate::entity::sea_orm_active_enums::TicketStatus::Finalized,
-							Some(tx_hash),
+							Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+							Some(Some(tx_hash)),
+							None,
+							None,
+							None,
+							None,
 						)
 						.await?;
 

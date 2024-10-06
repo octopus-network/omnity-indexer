@@ -117,11 +117,15 @@ pub async fn ticket_status_from_icp_route(
 					};
 
 					// update ticket status to finalized
-					let ticket_model = Mutation::update_ticket_status_n_txhash(
+					let ticket_model = Mutation::update_ticket(
 						db,
 						ticket.clone(),
-						TicketStatus::Finalized,
-						Some(tx_hash),
+						Some(TicketStatus::Finalized),
+						Some(Some(tx_hash)),
+						None,
+						None,
+						None,
+						None,
 					)
 					.await?;
 

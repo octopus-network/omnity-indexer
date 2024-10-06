@@ -37,8 +37,17 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					.to_string();
 
 				// Insert the sender into the ticket meta
-				let updated_ticket =
-					Mutation::update_tikcet_sender(db, ticket.clone(), sender).await?;
+				let updated_ticket = Mutation::update_ticket(
+					db,
+					ticket.clone(),
+					None,
+					None,
+					None,
+					Some(sender),
+					None,
+					None,
+				)
+				.await?;
 
 				info!(
 					"Ticket id({:?}) has changed its sender to {:?}",
