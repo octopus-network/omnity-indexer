@@ -118,20 +118,19 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 					Some(tx_hash) => {
 						// fetch the tx_hash from the mint ticket and put it in intermediate_tx_hash
 						let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-						let _ = Mutation::update_ticket_intermediate_tx_hash(
+						Mutation::update_ticket_intermediate_tx_hash(
 							db,
 							mint_ticket.clone(),
 							intermediate_tx_hash,
 						)
 						.await?;
 						// put the hash to mint ticket tx_hash
-						let _ =
-							Mutation::update_ticket_tx_hash(db, mint_ticket, Some(tx_hash.clone()))
-								.await?;
+						Mutation::update_ticket_tx_hash(db, mint_ticket, Some(tx_hash.clone()))
+							.await?;
 
 						// Save the ticket that contains the tx_hash as the ticket_id to
 						// DeletedMintTicket
-						let _ = Mutation::save_deleted_mint_ticket(
+						Mutation::save_deleted_mint_ticket(
 							db,
 							ticket_should_be_removed.clone().into(),
 						)
@@ -153,20 +152,20 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 					}
 					None => {
 						let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-						let _ = Mutation::update_ticket_intermediate_tx_hash(
+						Mutation::update_ticket_intermediate_tx_hash(
 							db,
 							mint_ticket.clone(),
 							intermediate_tx_hash,
 						)
 						.await?;
-						let _ = Mutation::update_ticket_tx_hash(db, mint_ticket, None).await?;
+						Mutation::update_ticket_tx_hash(db, mint_ticket, None).await?;
 					}
 				}
 			}
 			None => {
 				//update mint tickets status if there is no corresponding transfer tickets.
 				if let None = mint_ticket.clone().intermediate_tx_hash {
-					let _ = Mutation::update_ticket_status(
+					Mutation::update_ticket_status(
 						db,
 						mint_ticket.clone(),
 						crate::entity::sea_orm_active_enums::TicketStatus::Unknown,

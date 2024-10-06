@@ -75,9 +75,8 @@ pub async fn sync_all_token_ledger_id_from_evm_route(db: &DbConn) -> Result<(), 
 	let evm_routes = EvmRoutes::new();
 
 	for evm_route in evm_routes.routes.iter() {
-		let _ =
-			sync_all_evm_token_ledger_id_on_chain(db, evm_route.canister, evm_route.chain.clone())
-				.await;
+		sync_all_evm_token_ledger_id_on_chain(db, evm_route.canister, evm_route.chain.clone())
+			.await?;
 	}
 	Ok(())
 }
@@ -89,13 +88,13 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 		let unconfirmed_tickets =
 			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await?;
 		for unconfirmed_ticket in unconfirmed_tickets {
-			let _ = sync_ticket_status_from_evm_route(
+			sync_ticket_status_from_evm_route(
 				db,
 				evm_route.canister,
 				evm_route.chain.clone(),
 				unconfirmed_ticket,
 			)
-			.await;
+			.await?;
 		}
 	}
 	Ok(())

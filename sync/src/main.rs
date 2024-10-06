@@ -1,11 +1,11 @@
-use dotenvy::dotenv;
-use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
 use anyhow::anyhow;
+use dotenvy::dotenv;
 use log::LevelFilter;
 use log4rs::{
 	append::console::ConsoleAppender,
 	config::{Appender, Root},
 };
+use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

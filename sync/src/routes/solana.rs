@@ -19,13 +19,13 @@ pub enum TxStatus {
 
 #[derive(CandidType, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct MintTokenRequest {
-    pub ticket_id: TicketId,
-    pub associated_account: String,
-    pub amount: u64,
-    pub token_mint: String,
-    pub status: TxStatus,
-    pub signature: Option<String>,
-    pub retry:u64,
+	pub ticket_id: TicketId,
+	pub associated_account: String,
+	pub amount: u64,
+	pub token_mint: String,
+	pub status: TxStatus,
+	pub signature: Option<String>,
+	pub retry: u64,
 }
 
 impl MintTokenRequest {
@@ -66,7 +66,7 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 
 				match mint_token_req.status {
 					TxStatus::Finalized => {
-						let _ = Mutation::update_ticket_status_n_txhash(
+						Mutation::update_ticket_status_n_txhash(
 							db,
 							unconfirmed_ticket.clone(),
 							TicketStatus::Finalized,

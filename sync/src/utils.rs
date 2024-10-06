@@ -2,7 +2,8 @@ use crate::types::*;
 use crate::{
 	customs::bitcoin::ReleaseTokenStatus, customs::sicp::ICPCustomRelaseTokenStatus,
 	routes::cosmwasm::MintCosmwasmTokenStatus, routes::evm::MintEvmTokenStatus,
-	routes::icp::MintTokenStatus, routes::solana::MintTokenRequest, Error as OmnityError, FETCH_LIMIT,
+	routes::icp::MintTokenStatus, routes::solana::MintTokenRequest, Error as OmnityError,
+	FETCH_LIMIT,
 };
 use anyhow::{anyhow, Result};
 use candid::{Decode, Encode};

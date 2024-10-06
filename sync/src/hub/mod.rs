@@ -7,8 +7,8 @@ use sea_orm::DbConn;
 use std::{error::Error, str};
 
 pub const FETCH_LIMIT: u64 = 50;
-pub const CHAIN_SYNC_INTERVAL: u64 = 300;
-pub const TOKEN_SYNC_INTERVAL: u64 = 300;
+pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
+pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 120;
 

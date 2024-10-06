@@ -70,7 +70,7 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 
 	// get mint_token_status by ticket id
 	for unconfirmed_ticket in unconfirmed_tickets {
-		let _ = ticket_status_from_icp_route(db, unconfirmed_ticket).await?;
+		ticket_status_from_icp_route(db, unconfirmed_ticket).await?;
 	}
 	Ok(())
 }
