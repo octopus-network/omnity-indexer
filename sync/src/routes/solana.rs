@@ -1,7 +1,8 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
-use crate::{with_omnity_canister, Arg, TicketId};
+use crate::{with_omnity_canister, Arg, TicketId, CallError};
 use candid::CandidType;
+use candid::{Decode, Encode};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -54,19 +55,27 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 				Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 
 			for unconfirmed_ticket in unconfirmed_tickets {
-				let mint_token_req = Arg::TI(unconfirmed_ticket.clone().ticket_id.clone())
-					.query_method(
-						agent.clone(),
-						canister_id,
-						"mint_token_req",
-						"Syncing mint token status from solana route ...",
-						"Mint token status from solana route result: ",
-						None,
-						None,
-						"MintTokenRequest",
-					)
-					.await?
-					.convert_to_solana_mint_token_req();
+				// let mint_token_req = Arg::TI(unconfirmed_ticket.clone().ticket_id.clone())
+				// 	.query_method(
+				// 		agent.clone(),
+				// 		canister_id,
+				// 		"mint_token_req",
+				// 		"Syncing mint token status from solana route ...",
+				// 		"Mint token status from solana route result: ",
+				// 		None,
+				// 		None,
+				// 		"MintTokenRequest",
+				// 	)
+				// 	.await?
+				// 	.convert_to_solana_mint_token_req();
+
+				let args = Encode!(&unconfirmed_ticket.clone().ticket_id.clone())?;
+				let ret = agent
+					.query(&canister_id, "mint_token_req")
+					.with_arg(args)
+					.call()
+					.await?;
+				let mint_token_req: MintTokenRequest = Decode!(&ret, Result<MintTokenRequest, CallError>)?.unwrap();
 
 				info!(
 					"Solana Mint Token Status: {:?} ",
