@@ -406,12 +406,42 @@ impl Mutation {
 		Ok(deleted_mint_ticket::Model { ..deleted_ticket })
 	}
 
-	pub async fn save_pending_ticket(
+	// pub async fn save_pending_ticket(
+	// 	db: &DbConn,
+	// 	pending_ticket: pending_ticket::Model,
+	// ) -> Result<pending_ticket::Model, DbErr> {
+	// 	let active_model: pending_ticket::ActiveModel = pending_ticket.clone().into();
+	// 	let on_conflict = OnConflict::column(pending_ticket::Column::TicketId)
+	// 		.do_nothing()
+	// 		.to_owned();
+	// 	let insert_result = PendingTicket::insert(active_model.clone())
+	// 		.on_conflict(on_conflict)
+	// 		.exec(db)
+	// 		.await;
+	// 	match insert_result {
+	// 		Ok(ret) => {
+	// 			info!("insert pending ticket result : {:?}", ret);
+	// 		}
+	// 		Err(_) => {
+	// 			info!("the pending ticket already exists, need to update ticket !");
+	// 			let res = PendingTicket::update(active_model)
+	// 				.filter(
+	// 					pending_ticket::Column::TicketId.eq(&pending_ticket.ticket_id.to_owned()),
+	// 				)
+	// 				.exec(db)
+	// 				.await
+	// 				.map(|ticket| ticket);
+	// 			info!("update pending ticket result : {:?}", res);
+	// 		}
+	// 	}
+	// 	Ok(pending_ticket::Model { ..pending_ticket })
+	// }
+	pub async fn save_pending_ticket_index(
 		db: &DbConn,
 		pending_ticket: pending_ticket::Model,
 	) -> Result<pending_ticket::Model, DbErr> {
 		let active_model: pending_ticket::ActiveModel = pending_ticket.clone().into();
-		let on_conflict = OnConflict::column(pending_ticket::Column::TicketId)
+		let on_conflict = OnConflict::column(pending_ticket::Column::TicketIndex)
 			.do_nothing()
 			.to_owned();
 		let insert_result = PendingTicket::insert(active_model.clone())
@@ -420,18 +450,18 @@ impl Mutation {
 			.await;
 		match insert_result {
 			Ok(ret) => {
-				info!("insert pending ticket result : {:?}", ret);
+				info!("insert pending ticket index result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the pending ticket already exists, need to update ticket !");
 				let res = PendingTicket::update(active_model)
 					.filter(
-						pending_ticket::Column::TicketId.eq(&pending_ticket.ticket_id.to_owned()),
+						pending_ticket::Column::TicketIndex
+							.eq(pending_ticket.ticket_index.to_owned()),
 					)
 					.exec(db)
 					.await
 					.map(|ticket| ticket);
-				info!("update pending ticket result : {:?}", res);
+				info!("the pending ticket index already exists, updated ticket! {:?}", res);
 			}
 		}
 

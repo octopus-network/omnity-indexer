@@ -358,47 +358,59 @@ impl core::fmt::Display for ticket::Model {
 	}
 }
 
+// impl pending_ticket::Model {
+// 	pub fn from_omnity_pending_ticket(
+// 		omnity_pending_ticket: OmnityTicket,
+// 		updated_memo: Option<String>,
+// 	) -> Self {
+// 		Self {
+// 			ticket_id: omnity_pending_ticket.ticket_id.to_owned(),
+// 			ticket_type: omnity_pending_ticket.ticket_type.into(),
+// 			ticket_time: omnity_pending_ticket.ticket_time as i64,
+// 			src_chain: omnity_pending_ticket.src_chain.to_owned(),
+// 			dst_chain: omnity_pending_ticket.dst_chain.to_owned(),
+// 			action: omnity_pending_ticket.action.into(),
+// 			token: omnity_pending_ticket.token.to_owned(),
+// 			amount: omnity_pending_ticket.amount.to_owned(),
+// 			sender: omnity_pending_ticket.sender.to_owned(),
+// 			receiver: omnity_pending_ticket.receiver.to_owned(),
+// 			memo: updated_memo,
+// 			ticket_index: Default::default(),
+// 		}
+// 	}
+// }
 impl pending_ticket::Model {
-	pub fn from_omnity_pending_ticket(
-		omnity_pending_ticket: OmnityTicket,
-		updated_memo: Option<String>,
-	) -> Self {
+	pub fn from_index(pending_index: i32) -> Self {
 		Self {
-			ticket_id: omnity_pending_ticket.ticket_id.to_owned(),
-			ticket_type: omnity_pending_ticket.ticket_type.into(),
-			ticket_time: omnity_pending_ticket.ticket_time as i64,
-			src_chain: omnity_pending_ticket.src_chain.to_owned(),
-			dst_chain: omnity_pending_ticket.dst_chain.to_owned(),
-			action: omnity_pending_ticket.action.into(),
-			token: omnity_pending_ticket.token.to_owned(),
-			amount: omnity_pending_ticket.amount.to_owned(),
-			sender: omnity_pending_ticket.sender.to_owned(),
-			receiver: omnity_pending_ticket.receiver.to_owned(),
-			memo: updated_memo,
-			ticket_index: Default::default(),
+			ticket_index: pending_index,
 		}
 	}
 }
-
 impl core::fmt::Display for pending_ticket::Model {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-		write!(
-            f,
-            "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{} \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
-            self.ticket_id,
-            self.ticket_type,
-            self.ticket_time,
-            self.src_chain,
-            self.dst_chain,
-            self.action,
-            self.token,
-            self.amount,
-            self.sender,
-            self.receiver,
-            self.memo,
-        )
+		write!(f, "\nticket index:{}", self.ticket_index)
 	}
 }
+
+// impl core::fmt::Display for pending_ticket::Model {
+// 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+// 		write!(
+//             f,
+//             "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{}
+// \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",             
+// self.ticket_id,             self.ticket_type,
+//             self.ticket_time,
+//             self.src_chain,
+//             self.dst_chain,
+//             self.action,
+//             self.token,
+//             self.amount,
+//             self.sender,
+//             self.receiver,
+//             self.memo,
+//         )
+// 	}
+// }
 
 impl From<ticket::Model> for deleted_mint_ticket::Model {
 	fn from(ticket: ticket::Model) -> Self {

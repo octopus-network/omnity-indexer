@@ -335,6 +335,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			if new_pending_tickets.len() < pending_limit as usize {
 				break;
 			}
+			let last_index = pending_offset + pending_limit;
 
 			for (_ticket_id, pending_ticket) in new_pending_tickets.iter() {
 				let mut updated_memo = None;
@@ -346,11 +347,13 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					}
 				}
 
-				let pending_ticket_model = pending_ticket::Model::from_omnity_pending_ticket(
-					pending_ticket.clone().to_owned(),
-					updated_memo.clone(),
-				);
-				Mutation::save_pending_ticket(db, pending_ticket_model).await?;
+				// let pending_ticket_model = pending_ticket::Model::from_omnity_pending_ticket(
+				// 	pending_ticket.clone().to_owned(),
+				// 	updated_memo.clone(),
+				// );
+				// Mutation::save_pending_ticket(db, pending_ticket_model).await?;
+				let pending_ticket_model = pending_ticket::Model::from_index(last_index as i32);
+				Mutation::save_pending_ticket_index(db, pending_ticket_model).await?;
 
 				let ticket_model = ticket::Model::from_omnity_pending_ticket(
 					pending_ticket.clone().to_owned(),
