@@ -364,7 +364,6 @@ impl pending_ticket::Model {
 		updated_memo: Option<String>,
 	) -> Self {
 		Self {
-			ticket_index: Default::default(),
 			ticket_id: omnity_pending_ticket.ticket_id.to_owned(),
 			ticket_type: omnity_pending_ticket.ticket_type.into(),
 			ticket_time: omnity_pending_ticket.ticket_time as i64,
@@ -376,6 +375,7 @@ impl pending_ticket::Model {
 			sender: omnity_pending_ticket.sender.to_owned(),
 			receiver: omnity_pending_ticket.receiver.to_owned(),
 			memo: updated_memo,
+			ticket_index: Default::default(),
 		}
 	}
 }

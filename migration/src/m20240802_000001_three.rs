@@ -96,11 +96,6 @@ impl MigrationTrait for Migration {
 					.table(PendingTicket::Table)
 					.if_not_exists()
 					.col(
-						ColumnDef::new(PendingTicket::TicketIndex)
-							.integer()
-							.auto_increment(),
-					)
-					.col(
 						ColumnDef::new(PendingTicket::TicketId)
 							.text()
 							.not_null()
@@ -140,6 +135,11 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(PendingTicket::Sender).string().null())
 					.col(ColumnDef::new(PendingTicket::Receiver).string().not_null())
 					.col(ColumnDef::new(PendingTicket::Memo).string().null())
+					.col(
+						ColumnDef::new(PendingTicket::TicketIndex)
+							.integer()
+							.auto_increment(),
+					)
 					.to_owned(),
 			)
 			.await?;
@@ -154,6 +154,16 @@ impl MigrationTrait for Migration {
 					.col(DeletedMintTicket::TicketSeq)
 					.to_owned(),
 			)
+			.await?;
+		manager
+			.create_index(
+				Index::create()
+					.if_not_exists()
+					.name("idx-pending-ticket_seq")
+					.table(PendingTicket::Table)
+					.col(PendingTicket::TicketIndex)
+					.to_owned(),
+			)
 			.await
 	}
 
@@ -161,6 +171,9 @@ impl MigrationTrait for Migration {
 		// drop index
 		manager
 			.drop_index(Index::drop().name("idx-mint-ticket_seq").to_owned())
+			.await?;
+		manager
+			.drop_index(Index::drop().name("idx-pending-ticket_seq").to_owned())
 			.await?;
 		// drop tables
 		manager
@@ -194,7 +207,6 @@ enum DeletedMintTicket {
 #[derive(DeriveIden)]
 enum PendingTicket {
 	Table,
-	TicketIndex,
 	TicketId,
 	TicketType,
 	TicketTime,
@@ -206,4 +218,5 @@ enum PendingTicket {
 	Sender,
 	Receiver,
 	Memo,
+	TicketIndex,
 }

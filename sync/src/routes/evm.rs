@@ -186,34 +186,6 @@ pub async fn sync_ticket_status_from_evm_route(
 				ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 			);
 		}
-		// match mint_evm_token_status {
-		// 	MintEvmTokenStatus::Unknown => {
-		// 		info!(
-		// 			"Ticket id({:?}) from {:?} mint evm token status {:?}",
-		// 			ticket.ticket_id,
-		// 			chain.clone(),
-		// 			MintEvmTokenStatus::Unknown
-		// 		);
-		// 	}
-		// 	MintEvmTokenStatus::Finalized { tx_hash } => {
-		// 		let ticket_model = Mutation::update_ticket(
-		// 			db,
-		// 			ticket.clone(),
-		// 			Some(TicketStatus::Finalized),
-		// 			Some(Some(tx_hash)),
-		// 			None,
-		// 			None,
-		// 			None,
-		// 			None,
-		// 		)
-		// 		.await?;
-
-		// 		info!(
-		// 			"Ticket id({:?}) status:{:?} and its hash is {:?} ",
-		// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-		// 		);
-		// 	}
-		// }
 		Ok(())
 	})
 	.await
