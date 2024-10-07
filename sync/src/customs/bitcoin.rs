@@ -69,12 +69,12 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 					.await?;
 
 					info!(
-						"Ticket id({:?}) finally status:{:?} and its ICP hash is {:?} ",
+						"btc ticket id({:?}) finally status:{:?} and its hash is {:?} ",
 						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 					);
 				} else {
 					info!(
-						"Ticket id({:?}) current status {:?}",
+						"btc ticket id({:?}) current status {:?}",
 						unconfirmed_ticket.ticket_id, mint_token_status
 					);
 				}

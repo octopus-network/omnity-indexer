@@ -29,8 +29,8 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 						agent.clone(),
 						canister_id,
 						"mint_token_status",
-						"Syncing mint token status from sicp: ",
-						"Release sICP token status result: ",
+						"Syncing mint token status from icp custom: ",
+						"Release icp custom token status result: ",
 						None,
 						None,
 						"ICPCustomRelaseTokenStatus",
@@ -53,7 +53,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 					.await?;
 
 					info!(
-						"Ticket id({:?}) finally status:{:?} and its ICP custom hash is {:?} ",
+						"icp custom ticket id({:?}) finally status:{:?} and its hash is {:?} ",
 						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 					);
 				}
@@ -72,14 +72,14 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 				// 		.await?;
 
 				// 		info!(
-				// 			"Ticket id({:?}) finally status:{:?} and its ICP custom hash is {:?} ",
+				// 			"icp custom ticket id({:?}) finally status:{:?} and itshash is {:?} ",
 				// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 				// 		);
 				// 	}
 
 				// 	ICPCustomRelaseTokenStatus::Unknown => {
 				// 		info!(
-				// 			"Ticket id({:?}) current status {:?}",
+				// 			"icp custom ticket id({:?}) current status {:?}",
 				// 			unconfirmed_ticket.ticket_id, release_icp_token_status
 				// 		);
 				// 	}

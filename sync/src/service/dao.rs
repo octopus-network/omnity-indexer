@@ -208,9 +208,7 @@ impl Mutation {
 				info!("insert token ledger id result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the token ledger id already exists, need to update it !");
-
-				let res = TokenLedgerIdOnChain::update(active_model)
+				let _res = TokenLedgerIdOnChain::update(active_model)
 					.filter(
 						Condition::all()
 							.add(
@@ -225,7 +223,7 @@ impl Mutation {
 					.exec(db)
 					.await
 					.map(|token_on_chain| token_on_chain);
-				info!("update token ledger id result : {:?}", res);
+				info!("the token ledger id already exists, updated it !");
 			}
 		}
 		Ok(token_ledger_id_on_chain::Model {
@@ -254,9 +252,7 @@ impl Mutation {
 				info!("insert token on chain result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the token on chain already exists, need to update it !");
-
-				let res = TokenOnChain::update(active_model)
+				let _res = TokenOnChain::update(active_model)
 					.filter(
 						Condition::all()
 							.add(
@@ -271,7 +267,7 @@ impl Mutation {
 					.exec(db)
 					.await
 					.map(|token_on_chain| token_on_chain);
-				info!("update token on chain result : {:?}", res);
+				info!("the token on chain already exists, updated it !");
 			}
 		}
 		Ok(token_on_chain::Model { ..token_on_chain })
@@ -294,14 +290,12 @@ impl Mutation {
 				info!("insert chain result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the chain already exists, need to update chain !");
-
-				let res = ChainMeta::update(active_model)
+				let _res = ChainMeta::update(active_model)
 					.filter(chain_meta::Column::ChainId.eq(chain_meta.chain_id.to_owned()))
 					.exec(db)
 					.await
 					.map(|chain| chain);
-				info!("update chain result : {:?}", res);
+				info!("the chain already exists, updated chain !");
 			}
 		}
 		Ok(chain_meta::Model { ..chain_meta })
@@ -324,13 +318,12 @@ impl Mutation {
 				info!("insert token result : {:?}", ret);
 			}
 			Err(_) => {
-				info!(" token already exists, need to update token !");
-				let res = TokenMeta::update(active_model)
+				let _res = TokenMeta::update(active_model)
 					.filter(token_meta::Column::TokenId.eq(token_meta.token_id.to_owned()))
 					.exec(db)
 					.await
 					.map(|token| token);
-				info!("update token result : {:?}", res);
+				info!("token already exists, updated token !");
 			}
 		}
 
