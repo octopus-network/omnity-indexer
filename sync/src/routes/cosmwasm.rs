@@ -37,10 +37,7 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 
 	for osmosis_route in osmosis_routes.iter() {
 		with_omnity_canister(osmosis_route.canister, |agent, canister_id| async move {
-			info!(
-				"{:?} Syncing release token status from osmosis ... ",
-				chrono::Utc::now()
-			);
+			info!("Syncing release token status from osmosis ... ");
 
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, osmosis_route.chain.clone()).await?;

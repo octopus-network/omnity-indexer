@@ -18,10 +18,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!(
-				"{:?} Syncing release token status from icp custom ... ",
-				chrono::Utc::now()
-			);
+			info!("Syncing release token status from icp custom ... ");
 
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, ICP_CUSTOM_CHAIN_ID.to_owned()).await?;

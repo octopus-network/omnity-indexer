@@ -19,10 +19,10 @@ appenders:
 root:
   level: info
   appenders:
-    - stdout
+    - requests
 loggers:
   app::requests:
-    level: debug
+    level: info
     appenders:
       - requests
     additive: false
