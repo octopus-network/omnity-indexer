@@ -341,23 +341,30 @@ impl Mutation {
 			}
 			Err(_) => {
 				info!("the ticket already exited, need to update ticket !");
-				let res = Ticket::update(active_model)
-					.filter(ticket::Column::TicketId.eq(&ticket.ticket_id.to_owned()))
-					.exec(db)
-					.await
-					.map(|ticket| ticket);
-				info!("update ticket result : {:?}", res);
+				if let Some(t) = Query::get_ticket_by_id(db, ticket.clone().ticket_id).await? {
+					if t.ticket_seq == None && t.status == TicketStatus::Finalized {
+						let model = Self::update_ticket(
+							db,
+							ticket.clone(),
+							None,
+							None,
+							None,
+							None,
+							None,
+							Some(ticket.clone().ticket_seq),
+						)
+						.await?;
+						info!("update ticket seq result {:?}", model.ticket_seq);
+					}
+				}
+				// let res = Ticket::update(active_model)
+				// 	.filter(ticket::Column::TicketId.eq(&ticket.ticket_id.to_owned()))
+				// 	.exec(db)
+				// 	.await
+				// 	.map(|ticket| ticket);
+				// info!("update ticket result : {:?}", res);
 			}
 		}
-
-		// if let Some(t) = Query::get_ticket_by_id(db, ticket.clone().ticket_id).await? {
-		// 	if t.ticket_seq == None && t.status == TicketStatus::Finalized {
-		// 		let model =
-		// 			Mutation::update_tikcet_seq(db, ticket.clone(), ticket.clone().ticket_seq)
-		// 				.await?;
-		// 		info!("update ticket seq result {:?}", model.ticket_seq);
-		// 	}
-		// }
 
 		Ok(ticket::Model { ..ticket })
 	}

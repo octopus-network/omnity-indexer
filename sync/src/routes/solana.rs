@@ -1,6 +1,6 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
-use crate::{with_omnity_canister, Arg, TicketId, CallError};
+use crate::{with_omnity_canister, CallError, TicketId};
 use candid::CandidType;
 use candid::{Decode, Encode};
 use log::info;
@@ -75,7 +75,8 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 					.with_arg(args)
 					.call()
 					.await?;
-				let mint_token_req: MintTokenRequest = Decode!(&ret, Result<MintTokenRequest, CallError>)?.unwrap();
+				let mint_token_req: MintTokenRequest =
+					Decode!(&ret, Result<MintTokenRequest, CallError>)?.unwrap();
 
 				info!(
 					"Solana Mint Token Status: {:?} ",
