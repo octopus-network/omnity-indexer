@@ -54,6 +54,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 			hub::sync_tokens(&db_conn).await
 		});
 
+	let sync_tickets_task = spawn_sync_task(
+		db_conn.clone(),
+		TICKET_SYNC_INTERVAL,
+		|db_conn| async move { hub::sync_tickets(&db_conn).await },
+	);
+
 	let sync_all_token_ledger_id_on_chain_from_icp = spawn_sync_task(
 		db_conn.clone(),
 		TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
@@ -70,12 +76,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		db_conn.clone(),
 		TOKEN_ON_CHAIN_SYNC_INTERVAL,
 		|db_conn| async move { hub::sync_tokens_on_chains(&db_conn).await },
-	);
-
-	let sync_tickets_task = spawn_sync_task(
-		db_conn.clone(),
-		TICKET_SYNC_INTERVAL,
-		|db_conn| async move { hub::sync_tickets(&db_conn).await },
 	);
 
 	let sync_ticket_status_from_solana = spawn_sync_task(
@@ -136,10 +136,10 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		remove_database,
 		sync_chains_task,
 		sync_tokens_task,
+		sync_tickets_task,
 		sync_all_token_ledger_id_on_chain_from_icp,
 		sync_all_token_ledger_id_from_evm,
 		sync_tokens_on_chains_from_hub,
-		sync_tickets_task,
 		sync_ticket_status_from_solana,
 		sync_ticket_status_from_bitcoin,
 		sync_ticket_status_from_sicp,

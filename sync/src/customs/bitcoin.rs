@@ -31,10 +31,7 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!(
-				"{:?} Syncing release token status from bitcoin ... ",
-				chrono::Utc::now()
-			);
+			info!("Syncing release token status from bitcoin ... ");
 			//step1: get ticket that dest is bitcion and status is waiting for comformation by dst
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, BTC_CUSTOM_CHAIN_ID.to_owned()).await?;
@@ -46,8 +43,8 @@ pub async fn sync_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn 
 						agent.clone(),
 						canister_id,
 						"release_token_status",
-						"Unconfirmed ticket: ",
-						"Mint token status result: ",
+						"Syncing mint token status from bitcoin: ",
+						"Mint bitcoin token status result: ",
 						None,
 						None,
 						"ReleaseTokenStatus",

@@ -15,7 +15,7 @@ appenders:
         kind: fixed_window
         pattern: "logs/omnity-indexer.{}.log"
         base: 1
-        count: 5  
+        count: 7  
 root:
   level: info
   appenders:

@@ -2,6 +2,7 @@
 
 pub mod chain_meta;
 pub mod deleted_mint_ticket;
+pub mod pending_ticket;
 pub mod prelude;
 pub mod sea_orm_active_enums;
 pub mod ticket;

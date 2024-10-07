@@ -1,11 +1,13 @@
 use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
 use crate::entity::{
-	chain_meta, deleted_mint_ticket, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
+	chain_meta, deleted_mint_ticket, pending_ticket, ticket, token_ledger_id_on_chain, token_meta,
+	token_on_chain,
 };
 use crate::entity::{
 	chain_meta::Entity as ChainMeta, deleted_mint_ticket::Entity as DeletedMintTicket,
-	ticket::Entity as Ticket, token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain,
-	token_meta::Entity as TokenMeta, token_on_chain::Entity as TokenOnChain,
+	pending_ticket::Entity as PendingTicket, ticket::Entity as Ticket,
+	token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain, token_meta::Entity as TokenMeta,
+	token_on_chain::Entity as TokenOnChain,
 };
 use log::info;
 use sea_orm::{sea_query::OnConflict, *};
@@ -35,6 +37,15 @@ impl Query {
 		Ticket::find()
 			.filter(ticket::Column::TicketSeq.is_not_null())
 			.order_by_desc(ticket::Column::TicketSeq)
+			.one(db)
+			.await
+	}
+	pub async fn get_latest_pending_ticket(
+		db: &DbConn,
+	) -> Result<Option<pending_ticket::Model>, DbErr> {
+		PendingTicket::find()
+			.filter(pending_ticket::Column::TicketIndex.is_not_null())
+			.order_by_desc(pending_ticket::Column::TicketIndex)
 			.one(db)
 			.await
 	}
@@ -197,7 +208,7 @@ impl Mutation {
 				info!("insert token ledger id result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the token ledger id already exited, need to update it !");
+				info!("the token ledger id already exists, need to update it !");
 
 				let res = TokenLedgerIdOnChain::update(active_model)
 					.filter(
@@ -243,7 +254,7 @@ impl Mutation {
 				info!("insert token on chain result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the token on chain already exited, need to update it !");
+				info!("the token on chain already exists, need to update it !");
 
 				let res = TokenOnChain::update(active_model)
 					.filter(
@@ -283,7 +294,7 @@ impl Mutation {
 				info!("insert chain result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the chain already exited, need to update chain !");
+				info!("the chain already exists, need to update chain !");
 
 				let res = ChainMeta::update(active_model)
 					.filter(chain_meta::Column::ChainId.eq(chain_meta.chain_id.to_owned()))
@@ -313,7 +324,7 @@ impl Mutation {
 				info!("insert token result : {:?}", ret);
 			}
 			Err(_) => {
-				info!(" token already exited, need to update token !");
+				info!(" token already exists, need to update token !");
 				let res = TokenMeta::update(active_model)
 					.filter(token_meta::Column::TokenId.eq(token_meta.token_id.to_owned()))
 					.exec(db)
@@ -386,7 +397,7 @@ impl Mutation {
 				info!("insert deleted mint ticket result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the deleted mint ticket already exited, need to update ticket !");
+				info!("the deleted mint ticket already exists, need to update ticket !");
 				let res = DeletedMintTicket::update(active_model)
 					.filter(
 						deleted_mint_ticket::Column::TicketId
@@ -400,6 +411,38 @@ impl Mutation {
 		}
 
 		Ok(deleted_mint_ticket::Model { ..deleted_ticket })
+	}
+
+	pub async fn save_pending_ticket(
+		db: &DbConn,
+		pending_ticket: pending_ticket::Model,
+	) -> Result<pending_ticket::Model, DbErr> {
+		let active_model: pending_ticket::ActiveModel = pending_ticket.clone().into();
+		let on_conflict = OnConflict::column(pending_ticket::Column::TicketId)
+			.do_nothing()
+			.to_owned();
+		let insert_result = PendingTicket::insert(active_model.clone())
+			.on_conflict(on_conflict)
+			.exec(db)
+			.await;
+		match insert_result {
+			Ok(ret) => {
+				info!("insert pending ticket result : {:?}", ret);
+			}
+			Err(_) => {
+				info!("the pending ticket already exists, need to update ticket !");
+				let res = PendingTicket::update(active_model)
+					.filter(
+						pending_ticket::Column::TicketId.eq(&pending_ticket.ticket_id.to_owned()),
+					)
+					.exec(db)
+					.await
+					.map(|ticket| ticket);
+				info!("update pending ticket result : {:?}", res);
+			}
+		}
+
+		Ok(pending_ticket::Model { ..pending_ticket })
 	}
 
 	pub async fn update_ticket(

@@ -89,6 +89,61 @@ impl MigrationTrait for Migration {
 			)
 			.await?;
 
+		// Create PendingTicket table
+		manager
+			.create_table(
+				Table::create()
+					.table(PendingTicket::Table)
+					.if_not_exists()
+					.col(
+						ColumnDef::new(PendingTicket::TicketIndex)
+							.integer()
+							.auto_increment(),
+					)
+					.col(
+						ColumnDef::new(PendingTicket::TicketId)
+							.text()
+							.not_null()
+							.primary_key(),
+					)
+					.col(
+						ColumnDef::new(PendingTicket::TicketType)
+							.not_null()
+							.enumeration(
+								Alias::new("ticket_type"),
+								[TicketType::Normal, TicketType::Resubmit],
+							),
+					)
+					.col(
+						ColumnDef::new(PendingTicket::TicketTime)
+							.big_unsigned()
+							.not_null(),
+					)
+					.col(ColumnDef::new(PendingTicket::SrcChain).string().not_null())
+					.col(ColumnDef::new(PendingTicket::DstChain).string().not_null())
+					.col(
+						ColumnDef::new(PendingTicket::Action)
+							.not_null()
+							.enumeration(
+								Alias::new("tx_action"),
+								[
+									TxAction::Transfer,
+									TxAction::Redeem,
+									TxAction::Burn,
+									TxAction::Mint,
+									TxAction::RedeemIcpChainKeyAssets,
+								],
+							),
+					)
+					.col(ColumnDef::new(PendingTicket::Token).string().not_null())
+					.col(ColumnDef::new(PendingTicket::Amount).string().not_null())
+					.col(ColumnDef::new(PendingTicket::Sender).string().null())
+					.col(ColumnDef::new(PendingTicket::Receiver).string().not_null())
+					.col(ColumnDef::new(PendingTicket::Memo).string().null())
+					.to_owned(),
+			)
+			.await?;
+
 		// create index
 		manager
 			.create_index(
@@ -110,6 +165,9 @@ impl MigrationTrait for Migration {
 		// drop tables
 		manager
 			.drop_table(Table::drop().table(DeletedMintTicket::Table).to_owned())
+			.await?;
+		manager
+			.drop_table(Table::drop().table(PendingTicket::Table).to_owned())
 			.await
 	}
 }
@@ -131,4 +189,21 @@ enum DeletedMintTicket {
 	Memo,
 	Status,
 	TxHash,
+}
+
+#[derive(DeriveIden)]
+enum PendingTicket {
+	Table,
+	TicketIndex,
+	TicketId,
+	TicketType,
+	TicketTime,
+	SrcChain,
+	DstChain,
+	Action,
+	Token,
+	Amount,
+	Sender,
+	Receiver,
+	Memo,
 }
