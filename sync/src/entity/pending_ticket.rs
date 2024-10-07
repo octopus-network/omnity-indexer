@@ -7,7 +7,6 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
 #[sea_orm(table_name = "pending_ticket")]
 pub struct Model {
-	pub ticket_index: i32,
 	#[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
 	pub ticket_id: String,
 	pub ticket_type: TicketType,
@@ -20,6 +19,7 @@ pub struct Model {
 	pub sender: Option<String>,
 	pub receiver: String,
 	pub memo: Option<String>,
+	pub ticket_index: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -154,28 +154,13 @@ impl MigrationTrait for Migration {
 					.col(DeletedMintTicket::TicketSeq)
 					.to_owned(),
 			)
-			.await?;
-		manager
-			.create_index(
-				Index::create()
-					.if_not_exists()
-					.name("idx-pending-ticket_seq")
-					.table(PendingTicket::Table)
-					.col(PendingTicket::TicketIndex)
-					.to_owned(),
-			)
 			.await
 	}
 
 	async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-		// drop index
 		manager
 			.drop_index(Index::drop().name("idx-mint-ticket_seq").to_owned())
 			.await?;
-		manager
-			.drop_index(Index::drop().name("idx-pending-ticket_seq").to_owned())
-			.await?;
-		// drop tables
 		manager
 			.drop_table(Table::drop().table(DeletedMintTicket::Table).to_owned())
 			.await?;
