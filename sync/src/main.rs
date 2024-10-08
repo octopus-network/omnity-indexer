@@ -17,6 +17,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.unwrap();
 	log4rs::init_config(config).unwrap();
 
+	// if let Err(e) = log4rs::init_file("./log4rs.yaml", Default::default()) {
+	// 	eprintln!("init log failed: {}", e);
+	// 	std::process::exit(1);
+	// }
+
 	let db_url = std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
 	let db = Database::new(db_url.clone()).await;
 	execute_sync_tasks(db.get_connection()).await;

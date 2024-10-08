@@ -15,14 +15,14 @@ appenders:
         kind: fixed_window
         pattern: "logs/omnity-indexer.{}.log"
         base: 1
-        count: 5  
+        count: 5 
 root:
   level: info
   appenders:
-    - stdout
+    - requests
 loggers:
   app::requests:
-    level: debug
+    level: info
     appenders:
       - requests
     additive: false

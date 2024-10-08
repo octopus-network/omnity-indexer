@@ -1,4 +1,5 @@
 use crate::{
+	pending_ticket,
 	service::{Mutation, Query},
 	ticket, with_omnity_canister, Arg, ChainId, TokenId,
 };
@@ -9,8 +10,8 @@ use std::{error::Error, str};
 pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
 pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
-pub const TICKET_SYNC_INTERVAL: u64 = 5;
-pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 120;
+pub const TICKET_SYNC_INTERVAL: u64 = 8;
+pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
@@ -248,7 +249,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					agent.clone(),
 					canister_id,
 					"sync_tickets",
-					"",
+					"Syncing tickets from hub ...",
 					"Synced tickets : ",
 					Some(limit),
 					None,
@@ -296,27 +297,47 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			pending_ticket_size
 		);
 
-		let mut from_seq = 0u64;
-		while from_seq < pending_ticket_size {
-			let new_pending_tickets = Arg::U(from_seq)
+		let latest_ticket_index = Query::get_latest_pending_ticket(db).await?.map(|t| {
+			info!("last pending ticket : {:?}", t);
+			t.ticket_index
+		});
+
+		let pending_offset = match latest_ticket_index {
+			Some(t) => {
+				info!("Latest pending ticket: {:?}", t);
+				(t + 1) as u64
+			}
+			None => {
+				info!("No tickets found");
+				0u64
+			}
+		};
+
+		let mut pending_limit = FETCH_LIMIT;
+		for pending_next_offset in
+			(pending_offset..pending_ticket_size).step_by(pending_limit as usize)
+		{
+			pending_limit = std::cmp::min(pending_limit, pending_ticket_size - pending_next_offset);
+			let new_pending_tickets = Arg::U(pending_next_offset)
 				.query_method(
 					agent.clone(),
 					canister_id,
 					"get_pending_tickets",
-					"",
-					"Synced pending tickets : ",
-					Some(FETCH_LIMIT),
+					"Synced pending tickets now :",
+					"Synced pending tickets result: ",
+					Some(pending_limit),
 					None,
 					"Vec<(TicketId, OmnityTicket)>",
 				)
 				.await?
 				.convert_to_vec_omnity_pending_ticket();
 
-			if new_pending_tickets.is_empty() {
+			if new_pending_tickets.len() < pending_limit as usize {
 				break;
 			}
+			let last_index = pending_offset + pending_limit;
 
-			for (_ticket_id, pending_ticket) in new_pending_tickets.clone() {
+			for (_ticket_id, pending_ticket) in new_pending_tickets.iter() {
 				let mut updated_memo = None;
 				if let Some(memo) = pending_ticket.clone().memo {
 					if memo.len() > 0 {
@@ -326,13 +347,22 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					}
 				}
 
-				let ticket_model =
-					ticket::Model::from_omnity_pending_ticket(pending_ticket, updated_memo).into();
+				// let pending_ticket_model = pending_ticket::Model::from_omnity_pending_ticket(
+				// 	pending_ticket.clone().to_owned(),
+				// 	updated_memo.clone(),
+				// );
+				// Mutation::save_pending_ticket(db, pending_ticket_model).await?;
+				let pending_ticket_model = pending_ticket::Model::from_index(last_index as i32);
+				Mutation::save_pending_ticket_index(db, pending_ticket_model).await?;
+
+				let ticket_model = ticket::Model::from_omnity_pending_ticket(
+					pending_ticket.clone().to_owned(),
+					updated_memo,
+				)
+				.into();
 				Mutation::save_ticket(db, ticket_model).await?;
 			}
-			from_seq += new_pending_tickets.clone().len() as u64;
 		}
-
 		Ok(())
 	})
 	.await

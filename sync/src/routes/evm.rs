@@ -82,6 +82,8 @@ pub async fn sync_all_token_ledger_id_from_evm_route(db: &DbConn) -> Result<(), 
 }
 
 pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	info!("Syncing release token status from evm route ... ");
+
 	let evm_routes = EvmRoutes::new();
 
 	for evm_route in evm_routes.routes.iter() {
@@ -180,38 +182,10 @@ pub async fn sync_ticket_status_from_evm_route(
 			.await?;
 
 			info!(
-				"Ticket id({:?}) status:{:?} and its hash is {:?} ",
+				"evm id({:?}) status:{:?} and its hash is {:?} ",
 				ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 			);
 		}
-		// match mint_evm_token_status {
-		// 	MintEvmTokenStatus::Unknown => {
-		// 		info!(
-		// 			"Ticket id({:?}) from {:?} mint evm token status {:?}",
-		// 			ticket.ticket_id,
-		// 			chain.clone(),
-		// 			MintEvmTokenStatus::Unknown
-		// 		);
-		// 	}
-		// 	MintEvmTokenStatus::Finalized { tx_hash } => {
-		// 		let ticket_model = Mutation::update_ticket(
-		// 			db,
-		// 			ticket.clone(),
-		// 			Some(TicketStatus::Finalized),
-		// 			Some(Some(tx_hash)),
-		// 			None,
-		// 			None,
-		// 			None,
-		// 			None,
-		// 		)
-		// 		.await?;
-
-		// 		info!(
-		// 			"Ticket id({:?}) status:{:?} and its hash is {:?} ",
-		// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-		// 		);
-		// 	}
-		// }
 		Ok(())
 	})
 	.await

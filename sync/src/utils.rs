@@ -228,7 +228,7 @@ impl Arg {
 		args_three: Option<Option<TokenId>>,
 		re_type: &str,
 	) -> Result<ReturnType, Box<dyn Error>> {
-		info!("{:?} {:?}", chrono::Utc::now(), log_one);
+		info!("{:?}", log_one);
 
 		let encoded_args: Vec<u8> = match args_two {
 			Some(arg) => match self {

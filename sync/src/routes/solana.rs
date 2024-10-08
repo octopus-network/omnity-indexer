@@ -47,10 +47,7 @@ pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box
 	with_omnity_canister(
 		"OMNITY_ROUTES_SOLANA_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!(
-				"{:?} Syncing release token status from Solana ... ",
-				chrono::Utc::now()
-			);
+			info!("Syncing release token status from Solana ... ");
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 
