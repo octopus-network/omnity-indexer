@@ -1,8 +1,8 @@
 use crate::entity::{sea_orm_active_enums::TicketStatus, ticket};
 use crate::service::{Mutation, Query};
-use crate::{with_omnity_canister, CallError, TicketId};
+use crate::{with_omnity_canister, TicketId, Arg};
 use candid::CandidType;
-use candid::{Decode, Encode};
+// use candid::{Decode, Encode};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -36,7 +36,7 @@ impl MintTokenRequest {
 			associated_account: "".to_string(),
 			amount: 0,
 			token_mint: "".to_string(),
-			status: TxStatus::Finalized,
+			status: TxStatus::Unknown,
 			signature: Some("00000000".to_string()),
 			retry: 0,
 		}
@@ -60,28 +60,28 @@ pub async fn ticket_status_from_solana_route(
 	with_omnity_canister(
 		"OMNITY_ROUTES_SOLANA_CANISTER_ID",
 		|agent, canister_id| async move {
-			// let mint_token_req = Arg::TI(unconfirmed_ticket.clone().ticket_id.clone())
-			// 	.query_method(
-			// 		agent.clone(),
-			// 		canister_id,
-			// 		"mint_token_req",
-			// 		"Syncing mint token status from solana route ...",
-			// 		"Mint token status from solana route result: ",
-			// 		None,
-			// 		None,
-			// 		"MintTokenRequest",
-			// 	)
-			// 	.await?
-			// 	.convert_to_solana_mint_token_req();
+			let mint_token_req = Arg::TI(ticket.ticket_id.clone())
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"mint_token_req",
+					"Syncing mint token status from solana route ...",
+					"Mint token status from solana route result: ",
+					None,
+					None,
+					"MintTokenRequest",
+				)
+				.await?
+				.convert_to_solana_mint_token_req();
 
-			let args = Encode!(&ticket.ticket_id.clone())?;
-			let ret = agent
-				.query(&canister_id, "mint_token_req")
-				.with_arg(args)
-				.call()
-				.await?;
-			let mint_token_req: MintTokenRequest =
-				Decode!(&ret, Result<MintTokenRequest, CallError>)?.unwrap();
+			// let args = Encode!(&ticket.ticket_id.clone())?;
+			// let ret = agent
+			// 	.query(&canister_id, "mint_token_req")
+			// 	.with_arg(args)
+			// 	.call()
+			// 	.await?;
+			// let mint_token_req: MintTokenRequest =
+			// 	Decode!(&ret, Result<MintTokenRequest, CallError>)?.unwrap();
 
 			info!(
 				"Solana Mint Token Status: {:?} ",
