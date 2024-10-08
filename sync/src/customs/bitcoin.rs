@@ -123,11 +123,12 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 			match Query::get_ticket_by_id(db, tx_hash).await? {
 				Some(ticket_should_be_removed) => {
 					// Retrieval the tx_hash from each mint tickets
-					// update the ticket_should_be_removed status, then move the mint ticket tx_hash to
-					// the intermedieate tx_hash and then the tx_hash to mint ticket tx_hash
+					// update the ticket_should_be_removed status, then move the mint ticket tx_hash
+					// to the intermedieate tx_hash and then the tx_hash to mint ticket tx_hash
 					match ticket_should_be_removed.clone().tx_hash {
 						Some(tx_hash) => {
-							// fetch the tx_hash from the mint ticket and put it in intermediate_tx_hash
+							// fetch the tx_hash from the mint ticket and put it in
+							// intermediate_tx_hash
 							let intermediate_tx_hash = mint_ticket.clone().tx_hash;
 							Mutation::update_ticket(
 								db,
@@ -143,7 +144,7 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 							// put the hash to mint ticket tx_hash
 							Mutation::update_ticket_tx_hash(db, mint_ticket, Some(tx_hash.clone()))
 								.await?;
-	
+
 							// Save the ticket that contains the tx_hash as the ticket_id to
 							// DeletedMintTicket
 							Mutation::save_deleted_mint_ticket(
@@ -151,9 +152,9 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 								ticket_should_be_removed.clone().into(),
 							)
 							.await?;
-	
+
 							// Update sender/seq only if they are needed
-	
+
 							// Remove the ticket that contains the tx_hash as the ticket_id
 							let row = Delete::remove_ticket_by_id(
 								db,

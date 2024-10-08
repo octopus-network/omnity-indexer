@@ -25,6 +25,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			let client = reqwest::Client::new();
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
 			let response = client.get(url).send().await?;
+			info!("the response is {:?}", response.status());
 
 			let body = response.text().await?;
 			let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
@@ -33,28 +34,26 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			};
 
 			if let Some(vin) = a.get_mut("vin") {
-				let sender = vin[0]["prevout"]["scriptpubkey_address"]
-					.as_str()
-					.unwrap()
-					.to_string();
+				if let Some(sender) = vin[0]["prevout"]["scriptpubkey_address"].as_str() {
+					let _sender = sender.to_string();
+					// Insert the sender into the ticket meta
+					let updated_ticket = Mutation::update_ticket(
+						db,
+						ticket.clone(),
+						None,
+						None,
+						None,
+						Some(Some(_sender)),
+						None,
+						None,
+					)
+					.await?;
 
-				// Insert the sender into the ticket meta
-				let updated_ticket = Mutation::update_ticket(
-					db,
-					ticket.clone(),
-					None,
-					None,
-					None,
-					Some(Some(sender)),
-					None,
-					None,
-				)
-				.await?;
-
-				info!(
-					"Ticket id({:?}) has changed its sender to {:?}",
-					ticket.ticket_id, updated_ticket.sender
-				);
+					info!(
+						"Ticket id({:?}) has changed its sender to {:?}",
+						ticket.ticket_id, updated_ticket.sender
+					);
+				}
 			};
 		}
 		break;

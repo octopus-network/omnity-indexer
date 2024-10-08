@@ -1,8 +1,8 @@
 use crate::entity::{sea_orm_active_enums::TicketStatus, ticket};
 use crate::service::{Mutation, Query};
-use crate::{with_omnity_canister, TicketId, Arg};
+use crate::{with_omnity_canister, CallError, TicketId};
 use candid::CandidType;
-// use candid::{Decode, Encode};
+use candid::{Decode, Encode};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -29,20 +29,6 @@ pub struct MintTokenRequest {
 	pub retry: u64,
 }
 
-impl MintTokenRequest {
-	pub fn new() -> Self {
-		Self {
-			ticket_id: "".to_string(),
-			associated_account: "".to_string(),
-			amount: 0,
-			token_mint: "".to_string(),
-			status: TxStatus::Unknown,
-			signature: Some("00000000".to_string()),
-			retry: 0,
-		}
-	}
-}
-
 pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing release token status from Solana ... ");
 	let unconfirmed_tickets =
@@ -60,33 +46,41 @@ pub async fn ticket_status_from_solana_route(
 	with_omnity_canister(
 		"OMNITY_ROUTES_SOLANA_CANISTER_ID",
 		|agent, canister_id| async move {
-			let mint_token_req = Arg::TI(ticket.ticket_id.clone())
-				.query_method(
-					agent.clone(),
-					canister_id,
-					"mint_token_req",
-					"Syncing mint token status from solana route ...",
-					"Mint token status from solana route result: ",
-					None,
-					None,
-					"MintTokenRequest",
-				)
-				.await?
-				.convert_to_solana_mint_token_req();
+			let args = Encode!(&ticket.ticket_id.clone())?;
+			let ret = agent
+				.query(&canister_id, "mint_token_req")
+				.with_arg(args)
+				.call()
+				.await?;
 
-			// let args = Encode!(&ticket.ticket_id.clone())?;
-			// let ret = agent
-			// 	.query(&canister_id, "mint_token_req")
-			// 	.with_arg(args)
-			// 	.call()
-			// 	.await?;
-			// let mint_token_req: MintTokenRequest =
-			// 	Decode!(&ret, Result<MintTokenRequest, CallError>)?.unwrap();
+			if let Ok(mint_token_req) = Decode!(&ret, Result<MintTokenRequest, CallError>)? {
+				info!(
+					"Solana Mint Token Status: {:?} ",
+					mint_token_req.clone().status
+				);
 
-			info!(
-				"Solana Mint Token Status: {:?} ",
-				mint_token_req.clone().status
-			);
+				match mint_token_req.status {
+					TxStatus::Finalized => {
+						Mutation::update_ticket(
+							db,
+							ticket.clone(),
+							Some(TicketStatus::Finalized),
+							Some(mint_token_req.signature),
+							None,
+							None,
+							None,
+							None,
+						)
+						.await?;
+					}
+					TxStatus::Unknown => {
+						info!("{:?} is Unknown in Solana", ticket.clone())
+					}
+					TxStatus::TxFailed { e } => {
+						info!("Solana error: {:?}  ", e)
+					}
+				}
+			}
 
 			// if let TxStatus::Finalized = mint_token_req.status {
 			// 	Mutation::update_ticket(
@@ -101,28 +95,6 @@ pub async fn ticket_status_from_solana_route(
 			// 	)
 			// 	.await?;
 			// }
-
-			match mint_token_req.status {
-				TxStatus::Finalized => {
-					Mutation::update_ticket(
-						db,
-						ticket.clone(),
-						Some(TicketStatus::Finalized),
-						Some(mint_token_req.signature),
-						None,
-						None,
-						None,
-						None,
-					)
-					.await?;
-				}
-				TxStatus::Unknown => {
-					info!("{:?} is Unknown in Solana", ticket.clone())
-				}
-				TxStatus::TxFailed { e } => {
-					info!("Solana error: {:?}  ", e)
-				}
-			}
 
 			Ok(())
 		},
