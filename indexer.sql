@@ -72,11 +72,23 @@ CREATE SEQUENCE public.pending_ticket_ticket_index_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
+    
+ALTER SEQUENCE public.pending_ticket_ticket_index_seq OWNED BY public.pending_ticket.ticket_index;
+ALTER TABLE ONLY public.pending_ticket ALTER COLUMN ticket_index SET DEFAULT nextval('public.pending_ticket_ticket_index_seq'::regclass);
+COPY public.pending_ticket (ticket_index) FROM stdin;
+\.
+SELECT pg_catalog.setval('public.pending_ticket_ticket_index_seq', 1, false);
 
 CREATE TABLE public.seaql_migrations (
     version character varying NOT NULL,
     applied_at bigint NOT NULL
 );
+
+COPY public.seaql_migrations (version, applied_at) FROM stdin;
+m20240507_055143_one	1728346779
+m20240701_000001_two	1728346779
+m20240802_000001_three	1728346779
+\.
 
 CREATE TABLE public.ticket (
     ticket_id text NOT NULL,
@@ -162,3 +174,6 @@ ALTER TABLE ONLY public.token_on_chain
 
 ALTER TABLE ONLY public.token_ledger_id_on_chain
     ADD CONSTRAINT fk_token_id FOREIGN KEY (token_id) REFERENCES public.token_meta(token_id);
+
+ALTER TABLE ONLY public.pending_ticket
+    ADD CONSTRAINT pending_ticket_pkey PRIMARY KEY (ticket_index);
