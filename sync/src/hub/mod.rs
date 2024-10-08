@@ -20,12 +20,10 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("There are {:?} senders are null", null_sender_tickets.len());
 
 	loop {
-		info!("trying to update sender");
 		for ticket in null_sender_tickets.clone() {
 			let client = reqwest::Client::new();
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
 			let response = client.get(url).send().await?;
-			info!("the response is {:?}", response.status());
 
 			let body = response.text().await?;
 			let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
@@ -305,7 +303,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 		let pending_offset = match latest_ticket_index {
 			Some(t) => {
 				info!("Latest pending ticket: {:?}", t);
-				(t + 1) as u64
+				t as u64
 			}
 			None => {
 				info!("No tickets found");
@@ -347,14 +345,6 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					}
 				}
 
-				// let pending_ticket_model = pending_ticket::Model::from_omnity_pending_ticket(
-				// 	pending_ticket.clone().to_owned(),
-				// 	updated_memo.clone(),
-				// );
-				// Mutation::save_pending_ticket(db, pending_ticket_model).await?;
-				let pending_ticket_model = pending_ticket::Model::from_index(last_index as i32);
-				Mutation::save_pending_ticket_index(db, pending_ticket_model).await?;
-
 				let ticket_model = ticket::Model::from_omnity_pending_ticket(
 					pending_ticket.clone().to_owned(),
 					updated_memo,
@@ -362,6 +352,14 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.into();
 				Mutation::save_ticket(db, ticket_model).await?;
 			}
+			// let pending_ticket_model = pending_ticket::Model::from_omnity_pending_ticket(
+			// 	pending_ticket.clone().to_owned(),
+			// 	updated_memo.clone(),
+			// );
+			// Mutation::save_pending_ticket(db, pending_ticket_model).await?;
+			info!("TINGGGGG: {:?}", last_index.clone());
+			let pending_ticket_model = pending_ticket::Model::from_index(last_index as i32);
+			Mutation::save_pending_ticket_index(db, pending_ticket_model).await?;
 		}
 		Ok(())
 	})
