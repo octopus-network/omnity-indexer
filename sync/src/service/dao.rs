@@ -522,15 +522,4 @@ impl Mutation {
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}
-
-	pub async fn update_tikcet_sender(
-		db: &DbConn,
-		ticket: ticket::Model,
-		sender: String,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.sender = Set(Some(sender.to_owned()));
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
 }
