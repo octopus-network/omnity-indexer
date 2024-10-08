@@ -468,7 +468,10 @@ impl Mutation {
 					.exec(db)
 					.await
 					.map(|ticket| ticket);
-				info!("the pending ticket index already exists, updated ticket! {:?}", res);
+				info!(
+					"the pending ticket index already exists, updated ticket! {:?}",
+					res
+				);
 			}
 		}
 

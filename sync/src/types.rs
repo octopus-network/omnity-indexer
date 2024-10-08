@@ -397,7 +397,7 @@ impl core::fmt::Display for pending_ticket::Model {
 // 		write!(
 //             f,
 //             "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{}
-// \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",             
+// \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
 // self.ticket_id,             self.ticket_type,
 //             self.ticket_time,
 //             self.src_chain,
