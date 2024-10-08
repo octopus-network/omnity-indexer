@@ -61,6 +61,18 @@ CREATE TABLE public.deleted_mint_ticket (
     tx_hash character varying
 );
 
+CREATE TABLE public.pending_ticket (
+    ticket_index integer NOT NULL
+);
+
+CREATE SEQUENCE public.pending_ticket_ticket_index_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
 CREATE TABLE public.seaql_migrations (
     version character varying NOT NULL,
     applied_at bigint NOT NULL

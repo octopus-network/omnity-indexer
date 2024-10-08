@@ -181,6 +181,13 @@ impl Delete {
 			.exec(db)
 			.await
 	}
+
+	pub async fn remove_pending_mint_tickets(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		PendingTicket::delete_many()
+			.filter(Condition::all().add(pending_ticket::Column::TicketIndex.is_not_null()))
+			.exec(db)
+			.await
+	}
 }
 
 pub struct Mutation;
