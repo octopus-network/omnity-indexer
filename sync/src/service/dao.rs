@@ -397,16 +397,7 @@ impl Mutation {
 				info!("insert deleted mint ticket result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the deleted mint ticket already exists, need to update ticket !");
-				let res = DeletedMintTicket::update(active_model)
-					.filter(
-						deleted_mint_ticket::Column::TicketId
-							.eq(&deleted_ticket.ticket_id.to_owned()),
-					)
-					.exec(db)
-					.await
-					.map(|ticket| ticket);
-				info!("update deleted mint ticket result : {:?}", res);
+				info!("the deleted mint ticket already exists");
 			}
 		}
 
@@ -490,16 +481,16 @@ impl Mutation {
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
 		if let Some(_status) = status {
-			active_model.status = Set(_status.to_owned());
+			active_model.status = Set(_status);
 		}
 		if let Some(_tx_hash) = tx_hash {
-			active_model.tx_hash = Set(_tx_hash.to_owned());
+			active_model.tx_hash = Set(_tx_hash);
 		}
 		if let Some(_amount) = amount {
-			active_model.amount = Set(_amount.to_owned());
+			active_model.amount = Set(_amount);
 		}
 		if let Some(_sender) = sender {
-			active_model.sender = Set(_sender.to_owned());
+			active_model.sender = Set(_sender);
 		}
 		if let Some(_intermediate_tx_hash) = intermediate_tx_hash {
 			active_model.intermediate_tx_hash =
@@ -518,7 +509,7 @@ impl Mutation {
 		tx_hash: Option<String>,
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.tx_hash = Set(Some(tx_hash.to_owned().expect("no hash")));
+		active_model.tx_hash = Set(tx_hash);
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}

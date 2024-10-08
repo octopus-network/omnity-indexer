@@ -20,6 +20,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("There are {:?} senders are null", null_sender_tickets.len());
 
 	loop {
+		info!("trying to update sender");
 		for ticket in null_sender_tickets.clone() {
 			let client = reqwest::Client::new();
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
