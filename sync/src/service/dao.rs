@@ -397,16 +397,7 @@ impl Mutation {
 				info!("insert deleted mint ticket result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the deleted mint ticket already exists, need to update ticket !");
-				let res = DeletedMintTicket::update(active_model)
-					.filter(
-						deleted_mint_ticket::Column::TicketId
-							.eq(&deleted_ticket.ticket_id.to_owned()),
-					)
-					.exec(db)
-					.await
-					.map(|ticket| ticket);
-				info!("update deleted mint ticket result : {:?}", res);
+				info!("the deleted mint ticket already exists");
 			}
 		}
 
