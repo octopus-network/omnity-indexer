@@ -25,7 +25,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			let client = reqwest::Client::builder().timeout(std::time::Duration::new(30, 0)).build()?;
 			info!("Clinet{:?}", client);
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
-			match client.get(url).send().await {
+			match client.get(url).header("Origin", "*").send().await {
 				Ok(response) => {
 					info!("Mempool Respond: {:?}", response.status());
 
