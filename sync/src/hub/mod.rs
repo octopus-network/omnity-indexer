@@ -25,6 +25,8 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
 
 			if let Ok(response) = client.get(url).send().await {
+				info!("Mempool Respond: {:?}", response.status());
+				
 				if let Ok(body) = response.text().await {
 					let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
 						Ok(v) => v,

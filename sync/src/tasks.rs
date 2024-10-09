@@ -117,7 +117,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 
 	let update_sender_tickets_from_hub = spawn_sync_task(
 		db_conn.clone(),
-		TICKET_SYNC_INTERVAL,
+		20,
 		|db_conn| async move { hub::update_sender(&db_conn).await },
 	);
 
