@@ -11,10 +11,10 @@ pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
 pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
-pub const SENDER_SYNC_INTERVAL: u64 = 30;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	info!("Updating Senders");
 	// Find the tickets with no sender
 	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
 
@@ -38,17 +38,19 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 						if let Some(sender) = vin[0]["prevout"]["scriptpubkey_address"].as_str() {
 							let _sender = sender.to_string();
 							// Insert the sender into the ticket meta
-							let updated_ticket = Mutation::update_ticket(
-								db,
-								ticket.clone(),
-								None,
-								None,
-								None,
-								Some(Some(_sender)),
-								None,
-								None,
-							)
-							.await?;
+							let updated_ticket =
+								Mutation::update_tikcet_sender(db, ticket.clone(), _sender).await?;
+							// let updated_ticket = Mutation::update_ticket(
+							// 	db,
+							// 	ticket.clone(),
+							// 	None,
+							// 	None,
+							// 	None,
+							// 	Some(Some(_sender)),
+							// 	None,
+							// 	None,
+							// )
+							// .await?;
 
 							info!(
 								"Ticket id({:?}) has changed its sender to {:?}",
