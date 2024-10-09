@@ -23,36 +23,38 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 		for ticket in null_sender_tickets.clone() {
 			let client = reqwest::Client::new();
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
-			let response = client.get(url).send().await?;
 
-			let body = response.text().await?;
-			let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
-				Ok(v) => v,
-				Err(_) => continue,
-			};
+			if let Ok(response) = client.get(url).send().await {
+				if let Ok(body) = response.text().await {
+					let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
+						Ok(v) => v,
+						Err(_) => continue,
+					};
 
-			if let Some(vin) = a.get_mut("vin") {
-				if let Some(sender) = vin[0]["prevout"]["scriptpubkey_address"].as_str() {
-					let _sender = sender.to_string();
-					// Insert the sender into the ticket meta
-					let updated_ticket = Mutation::update_ticket(
-						db,
-						ticket.clone(),
-						None,
-						None,
-						None,
-						Some(Some(_sender)),
-						None,
-						None,
-					)
-					.await?;
+					if let Some(vin) = a.get_mut("vin") {
+						if let Some(sender) = vin[0]["prevout"]["scriptpubkey_address"].as_str() {
+							let _sender = sender.to_string();
+							// Insert the sender into the ticket meta
+							let updated_ticket = Mutation::update_ticket(
+								db,
+								ticket.clone(),
+								None,
+								None,
+								None,
+								Some(Some(_sender)),
+								None,
+								None,
+							)
+							.await?;
 
-					info!(
-						"Ticket id({:?}) has changed its sender to {:?}",
-						ticket.ticket_id, updated_ticket.sender
-					);
+							info!(
+								"Ticket id({:?}) has changed its sender to {:?}",
+								ticket.ticket_id, updated_ticket.sender
+							);
+						}
+					};
 				}
-			};
+			}
 		}
 		break;
 	}
@@ -352,12 +354,12 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				.into();
 				Mutation::save_ticket(db, ticket_model).await?;
 			}
+
 			// let pending_ticket_model = pending_ticket::Model::from_omnity_pending_ticket(
 			// 	pending_ticket.clone().to_owned(),
 			// 	updated_memo.clone(),
 			// );
 			// Mutation::save_pending_ticket(db, pending_ticket_model).await?;
-			info!("TINGGGGG: {:?}", last_index.clone());
 			let pending_ticket_model = pending_ticket::Model::from_index(last_index as i32);
 			Mutation::save_pending_ticket_index(db, pending_ticket_model).await?;
 		}
