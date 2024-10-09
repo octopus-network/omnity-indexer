@@ -22,7 +22,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 	loop {
 		for ticket in null_sender_tickets.clone() {
-			let client = reqwest::Client::new();
+			let client = reqwest::Client::builder().timeout(std::time::Duration::new(30, 0)).build()?;
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
 			match client.get(url).send().await {
 				Ok(response) => {
