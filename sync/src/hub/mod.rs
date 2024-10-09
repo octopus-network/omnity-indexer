@@ -11,6 +11,7 @@ pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
 pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
+pub const SENDER_SYNC_INTERVAL: u64 = 5;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
@@ -26,7 +27,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 			if let Ok(response) = client.get(url).send().await {
 				info!("Mempool Respond: {:?}", response.status());
-				
+
 				if let Ok(body) = response.text().await {
 					let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
 						Ok(v) => v,
