@@ -63,10 +63,16 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 								}
 							};
 						}
-						Err(_) => continue,
+						Err(e) => {
+							info!("Mempool error: {:?}", e);
+							continue
+						},
 					}
 				}
-				Err(_) => continue,
+				Err(e) => {
+					info!("Mempool errors: {:?}", e);
+					continue
+				},
 			}
 		}
 		break;
