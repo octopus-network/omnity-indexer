@@ -11,7 +11,7 @@ pub const FETCH_LIMIT: u64 = 50;
 pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
 pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
-pub const SENDER_SYNC_INTERVAL: u64 = 5;
+pub const SENDER_SYNC_INTERVAL: u64 = 30;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
