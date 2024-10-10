@@ -14,21 +14,16 @@ pub const TICKET_SYNC_INTERVAL: u64 = 8;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("Updating Senders");
 	// Find the tickets with no sender
 	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
-
 	info!("There are {:?} senders are null", null_sender_tickets.len());
 
 	loop {
 		for ticket in null_sender_tickets.clone() {
 			let client = reqwest::Client::builder().timeout(std::time::Duration::new(30, 0)).build()?;
-			info!("Clinet{:?}", client);
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
 			match client.get(url).header("Origin", "*").send().await {
 				Ok(response) => {
-					info!("Mempool Respond: {:?}", response.status());
-
 					match response.text().await {
 						Ok(body) => {
 							let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
@@ -42,20 +37,17 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 								{
 									let _sender = sender.to_string();
 									// Insert the sender into the ticket meta
-									let updated_ticket =
-										Mutation::update_tikcet_sender(db, ticket.clone(), _sender)
-											.await?;
-									// let updated_ticket = Mutation::update_ticket(
-									// 	db,
-									// 	ticket.clone(),
-									// 	None,
-									// 	None,
-									// 	None,
-									// 	Some(Some(_sender)),
-									// 	None,
-									// 	None,
-									// )
-									// .await?;
+									let updated_ticket = Mutation::update_ticket(
+										db,
+										ticket.clone(),
+										None,
+										None,
+										None,
+										Some(Some(_sender)),
+										None,
+										None,
+									)
+									.await?;
 
 									info!(
 										"Ticket id({:?}) has changed its sender to {:?}",

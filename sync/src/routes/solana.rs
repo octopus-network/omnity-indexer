@@ -81,21 +81,6 @@ pub async fn ticket_status_from_solana_route(
 					}
 				}
 			}
-
-			// if let TxStatus::Finalized = mint_token_req.status {
-			// 	Mutation::update_ticket(
-			// 		db,
-			// 		unconfirmed_ticket.clone(),
-			// 		Some(TicketStatus::Finalized),
-			// 		Some(mint_token_req.signature),
-			// 		None,
-			// 		None,
-			// 		None,
-			// 		None,
-			// 	)
-			// 	.await?;
-			// }
-
 			Ok(())
 		},
 	)

@@ -368,12 +368,6 @@ impl Mutation {
 						info!("update ticket seq result {:?}", model.ticket_seq);
 					}
 				}
-				// let res = Ticket::update(active_model)
-				// 	.filter(ticket::Column::TicketId.eq(&ticket.ticket_id.to_owned()))
-				// 	.exec(db)
-				// 	.await
-				// 	.map(|ticket| ticket);
-				// info!("update ticket result : {:?}", res);
 			}
 		}
 
@@ -510,17 +504,6 @@ impl Mutation {
 	) -> Result<ticket::Model, DbErr> {
 		let mut active_model: ticket::ActiveModel = ticket.into();
 		active_model.tx_hash = Set(tx_hash);
-		let ticket = active_model.update(db).await?;
-		Ok(ticket)
-	}
-
-	pub async fn update_tikcet_sender(
-		db: &DbConn,
-		ticket: ticket::Model,
-		sender: String,
-	) -> Result<ticket::Model, DbErr> {
-		let mut active_model: ticket::ActiveModel = ticket.into();
-		active_model.sender = Set(Some(sender.to_owned()));
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
 	}

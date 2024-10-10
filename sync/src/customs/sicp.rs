@@ -57,33 +57,6 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 					);
 				}
-				// match release_icp_token_status {
-				// 	ICPCustomRelaseTokenStatus::Finalized { tx_hash } => {
-				// 		let ticket_model = Mutation::update_ticket(
-				// 			db,
-				// 			unconfirmed_ticket.clone(),
-				// 			Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
-				// 			Some(Some(tx_hash)),
-				// 			None,
-				// 			None,
-				// 			None,
-				// 			None,
-				// 		)
-				// 		.await?;
-
-				// 		info!(
-				// 			"icp custom ticket id({:?}) finally status:{:?} and itshash is {:?} ",
-				// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-				// 		);
-				// 	}
-
-				// 	ICPCustomRelaseTokenStatus::Unknown => {
-				// 		info!(
-				// 			"icp custom ticket id({:?}) current status {:?}",
-				// 			unconfirmed_ticket.ticket_id, release_icp_token_status
-				// 		);
-				// 	}
-				// }
 			}
 
 			Ok(())

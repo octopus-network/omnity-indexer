@@ -75,34 +75,6 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 					);
 				}
-				// match mint_osmosis_token_status {
-				// 	MintCosmwasmTokenStatus::Unknown => {
-				// 		info!(
-				// 			"Ticket id({:?}) from {:?} mint osmosis token status {:?}",
-				// 			unconfirmed_ticket.ticket_id,
-				// 			osmosis_route.chain.clone(),
-				// 			MintCosmwasmTokenStatus::Unknown
-				// 		);
-				// 	}
-				// 	MintCosmwasmTokenStatus::Finalized { tx_hash } => {
-				// 		let ticket_model = Mutation::update_ticket(
-				// 			db,
-				// 			unconfirmed_ticket.clone(),
-				// 			Some(TicketStatus::Finalized),
-				// 			Some(Some(tx_hash)),
-				// 			None,
-				// 			None,
-				// 			None,
-				// 			None,
-				// 		)
-				// 		.await?;
-
-				// 		info!(
-				// 			"osmosis route ticket id({:?}) status:{:?} and its hash is {:?} ",
-				// 			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-				// 		);
-				// 	}
-				// }
 			}
 
 			Ok(())
