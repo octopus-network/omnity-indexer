@@ -2,7 +2,7 @@ use crate::entity;
 use candid::CandidType;
 use entity::{
 	chain_meta, deleted_mint_ticket, pending_ticket, sea_orm_active_enums, ticket,
-	token_ledger_id_on_chain, token_meta, token_on_chain,
+	token_ledger_id_on_chain, token_meta, token_on_chain, token_volumn,
 };
 use ic_cdk::api::call::RejectionCode;
 use serde::{Deserialize, Serialize};
@@ -196,6 +196,16 @@ impl core::fmt::Display for TokenResp {
 			"\ntoken id:{} \nsymbol:{}  \ndecimals:{} \nicon:{:?} \nrune id:{:?} \nevm contract:{:?}",
 			self.token_id, self.symbol, self.decimals, self.icon, self.rune_id, self.evm_contract
 		)
+	}
+}
+
+impl token_volumn::Model {
+	pub fn new(token_id: String, len: usize, volumn: u128) -> Self {
+		Self {
+			token_id: token_id,
+			ticket_len: len.to_string(),
+			historical_volumn: volumn.to_string(),
+		}
 	}
 }
 

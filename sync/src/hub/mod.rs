@@ -1,7 +1,7 @@
 use crate::{
 	pending_ticket,
 	service::{Mutation, Query},
-	ticket, with_omnity_canister, Arg, ChainId, TokenId,
+	ticket, token_volumn, with_omnity_canister, Arg, ChainId, TokenId,
 };
 use log::info;
 use sea_orm::DbConn;
@@ -12,6 +12,28 @@ pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
 pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
+pub const TOKEN_VOLUMN_SYNC_INTERVAL: u64 = 60;
+
+pub async fn update_volumn(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	info!("Syncing with token volumns...");
+
+	for token in Query::get_all_tokens(db).await? {
+		let token_tickets = Query::get_token_tickets(db, token.clone().token_id).await?;
+		let mut total: u128 = 0;
+		let total_len = token_tickets.len();
+		let mut count = 0;
+		for t in token_tickets {
+			total += t.amount.parse::<u128>().unwrap_or(0);
+			count += 1;
+			if count == total_len {
+				let _token_volumn =
+					token_volumn::Model::new(token.clone().token_id, total_len, total);
+				Mutation::save_token_volumn(db, _token_volumn.clone().into()).await?;
+			}
+		}
+	}
+	Ok(())
+}
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
@@ -20,7 +42,9 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 	loop {
 		for ticket in null_sender_tickets.clone() {
-			let client = reqwest::Client::builder().timeout(std::time::Duration::new(30, 0)).build()?;
+			let client = reqwest::Client::builder()
+				.timeout(std::time::Duration::new(30, 0))
+				.build()?;
 			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
 			match client.get(url).header("Origin", "*").send().await {
 				Ok(response) => {
@@ -58,14 +82,14 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 						}
 						Err(e) => {
 							info!("Mempool error: {:?}", e);
-							continue
-						},
+							continue;
+						}
 					}
 				}
 				Err(e) => {
 					info!("Mempool errors: {:?}", e);
-					continue
-				},
+					continue;
+				}
 			}
 		}
 		break;
