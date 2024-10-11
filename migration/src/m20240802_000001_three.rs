@@ -225,3 +225,11 @@ enum PendingTicket {
 	Table,
 	TicketIndex,
 }
+
+#[derive(DeriveIden)]
+enum TokenVolumn {
+	Table,
+	TokenId,
+	TicketLen,
+	HistoricalVolumn,
+}

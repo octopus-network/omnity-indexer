@@ -12,6 +12,25 @@ pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
 pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
+pub const TOKEN_VOLUMN_SYNC_INTERVAL: u64 = 600;
+
+pub async fn update_volumn(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	for token in Query::get_all_tokens(db).await?{
+		let token_tickets = Query::get_token_tickets(db, token.clone().token_id).await?;
+		let mut total:u128 = 0;
+		let total_len = token_tickets.len();
+		let mut count = 0;
+		for t in token_tickets {
+			total += t.amount.parse::<u128>().unwrap_or(0);
+			count += 1;
+			if count == total_len {
+				//save
+				info!("Total volumn of {:?} is {:?}, and it has {:?} tickets", token.clone().token_id, total, total_len);
+			}
+		}
+	}
+	Ok(())
+}
 
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender

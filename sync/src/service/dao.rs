@@ -128,6 +128,16 @@ impl Query {
 			.all(db)
 			.await
 	}
+
+	pub async fn get_token_tickets(
+		db: &DbConn,
+		token: String,
+	) -> Result<Vec<ticket::Model>, DbErr> {
+		Ticket::find()
+			.filter(Condition::all().add(ticket::Column::Token.eq(token)))
+			.all(db)
+			.await
+	}
 }
 
 pub struct Delete;
