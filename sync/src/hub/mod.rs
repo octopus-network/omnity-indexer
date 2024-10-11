@@ -1,7 +1,5 @@
 use crate::{
-	pending_ticket,
-	service::{Mutation, Query},
-	ticket, with_omnity_canister, Arg, ChainId, TokenId,
+	pending_ticket, service::{Mutation, Query}, ticket, token_volumn, with_omnity_canister, Arg, ChainId, TokenId
 };
 use log::info;
 use sea_orm::DbConn;
@@ -12,9 +10,11 @@ pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
 pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
-pub const TOKEN_VOLUMN_SYNC_INTERVAL: u64 = 600;
+pub const TOKEN_VOLUMN_SYNC_INTERVAL: u64 = 30;
 
 pub async fn update_volumn(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	info!("Syncing with token volumns...");
+
 	for token in Query::get_all_tokens(db).await?{
 		let token_tickets = Query::get_token_tickets(db, token.clone().token_id).await?;
 		let mut total:u128 = 0;
@@ -24,8 +24,8 @@ pub async fn update_volumn(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			total += t.amount.parse::<u128>().unwrap_or(0);
 			count += 1;
 			if count == total_len {
-				//save
-				info!("Total volumn of {:?} is {:?}, and it has {:?} tickets", token.clone().token_id, total, total_len);
+				let _token_volumn = token_volumn::Model::new(token.clone().token_id, total_len, total);
+				Mutation::save_token_volumn(db, _token_volumn.clone().into()).await?;
 			}
 		}
 	}

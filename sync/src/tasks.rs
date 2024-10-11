@@ -43,6 +43,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		let _ = Delete::remove_token_ledger_id_on_chain(&db_conn).await;
 		let _ = Delete::remove_deleted_mint_tickets(&db_conn).await;
 		let _ = Delete::remove_pending_mint_tickets(&db_conn).await;
+		let _ = Delete::remove_token_volumns(&db_conn).await;
 	};
 
 	let sync_chains_task =
