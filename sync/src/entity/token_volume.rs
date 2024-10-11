@@ -3,12 +3,12 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "token_volumn")]
+#[sea_orm(table_name = "token_volume")]
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = false)]
 	pub token_id: String,
-	pub ticket_len: String,
-	pub historical_volumn: String,
+	pub ticket_count: String,
+	pub historical_volume: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

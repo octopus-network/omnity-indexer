@@ -1,7 +1,7 @@
 use crate::customs::UPDATE_DELETED_MINT_TICKET_SYNC_INTERVAL;
 use crate::hub::{
 	CHAIN_SYNC_INTERVAL, TICKET_SYNC_INTERVAL, TOKEN_ON_CHAIN_SYNC_INTERVAL, TOKEN_SYNC_INTERVAL,
-	TOKEN_VOLUMN_SYNC_INTERVAL,
+	TOKEN_VOLUME_SYNC_INTERVAL,
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
 use crate::Delete;
@@ -44,7 +44,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		let _ = Delete::remove_token_ledger_id_on_chain(&db_conn).await;
 		let _ = Delete::remove_deleted_mint_tickets(&db_conn).await;
 		let _ = Delete::remove_pending_mint_tickets(&db_conn).await;
-		let _ = Delete::remove_token_volumns(&db_conn).await;
+		let _ = Delete::remove_token_volumes(&db_conn).await;
 	};
 
 	let sync_chains_task =
@@ -135,10 +135,10 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { bitcoin::update_deleted_mint_tickets(&db_conn).await },
 	);
 
-	let update_total_volumns_from_hub = spawn_sync_task(
+	let update_total_volumes_from_hub = spawn_sync_task(
 		db_conn.clone(),
-		TOKEN_VOLUMN_SYNC_INTERVAL,
-		|db_conn| async move { hub::update_volumn(&db_conn).await },
+		TOKEN_VOLUME_SYNC_INTERVAL,
+		|db_conn| async move { hub::update_volume(&db_conn).await },
 	);
 
 	let _ = tokio::join!(
@@ -158,6 +158,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		update_sender_tickets_from_hub,
 		update_mint_tickets_from_btc,
 		update_deleted_mint_tickets_from_btc,
-		update_total_volumns_from_hub,
+		update_total_volumes_from_hub,
 	);
 }

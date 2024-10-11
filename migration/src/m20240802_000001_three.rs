@@ -161,22 +161,22 @@ impl MigrationTrait for Migration {
 		manager
 			.create_table(
 				Table::create()
-					.table(TokenVolumn::Table)
+					.table(TokenVolume::Table)
 					.col(
-						ColumnDef::new(TokenVolumn::TokenId)
+						ColumnDef::new(TokenVolume::TokenId)
 							.string()
 							.not_null()
 							.primary_key(),
 					)
 					.foreign_key(
 						ForeignKey::create()
-							.name("fk_token_id_volumn")
-							.from(TokenVolumn::Table, TokenVolumn::TokenId)
+							.name("fk_token_id_volume")
+							.from(TokenVolume::Table, TokenVolume::TokenId)
 							.to(TokenMeta::Table, TokenMeta::TokenId),
 					)
-					.col(ColumnDef::new(TokenVolumn::TicketLen).string().not_null())
+					.col(ColumnDef::new(TokenVolume::TicketCount).string().not_null())
 					.col(
-						ColumnDef::new(TokenVolumn::HistoricalVolumn)
+						ColumnDef::new(TokenVolume::HistoricalVolume)
 							.string()
 							.not_null(),
 					)
@@ -208,7 +208,7 @@ impl MigrationTrait for Migration {
 			.drop_table(Table::drop().table(PendingTicket::Table).to_owned())
 			.await?;
 		manager
-			.drop_table(Table::drop().table(TokenVolumn::Table).to_owned())
+			.drop_table(Table::drop().table(TokenVolume::Table).to_owned())
 			.await
 	}
 }
@@ -256,9 +256,9 @@ enum PendingTicket {
 }
 
 #[derive(DeriveIden)]
-enum TokenVolumn {
+enum TokenVolume {
 	Table,
 	TokenId,
-	TicketLen,
-	HistoricalVolumn,
+	TicketCount,
+	HistoricalVolume,
 }

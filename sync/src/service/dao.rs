@@ -1,13 +1,13 @@
 use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
 use crate::entity::{
 	chain_meta, deleted_mint_ticket, pending_ticket, ticket, token_ledger_id_on_chain, token_meta,
-	token_on_chain, token_volumn,
+	token_on_chain, token_volume,
 };
 use crate::entity::{
 	chain_meta::Entity as ChainMeta, deleted_mint_ticket::Entity as DeletedMintTicket,
 	pending_ticket::Entity as PendingTicket, ticket::Entity as Ticket,
 	token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain, token_meta::Entity as TokenMeta,
-	token_on_chain::Entity as TokenOnChain, token_volumn::Entity as TokenVolumn,
+	token_on_chain::Entity as TokenOnChain, token_volume::Entity as TokenVolume,
 };
 use log::info;
 use sea_orm::{sea_query::OnConflict, *};
@@ -199,9 +199,9 @@ impl Delete {
 			.await
 	}
 
-	pub async fn remove_token_volumns(db: &DbConn) -> Result<DeleteResult, DbErr> {
-		TokenVolumn::delete_many()
-			.filter(Condition::all().add(token_volumn::Column::TokenId.is_not_null()))
+	pub async fn remove_token_volumes(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		TokenVolume::delete_many()
+			.filter(Condition::all().add(token_volume::Column::TokenId.is_not_null()))
 			.exec(db)
 			.await
 	}
@@ -477,34 +477,34 @@ impl Mutation {
 		Ok(pending_ticket::Model { ..pending_ticket })
 	}
 
-	pub async fn save_token_volumn(
+	pub async fn save_token_volume(
 		db: &DbConn,
-		token_volumn: token_volumn::Model,
-	) -> Result<token_volumn::Model, DbErr> {
-		let active_model: token_volumn::ActiveModel = token_volumn.clone().into();
-		let on_conflict = OnConflict::column(token_volumn::Column::TokenId)
+		token_volume: token_volume::Model,
+	) -> Result<token_volume::Model, DbErr> {
+		let active_model: token_volume::ActiveModel = token_volume.clone().into();
+		let on_conflict = OnConflict::column(token_volume::Column::TokenId)
 			.do_nothing()
 			.to_owned();
-		let insert_result = TokenVolumn::insert(active_model.clone())
+		let insert_result = TokenVolume::insert(active_model.clone())
 			.on_conflict(on_conflict)
 			.exec(db)
 			.await;
 		match insert_result {
 			Ok(ret) => {
-				info!("insert token volumn result : {:?}", ret);
+				info!("insert token volume result : {:?}", ret);
 			}
 			Err(_) => {
-				let model = Self::update_token_volumn(
+				let model = Self::update_token_volume(
 					db,
-					token_volumn.clone(),
-					token_volumn.clone().ticket_len,
-					token_volumn.clone().historical_volumn,
+					token_volume.clone(),
+					token_volume.clone().ticket_count,
+					token_volume.clone().historical_volume,
 				)
 				.await?;
-				info!("the token volumn already exists, updated it ! {:?}", model);
+				info!("the token volume already exists, updated it ! {:?}", model);
 			}
 		}
-		Ok(token_volumn::Model { ..token_volumn })
+		Ok(token_volume::Model { ..token_volume })
 	}
 
 	pub async fn update_ticket(
@@ -552,16 +552,16 @@ impl Mutation {
 		Ok(ticket)
 	}
 
-	pub async fn update_token_volumn(
+	pub async fn update_token_volume(
 		db: &DbConn,
-		token_volumn: token_volumn::Model,
+		token_volume: token_volume::Model,
 		len: String,
-		volumn: String,
-	) -> Result<token_volumn::Model, DbErr> {
-		let mut active_model: token_volumn::ActiveModel = token_volumn.into();
-		active_model.ticket_len = Set(len);
-		active_model.historical_volumn = Set(volumn);
-		let token_volumn = active_model.update(db).await?;
-		Ok(token_volumn)
+		volume: String,
+	) -> Result<token_volume::Model, DbErr> {
+		let mut active_model: token_volume::ActiveModel = token_volume.into();
+		active_model.ticket_count = Set(len);
+		active_model.historical_volume = Set(volume);
+		let token_volume = active_model.update(db).await?;
+		Ok(token_volume)
 	}
 }

@@ -131,10 +131,10 @@ CREATE TABLE public.token_on_chain (
     amount character varying NOT NULL
 );
 
-CREATE TABLE public.token_volumn (
+CREATE TABLE public.token_volume (
     token_id character varying NOT NULL,
-    ticket_len character varying NOT NULL,
-    historical_volumn character varying NOT NULL
+    ticket_count character varying NOT NULL,
+    historical_volume character varying NOT NULL
 );
 
 ALTER TABLE ONLY public.chain_meta
@@ -162,8 +162,8 @@ ALTER TABLE ONLY public.ticket
 ALTER TABLE ONLY public.token_meta
     ADD CONSTRAINT token_meta_pkey PRIMARY KEY (token_id);
 
-ALTER TABLE ONLY public.token_volumn
-    ADD CONSTRAINT token_volumn_pkey PRIMARY KEY (token_id);
+ALTER TABLE ONLY public.token_volume
+    ADD CONSTRAINT token_volume_pkey PRIMARY KEY (token_id);
 
 CREATE INDEX "idx-mint-ticket_seq" ON public.deleted_mint_ticket USING btree (ticket_seq);
 
@@ -187,5 +187,5 @@ ALTER TABLE ONLY public.token_ledger_id_on_chain
 ALTER TABLE ONLY public.pending_ticket
     ADD CONSTRAINT pending_ticket_pkey PRIMARY KEY (ticket_index);
 
-ALTER TABLE ONLY public.token_volumn
-    ADD CONSTRAINT fk_token_id_volumn FOREIGN KEY (token_id) REFERENCES public.token_meta(token_id);
+ALTER TABLE ONLY public.token_volume
+    ADD CONSTRAINT fk_token_id_volume FOREIGN KEY (token_id) REFERENCES public.token_meta(token_id);
