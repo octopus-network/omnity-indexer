@@ -462,7 +462,7 @@ impl Mutation {
 				info!("insert pending ticket index result : {:?}", ret);
 			}
 			Err(_) => {
-				let res = PendingTicket::update(active_model)
+				let _res = PendingTicket::update(active_model)
 					.filter(
 						pending_ticket::Column::TicketIndex
 							.eq(pending_ticket.ticket_index.to_owned()),
@@ -470,10 +470,7 @@ impl Mutation {
 					.exec(db)
 					.await
 					.map(|ticket| ticket);
-				info!(
-					"the pending ticket index already exists, updated ticket! {:?}",
-					res
-				);
+				info!("the pending ticket index already exists, updated ticket!",);
 			}
 		}
 
@@ -497,12 +494,14 @@ impl Mutation {
 				info!("insert token volumn result : {:?}", ret);
 			}
 			Err(_) => {
-				let _res = TokenVolumn::update(active_model)
-					.filter(token_volumn::Column::TokenId.eq(token_volumn.token_id.to_owned()))
-					.exec(db)
-					.await
-					.map(|volumn| volumn);
-				info!("the token volumn already exists, updated it !");
+				let model = Self::update_token_volumn(
+					db,
+					token_volumn.clone(),
+					token_volumn.clone().ticket_len,
+					token_volumn.clone().historical_volumn,
+				)
+				.await?;
+				info!("the token volumn already exists, updated it ! {:?}", model);
 			}
 		}
 		Ok(token_volumn::Model { ..token_volumn })
@@ -551,5 +550,18 @@ impl Mutation {
 		active_model.tx_hash = Set(tx_hash);
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
+	}
+
+	pub async fn update_token_volumn(
+		db: &DbConn,
+		token_volumn: token_volumn::Model,
+		len: String,
+		volumn: String,
+	) -> Result<token_volumn::Model, DbErr> {
+		let mut active_model: token_volumn::ActiveModel = token_volumn.into();
+		active_model.ticket_len = Set(len);
+		active_model.historical_volumn = Set(volumn);
+		let token_volumn = active_model.update(db).await?;
+		Ok(token_volumn)
 	}
 }

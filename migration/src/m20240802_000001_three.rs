@@ -1,4 +1,4 @@
-use super::m20240507_055143_one::{TicketStatus, TicketType, TxAction, TokenMeta};
+use super::m20240507_055143_one::{TicketStatus, TicketType, TokenMeta, TxAction};
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -162,7 +162,12 @@ impl MigrationTrait for Migration {
 			.create_table(
 				Table::create()
 					.table(TokenVolumn::Table)
-					.col(ColumnDef::new(TokenVolumn::TokenId).string().not_null().primary_key())
+					.col(
+						ColumnDef::new(TokenVolumn::TokenId)
+							.string()
+							.not_null()
+							.primary_key(),
+					)
 					.foreign_key(
 						ForeignKey::create()
 							.name("fk_token_id_volumn")
@@ -170,7 +175,11 @@ impl MigrationTrait for Migration {
 							.to(TokenMeta::Table, TokenMeta::TokenId),
 					)
 					.col(ColumnDef::new(TokenVolumn::TicketLen).string().not_null())
-					.col(ColumnDef::new(TokenVolumn::HistoricalVolumn).string().not_null())
+					.col(
+						ColumnDef::new(TokenVolumn::HistoricalVolumn)
+							.string()
+							.not_null(),
+					)
 					.to_owned(),
 			)
 			.await?;
