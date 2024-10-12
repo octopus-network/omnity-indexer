@@ -39,60 +39,78 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
 	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
 	info!("There are {:?} senders are null", null_sender_tickets.len());
-
-	loop {
-		for ticket in null_sender_tickets.clone() {
-			let client = reqwest::Client::builder()
-				.timeout(std::time::Duration::new(30, 0))
-				.build()?;
-			let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
-			match client.get(url).header("Origin", "*").send().await {
-				Ok(response) => {
-					match response.text().await {
-						Ok(body) => {
-							let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
-								Ok(v) => v,
-								Err(_) => continue,
-							};
-
-							if let Some(vin) = a.get_mut("vin") {
-								if let Some(sender) =
-									vin[0]["prevout"]["scriptpubkey_address"].as_str()
-								{
-									let _sender = sender.to_string();
-									// Insert the sender into the ticket meta
-									let updated_ticket = Mutation::update_ticket(
-										db,
-										ticket.clone(),
-										None,
-										None,
-										None,
-										Some(Some(_sender)),
-										None,
-										None,
-									)
-									.await?;
-
-									info!(
-										"Ticket id({:?}) has changed its sender to {:?}",
-										ticket.ticket_id, updated_ticket.sender
-									);
-								}
-							};
-						}
-						Err(e) => {
-							info!("Mempool error: {:?}", e);
-							continue;
+	if null_sender_tickets.len() > 0 {
+		loop {
+			for ticket in null_sender_tickets.clone() {
+				let client = reqwest::Client::builder()
+					.timeout(std::time::Duration::new(8, 0))
+					.build()?;
+				let url = "https://mempool.space/api/tx/".to_string() + &ticket.clone().ticket_id;
+				match client.get(url).header("Origin", "*").send().await {
+					Ok(response) => {
+						match response.text().await {
+							Ok(body) => {
+								let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
+									Ok(v) => v,
+									Err(_) => {
+										let updated_ticket = Mutation::update_ticket(
+											db,
+											ticket.clone(),
+											None,
+											None,
+											None,
+											Some(Some("unavailable sender".to_string())),
+											None,
+											None,
+										)
+										.await?;
+										info!(
+											"Ticket id({:?}) has changed its sender to {:?}",
+											ticket.ticket_id, updated_ticket.sender
+										);
+										continue;
+									}
+								};
+	
+								if let Some(vin) = a.get_mut("vin") {
+									if let Some(sender) =
+										vin[0]["prevout"]["scriptpubkey_address"].as_str()
+									{
+										let _sender = sender.to_string();
+										// Insert the sender into the ticket meta
+										let updated_ticket = Mutation::update_ticket(
+											db,
+											ticket.clone(),
+											None,
+											None,
+											None,
+											Some(Some(_sender)),
+											None,
+											None,
+										)
+										.await?;
+	
+										info!(
+											"Ticket id({:?}) has changed its sender to {:?}",
+											ticket.ticket_id, updated_ticket.sender
+										);
+									}
+								};
+							}
+							Err(e) => {
+								info!("Mempool error: {:?}", e);
+								continue;
+							}
 						}
 					}
-				}
-				Err(e) => {
-					info!("Mempool errors: {:?}", e);
-					continue;
+					Err(e) => {
+						info!("Mempool errors: {:?}", e);
+						continue;
+					}
 				}
 			}
+			break;
 		}
-		break;
 	}
 	Ok(())
 }
