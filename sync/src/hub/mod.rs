@@ -71,7 +71,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 										continue;
 									}
 								};
-	
+
 								if let Some(vin) = a.get_mut("vin") {
 									if let Some(sender) =
 										vin[0]["prevout"]["scriptpubkey_address"].as_str()
@@ -89,7 +89,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 											None,
 										)
 										.await?;
-	
+
 										info!(
 											"Ticket id({:?}) has changed its sender to {:?}",
 											ticket.ticket_id, updated_ticket.sender

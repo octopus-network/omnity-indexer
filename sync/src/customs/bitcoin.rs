@@ -168,37 +168,41 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 							);
 						}
 						None => {
-							let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-							Mutation::update_ticket(
-								db,
-								mint_ticket.clone(),
-								None,
-								None,
-								None,
-								None,
-								Some(intermediate_tx_hash),
-								None,
-							)
-							.await?;
-							Mutation::update_ticket_tx_hash(db, mint_ticket, None).await?;
+							// let intermediate_tx_hash = mint_ticket.clone().tx_hash;
+							// Mutation::update_ticket(
+							// 	db,
+							// 	mint_ticket.clone(),
+							// 	None,
+							// 	None,
+							// 	None,
+							// 	None,
+							// 	Some(intermediate_tx_hash),
+							// 	None,
+							// )
+							// .await?;
+							// Mutation::update_ticket_tx_hash(db, mint_ticket, None).await?;
+							info!(
+								"Ticket id({:?}) is waiting to be finalized",
+								mint_ticket.clone().tx_hash
+							);
 						}
 					}
 				}
 				None => {
 					//update mint tickets status if there is no corresponding transfer tickets.
-					if let None = mint_ticket.clone().intermediate_tx_hash {
-						Mutation::update_ticket(
-							db,
-							mint_ticket.clone(),
-							Some(crate::entity::sea_orm_active_enums::TicketStatus::Unknown),
-							None,
-							None,
-							None,
-							None,
-							None,
-						)
-						.await?;
-					}
+					// if let None = mint_ticket.clone().intermediate_tx_hash {
+					Mutation::update_ticket(
+						db,
+						mint_ticket.clone(),
+						Some(crate::entity::sea_orm_active_enums::TicketStatus::Unknown),
+						None,
+						None,
+						None,
+						None,
+						None,
+					)
+					.await?;
+					// }
 				}
 			}
 		}
