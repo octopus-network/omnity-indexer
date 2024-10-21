@@ -90,7 +90,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 	let sync_ticket_status_from_bitcoin = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
-		|db_conn| async move { bitcoin::sync_ticket_status_from_bitcoin(&db_conn).await },
+		|db_conn| async move { bitcoin::sync_all_ticket_status_from_bitcoin(&db_conn).await },
 	);
 
 	let sync_ticket_status_from_sicp = spawn_sync_task(

@@ -6,9 +6,6 @@ use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-pub const OSMO_TEST_CHAIN_ID: &str = "osmo-test-5";
-pub const OSMO_CHAIN_ID: &str = "osmosis-1";
-
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct OsmoRoute {
 	pub canister: &'static str,
