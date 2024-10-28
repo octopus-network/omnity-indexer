@@ -40,15 +40,15 @@ impl Query {
 			.one(db)
 			.await
 	}
-	pub async fn get_latest_pending_ticket(
-		db: &DbConn,
-	) -> Result<Option<pending_ticket::Model>, DbErr> {
-		PendingTicket::find()
-			.filter(pending_ticket::Column::TicketIndex.is_not_null())
-			.order_by_desc(pending_ticket::Column::TicketIndex)
-			.one(db)
-			.await
-	}
+	// pub async fn get_latest_pending_ticket(
+	// 	db: &DbConn,
+	// ) -> Result<Option<pending_ticket::Model>, DbErr> {
+	// 	PendingTicket::find()
+	// 		.filter(pending_ticket::Column::TicketIndex.is_not_null())
+	// 		.order_by_desc(pending_ticket::Column::TicketIndex)
+	// 		.one(db)
+	// 		.await
+	// }
 	pub async fn get_unconfirmed_tickets(
 		db: &DbConn,
 		dest: String,
