@@ -66,6 +66,10 @@ impl EvmRoutes {
 					canister: "EVM_CANISTER_ID",
 					chain: "Ethereum".to_owned(),
 				},
+				EvmRoute {
+					canister: "CORE_CANISTER_ID",
+					chain: "Core".to_owned(),
+				},
 			],
 		}
 	}
