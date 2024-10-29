@@ -145,7 +145,7 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 							// fetch the tx_hash from the mint ticket and put it in
 							// intermediate_tx_hash
 							let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-							Mutation::update_ticket(
+							if let Ok(_) = Mutation::update_ticket(
 								db,
 								mint_ticket.clone(),
 								None,
@@ -155,32 +155,41 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 								Some(intermediate_tx_hash),
 								None,
 							)
-							.await?;
-							// put the hash to mint ticket tx_hash
-							Mutation::update_ticket_tx_hash(db, mint_ticket, Some(tx_hash.clone()))
-								.await?;
+							.await
+							{
+								// put the hash to mint ticket tx_hash
+								if let Ok(_) = Mutation::update_ticket_tx_hash(
+									db,
+									mint_ticket,
+									Some(tx_hash.clone()),
+								)
+								.await
+								{
+									// Save the ticket that contains the tx_hash as the ticket_id to
+									// DeletedMintTicket
+									if let Ok(_) = Mutation::save_deleted_mint_ticket(
+										db,
+										ticket_should_be_removed.clone().into(),
+									)
+									.await
+									{
+										// Update sender/seq only if they are needed
 
-							// Save the ticket that contains the tx_hash as the ticket_id to
-							// DeletedMintTicket
-							Mutation::save_deleted_mint_ticket(
-								db,
-								ticket_should_be_removed.clone().into(),
-							)
-							.await?;
-
-							// Update sender/seq only if they are needed
-
-							// Remove the ticket that contains the tx_hash as the ticket_id
-							let row = Delete::remove_ticket_by_id(
-								db,
-								ticket_should_be_removed.clone().ticket_id,
-							)
-							.await?;
-							info!(
-								"Ticket id({:?}) has been removed and {:?} row has been deleted",
-								ticket_should_be_removed.clone().ticket_id,
-								row
-							);
+										// Remove the ticket that contains the tx_hash as the
+										// ticket_id
+										let row = Delete::remove_ticket_by_id(
+											db,
+											ticket_should_be_removed.clone().ticket_id,
+										)
+										.await?;
+										info!(
+											"Ticket id({:?}) has been removed and {:?} row has been deleted",
+											ticket_should_be_removed.clone().ticket_id,
+											row
+										);
+									}
+								}
+							}
 						}
 						None => {
 							// let intermediate_tx_hash = mint_ticket.clone().tx_hash;
