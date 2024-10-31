@@ -199,6 +199,26 @@ impl core::fmt::Display for TokenResp {
 	}
 }
 
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+pub struct Token {
+	pub token_id: TokenId,
+	pub name: String,
+	pub symbol: String,
+	pub decimals: u8,
+	pub icon: Option<String>,
+	pub metadata: HashMap<String, String>,
+}
+
+impl core::fmt::Display for Token {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+			f,
+			"\ttoken id:{} \ntoken name:{} \nsymbol:{:?} \ndecimals:{} \nicon:{:?} \nmetadata:{:?}",
+			self.token_id, self.name, self.symbol, self.decimals, self.icon, self.metadata
+		)
+	}
+}
+
 impl token_volume::Model {
 	pub fn new(token_id: String, len: usize, volume: u128) -> Self {
 		Self {

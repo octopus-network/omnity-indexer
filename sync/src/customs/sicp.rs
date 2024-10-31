@@ -1,5 +1,5 @@
 use crate::service::{Mutation, Query};
-use crate::{with_omnity_canister, Arg};
+use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -55,6 +55,52 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 					info!(
 						"icp custom ticket id({:?}) finally status:{:?} and its hash is {:?} ",
 						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+					);
+				}
+			}
+
+			Ok(())
+		},
+	)
+	.await
+}
+
+pub async fn sync_all_icrc_token_canister_id_from_sicp(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister(
+		"OMNITY_CUSTOMS_ICP_CANISTER_ID",
+		|agent, canister_id| async move {
+			let token_canisters = Arg::V(Vec::<u8>::new())
+				.query_method(
+					agent.clone(),
+					canister_id,
+					"get_token_list",
+					"Syncing token canister id from sicp ...",
+					"Token canister id from sicp result: ",
+					None,
+					None,
+					"Vec<Token>",
+				)
+				.await?
+				.convert_to_vec_token();
+			for token in token_canisters {
+				if let Some(canister) = token.metadata.get("ledger_id") {
+					let token_canister_id_on_chain_model = token_ledger_id_on_chain::Model::new(
+						ICP_CUSTOM_CHAIN_ID.to_string(),
+						token.token_id,
+						canister.to_owned(),
+					);
+
+					let token_canister_id_on_chain = Mutation::save_all_token_ledger_id_on_chain(
+						db,
+						token_canister_id_on_chain_model,
+					)
+					.await?;
+
+					info!(
+						"Token {:?} in Chain id({:?})' Canister id is {:?}",
+						token_canister_id_on_chain.token_id,
+						token_canister_id_on_chain.chain_id,
+						token_canister_id_on_chain.contract_id
 					);
 				}
 			}

@@ -112,6 +112,7 @@ pub enum ReturnType {
 	OmnityTokenOnChain(Vec<OmnityTokenOnChain>),
 	CanisterId(Option<Principal>),
 	VecTokenResp(Vec<TokenResp>),
+	VecToken(Vec<Token>),
 	VecOmnityPendingTicket(Vec<(TicketId, OmnityTicket)>),
 	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
 	MintCosmwasmTokenStatus(MintCosmwasmTokenStatus),
@@ -176,6 +177,12 @@ impl ReturnType {
 	pub fn convert_to_vec_token_resp(&self) -> Vec<TokenResp> {
 		match self {
 			Self::VecTokenResp(tr) => return tr.to_vec(),
+			_ => return Vec::new(),
+		}
+	}
+	pub fn convert_to_vec_token(&self) -> Vec<Token> {
+		match self {
+			Self::VecToken(t) => return t.to_vec(),
 			_ => return Vec::new(),
 		}
 	}
@@ -301,6 +308,11 @@ impl Arg {
 				let decoded_return_output = Decode!(&return_output, Vec<TokenResp>)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::VecTokenResp(decoded_return_output));
+			}
+			"Vec<Token>" => {
+				let decoded_return_output = Decode!(&return_output, Vec<Token>)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::VecToken(decoded_return_output));
 			}
 			"Vec<(TicketId, OmnityTicket)>" => {
 				let decoded_return_output = Decode!(

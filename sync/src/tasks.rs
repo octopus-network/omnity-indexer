@@ -75,6 +75,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { evm::sync_all_token_ledger_id_from_evm_route(&db_conn).await },
 	);
 
+	let sync_all_token_canister_id_from_sicp = spawn_sync_task(
+		db_conn.clone(),
+		TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
+		|db_conn| async move { sicp::sync_all_icrc_token_canister_id_from_sicp(&db_conn).await },
+	);
+
 	let sync_tokens_on_chains_from_hub = spawn_sync_task(
 		db_conn.clone(),
 		TOKEN_ON_CHAIN_SYNC_INTERVAL,
@@ -148,6 +154,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_tickets_task,
 		sync_all_token_ledger_id_on_chain_from_icp,
 		sync_all_token_ledger_id_from_evm,
+		sync_all_token_canister_id_from_sicp,
 		sync_tokens_on_chains_from_hub,
 		sync_ticket_status_from_solana,
 		sync_ticket_status_from_bitcoin,
