@@ -160,7 +160,7 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 								// put the hash to mint ticket tx_hash
 								if let Ok(_) = Mutation::update_ticket_tx_hash(
 									db,
-									mint_ticket,
+									mint_ticket.clone(),
 									Some(tx_hash.clone()),
 								)
 								.await
@@ -177,16 +177,30 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 
 										// Remove the ticket that contains the tx_hash as the
 										// ticket_id
-										let row = Delete::remove_ticket_by_id(
+										if let Ok(row) = Delete::remove_ticket_by_id(
 											db,
 											ticket_should_be_removed.clone().ticket_id,
 										)
-										.await?;
-										info!(
-											"Ticket id({:?}) has been removed and {:?} row has been deleted",
-											ticket_should_be_removed.clone().ticket_id,
-											row
-										);
+										.await
+										{
+											if let Ok(_) = Mutation::update_ticket(
+												db,
+												mint_ticket.clone(),
+												Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+												None,
+												None,
+												None,
+												None,
+												None,
+											)
+											.await {
+												info!(
+													"Ticket id({:?}) has been removed and {:?} row has been deleted",
+													ticket_should_be_removed.clone().ticket_id,
+													row
+												);
+											}
+										}
 									}
 								}
 							}
