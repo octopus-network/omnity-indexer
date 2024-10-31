@@ -137,98 +137,76 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 		if let Some(tx_hash) = mint_ticket.clone().tx_hash {
 			match Query::get_ticket_by_id(db, tx_hash).await? {
 				Some(ticket_should_be_removed) => {
-					// Retrieval the tx_hash from each mint tickets
-					// update the ticket_should_be_removed status, then move the mint ticket tx_hash
-					// to the intermedieate tx_hash and then the tx_hash to mint ticket tx_hash
-					match ticket_should_be_removed.clone().tx_hash {
-						Some(tx_hash) => {
-							// fetch the tx_hash from the mint ticket and put it in
-							// intermediate_tx_hash
-							let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-							if let Ok(_) = Mutation::update_ticket(
-								db,
-								mint_ticket.clone(),
-								None,
-								None,
-								None,
-								None,
-								Some(intermediate_tx_hash),
-								None,
-							)
-							.await
-							{
-								// put the hash to mint ticket tx_hash
-								if let Ok(_) = Mutation::update_ticket_tx_hash(
-									db,
-									mint_ticket.clone(),
-									Some(tx_hash.clone()),
-								)
-								.await
-								{
-									// Save the ticket that contains the tx_hash as the ticket_id to
-									// DeletedMintTicket
-									if let Ok(_) = Mutation::save_deleted_mint_ticket(
+					if let Ok(_) = Mutation::save_deleted_mint_ticket(
+						db,
+						ticket_should_be_removed.clone().into(),
+					)
+					.await
+					{
+						if let Ok(row) = Delete::remove_ticket_by_id(
+							db,
+							ticket_should_be_removed.clone().ticket_id,
+						)
+						.await
+						{
+							match ticket_should_be_removed.clone().tx_hash {
+								Some(tx_hash) => {
+									// fetch the tx_hash from the mint ticket and put it in
+									// intermediate_tx_hash
+									let intermediate_tx_hash = mint_ticket.clone().tx_hash;
+									if let Ok(_) = Mutation::update_ticket(
 										db,
-										ticket_should_be_removed.clone().into(),
+										mint_ticket.clone(),
+										None,
+										None,
+										None,
+										None,
+										Some(intermediate_tx_hash),
+										None,
 									)
 									.await
 									{
-										// Update sender/seq only if they are needed
-
-										// Remove the ticket that contains the tx_hash as the
-										// ticket_id
-										if let Ok(row) = Delete::remove_ticket_by_id(
+										// put the hash to mint ticket tx_hash
+										if let Ok(_) = Mutation::update_ticket_tx_hash(
 											db,
-											ticket_should_be_removed.clone().ticket_id,
+											mint_ticket.clone(),
+											Some(tx_hash.clone()),
 										)
 										.await
 										{
 											if let Ok(_) = Mutation::update_ticket(
-												db,
-												mint_ticket.clone(),
-												Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
-												None,
-												None,
-												None,
-												None,
-												None,
-											)
-											.await {
-												info!(
-													"Ticket id({:?}) has been removed and {:?} row has been deleted",
-													ticket_should_be_removed.clone().ticket_id,
-													row
-												);
-											}
+										db,
+										mint_ticket.clone(),
+										Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+										None,
+										None,
+										None,
+										None,
+										None,
+									)
+									.await {
+										info!(
+											"Ticket id({:?}) has been removed and {:?} row has been deleted",
+											ticket_should_be_removed.clone().ticket_id,
+											row
+										);
+									}
 										}
 									}
 								}
+								None => {
+									info!(
+										"Ticket id({:?}) is waiting to be finalized",
+										mint_ticket.clone().tx_hash
+									);
+								}
 							}
-						}
-						None => {
-							// let intermediate_tx_hash = mint_ticket.clone().tx_hash;
-							// Mutation::update_ticket(
-							// 	db,
-							// 	mint_ticket.clone(),
-							// 	None,
-							// 	None,
-							// 	None,
-							// 	None,
-							// 	Some(intermediate_tx_hash),
-							// 	None,
-							// )
-							// .await?;
-							// Mutation::update_ticket_tx_hash(db, mint_ticket, None).await?;
-							info!(
-								"Ticket id({:?}) is waiting to be finalized",
-								mint_ticket.clone().tx_hash
-							);
 						}
 					}
 				}
 				None => {
 					//update mint tickets status if there is no corresponding transfer tickets.
-					// if let None = mint_ticket.clone().intermediate_tx_hash {
+					let intermediate_tx_hash = mint_ticket.clone().tx_hash;
 					Mutation::update_ticket(
 						db,
 						mint_ticket.clone(),
@@ -236,11 +214,11 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 						None,
 						None,
 						None,
-						None,
+						Some(intermediate_tx_hash),
 						None,
 					)
 					.await?;
-					// }
+					Mutation::update_ticket_tx_hash(db, mint_ticket.clone(), None).await?;
 				}
 			}
 		}

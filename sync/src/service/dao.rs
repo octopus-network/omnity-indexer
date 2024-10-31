@@ -116,7 +116,11 @@ impl Query {
 					.add(ticket::Column::Action.eq(TxAction::Mint))
 					// The ticket amount is updated
 					.add(ticket::Column::Amount.ne(0.to_string()))
-					.add(ticket::Column::IntermediateTxHash.is_null()),
+					.add(
+						Condition::any()
+							.add(ticket::Column::IntermediateTxHash.is_null())
+							.add(ticket::Column::TxHash.is_null()),
+					),
 			)
 			.all(db)
 			.await
