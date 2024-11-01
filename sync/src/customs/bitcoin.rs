@@ -133,7 +133,10 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // update deleted mint tickets meta
 pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	let updated_mint_tickets = Query::get_updated_mint_tickets(db).await?;
+
 	for mint_ticket in updated_mint_tickets {
+		info!("mint ticket ({:?}) is not finalized", mint_ticket.clone());
+
 		if let Some(tx_hash) = mint_ticket.clone().tx_hash {
 			match Query::get_ticket_by_id(db, tx_hash).await? {
 				Some(ticket_should_be_removed) => {
@@ -157,8 +160,8 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 									if let Ok(_) = Mutation::update_ticket(
 										db,
 										mint_ticket.clone(),
-										None,
-										None,
+										Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+										Some(Some(tx_hash.clone())),
 										None,
 										None,
 										Some(intermediate_tx_hash),
@@ -166,32 +169,11 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 									)
 									.await
 									{
-										// put the hash to mint ticket tx_hash
-										if let Ok(_) = Mutation::update_ticket_tx_hash(
-											db,
-											mint_ticket.clone(),
-											Some(tx_hash.clone()),
-										)
-										.await
-										{
-											if let Ok(_) = Mutation::update_ticket(
-										db,
-										mint_ticket.clone(),
-										Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
-										None,
-										None,
-										None,
-										None,
-										None,
-									)
-									.await {
 										info!(
 											"Ticket id({:?}) has been removed and {:?} row has been deleted",
 											ticket_should_be_removed.clone().ticket_id,
 											row
 										);
-									}
-										}
 									}
 								}
 								None => {

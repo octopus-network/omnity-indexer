@@ -99,34 +99,32 @@ pub async fn ticket_status_from_icp_route(
 				.convert_to_mint_token_status();
 
 			if let MintTokenStatus::Finalized { block_index } = mint_token_status {
-				let tx_hash = match Query::get_token_ledger_id_on_chain_by_id(
+				if let Some(rep) = Query::get_token_ledger_id_on_chain_by_id(
 					db,
 					ROUTE_CHAIN_ID.to_owned(),
 					ticket.clone().token,
 				)
 				.await?
 				{
-					Some(rep) => rep.contract_id + "-" + &block_index.to_string(),
-					None => block_index.to_string(),
-				};
+					let tx_hash = rep.contract_id + "-" + &block_index.to_string();
+					// update ticket status to finalized
+					let ticket_model = Mutation::update_ticket(
+						db,
+						ticket.clone(),
+						Some(TicketStatus::Finalized),
+						Some(Some(tx_hash)),
+						None,
+						None,
+						None,
+						None,
+					)
+					.await?;
 
-				// update ticket status to finalized
-				let ticket_model = Mutation::update_ticket(
-					db,
-					ticket.clone(),
-					Some(TicketStatus::Finalized),
-					Some(Some(tx_hash)),
-					None,
-					None,
-					None,
-					None,
-				)
-				.await?;
-
-				info!(
-					"Ticket id({:?}) status:{:?} and finalized on block {:?}",
-					ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-				);
+					info!(
+						"Ticket id({:?}) status:{:?} and finalized on block {:?}",
+						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+					);
+				}
 			}
 			Ok(())
 		},

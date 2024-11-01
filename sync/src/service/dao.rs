@@ -237,21 +237,6 @@ impl Mutation {
 				info!("insert token ledger id result : {:?}", ret);
 			}
 			Err(_) => {
-				let _res = TokenLedgerIdOnChain::update(active_model)
-					.filter(
-						Condition::all()
-							.add(
-								token_ledger_id_on_chain::Column::ChainId
-									.eq(token_ledger_id_on_chain.chain_id.to_owned()),
-							)
-							.add(
-								token_ledger_id_on_chain::Column::TokenId
-									.eq(token_ledger_id_on_chain.token_id.to_owned()),
-							),
-					)
-					.exec(db)
-					.await
-					.map(|token_on_chain| token_on_chain);
 				info!("the token ledger id already exists, updated it !");
 			}
 		}
@@ -281,22 +266,16 @@ impl Mutation {
 				info!("insert token on chain result : {:?}", ret);
 			}
 			Err(_) => {
-				let _res = TokenOnChain::update(active_model)
-					.filter(
-						Condition::all()
-							.add(
-								token_on_chain::Column::ChainId
-									.eq(token_on_chain.chain_id.to_owned()),
-							)
-							.add(
-								token_on_chain::Column::TokenId
-									.eq(token_on_chain.token_id.to_owned()),
-							),
-					)
-					.exec(db)
-					.await
-					.map(|token_on_chain| token_on_chain);
-				info!("the token on chain already exists, updated it !");
+				let model = Self::update_token_on_chain(
+					db,
+					token_on_chain.clone(),
+					token_on_chain.clone().amount,
+				)
+				.await?;
+				info!(
+					"the token on chain already exists, updated it ! {:?}",
+					model
+				);
 			}
 		}
 		Ok(token_on_chain::Model { ..token_on_chain })
@@ -319,11 +298,6 @@ impl Mutation {
 				info!("insert chain result : {:?}", ret);
 			}
 			Err(_) => {
-				let _res = ChainMeta::update(active_model)
-					.filter(chain_meta::Column::ChainId.eq(chain_meta.chain_id.to_owned()))
-					.exec(db)
-					.await
-					.map(|chain| chain);
 				info!("the chain already exists, updated chain !");
 			}
 		}
@@ -347,11 +321,6 @@ impl Mutation {
 				info!("insert token result : {:?}", ret);
 			}
 			Err(_) => {
-				let _res = TokenMeta::update(active_model)
-					.filter(token_meta::Column::TokenId.eq(token_meta.token_id.to_owned()))
-					.exec(db)
-					.await
-					.map(|token| token);
 				info!("token already exists, updated token !");
 			}
 		}
@@ -467,14 +436,6 @@ impl Mutation {
 				info!("insert pending ticket index result : {:?}", ret);
 			}
 			Err(_) => {
-				let _res = PendingTicket::update(active_model)
-					.filter(
-						pending_ticket::Column::TicketIndex
-							.eq(pending_ticket.ticket_index.to_owned()),
-					)
-					.exec(db)
-					.await
-					.map(|ticket| ticket);
 				info!("the pending ticket index already exists, updated ticket!",);
 			}
 		}
@@ -568,5 +529,16 @@ impl Mutation {
 		active_model.historical_volume = Set(volume);
 		let token_volume = active_model.update(db).await?;
 		Ok(token_volume)
+	}
+
+	pub async fn update_token_on_chain(
+		db: &DbConn,
+		token_on_chain: token_on_chain::Model,
+		amount: String,
+	) -> Result<token_on_chain::Model, DbErr> {
+		let mut active_model: token_on_chain::ActiveModel = token_on_chain.into();
+		active_model.amount = Set(amount);
+		let token_on_chain = active_model.update(db).await?;
+		Ok(token_on_chain)
 	}
 }
