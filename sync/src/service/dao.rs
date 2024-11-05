@@ -497,11 +497,10 @@ impl Mutation {
 			active_model.sender = Set(_sender);
 		}
 		if let Some(_intermediate_tx_hash) = intermediate_tx_hash {
-			active_model.intermediate_tx_hash =
-				Set(Some(_intermediate_tx_hash.to_owned().expect("no hash")));
+			active_model.intermediate_tx_hash = Set(_intermediate_tx_hash);
 		}
 		if let Some(_seq) = seq {
-			active_model.ticket_seq = Set(Some(_seq.to_owned().expect("no seq")));
+			active_model.ticket_seq = Set(_seq);
 		}
 		let ticket = active_model.update(db).await?;
 		Ok(ticket)
