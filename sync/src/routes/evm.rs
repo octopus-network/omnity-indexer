@@ -87,20 +87,36 @@ pub async fn sync_all_token_ledger_id_from_evm_route(db: &DbConn) -> Result<(), 
 
 pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing release token status from evm route ... ");
-
 	let evm_routes = EvmRoutes::new();
 
 	for evm_route in evm_routes.routes.iter() {
-		let unconfirmed_tickets =
-			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await?;
-		for unconfirmed_ticket in unconfirmed_tickets {
-			sync_ticket_status_from_evm_route(
-				db,
-				evm_route.canister,
-				evm_route.chain.clone(),
-				unconfirmed_ticket,
-			)
-			.await?;
+		if let (Ok(unconfirmed_tickets), _) = (
+			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await,
+			Query::get_unconfirmed_deleted_tickets(db, evm_route.chain.clone()).await,
+		) {
+			for unconfirmed_ticket in unconfirmed_tickets {
+				sync_ticket_status_from_evm_route(
+					db,
+					evm_route.canister,
+					evm_route.chain.clone(),
+					unconfirmed_ticket,
+				)
+				.await?;
+			}
+		} else if let (_, Ok(unconfirmed_tickets)) = (
+			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await,
+			Query::get_unconfirmed_deleted_tickets(db, evm_route.chain.clone()).await,
+		) {
+			for unconfirmed_ticket in unconfirmed_tickets {
+				let _unconfirmed_ticket = ticket::Model::from_deleted_ticket(unconfirmed_ticket);
+				sync_ticket_status_from_evm_route(
+					db,
+					evm_route.canister,
+					evm_route.chain.clone(),
+					_unconfirmed_ticket,
+				)
+				.await?;
+			}
 		}
 	}
 	Ok(())
@@ -151,7 +167,7 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 	.await
 }
 
-pub async fn sync_ticket_status_from_evm_route(
+async fn sync_ticket_status_from_evm_route(
 	db: &DbConn,
 	canister: &str,
 	_chain: ChainId,

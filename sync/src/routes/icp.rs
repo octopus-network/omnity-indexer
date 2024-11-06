@@ -67,17 +67,26 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing release token status from icp route ... ");
 
-	// get ticket that dest is icp route and status is waiting for comformation by dst
-	let unconfirmed_tickets = Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await?;
-
-	// get mint_token_status by ticket id
-	for unconfirmed_ticket in unconfirmed_tickets {
-		ticket_status_from_icp_route(db, unconfirmed_ticket).await?;
+	if let (Ok(unconfirmed_tickets), _) = (
+		Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
+		Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
+	) {
+		for unconfirmed_ticket in unconfirmed_tickets {
+			ticket_status_from_icp_route(db, unconfirmed_ticket).await?;
+		}
+	} else if let (_, Ok(unconfirmed_tickets)) = (
+		Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
+		Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
+	) {
+		for unconfirmed_ticket in unconfirmed_tickets {
+			let _unconfirmed_ticket = ticket::Model::from_deleted_ticket(unconfirmed_ticket);
+			ticket_status_from_icp_route(db, _unconfirmed_ticket).await?;
+		}
 	}
 	Ok(())
 }
 
-pub async fn ticket_status_from_icp_route(
+async fn ticket_status_from_icp_route(
 	db: &DbConn,
 	ticket: ticket::Model,
 ) -> Result<(), Box<dyn Error>> {

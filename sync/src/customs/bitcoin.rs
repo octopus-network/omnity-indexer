@@ -55,7 +55,6 @@ async fn process_ticket_status_from_bitcoin(
 	if let ReleaseTokenStatus::Submitted(tx_hash) | ReleaseTokenStatus::Confirmed(tx_hash) =
 		mint_token_status
 	{
-		//step3: update ticket status to finalized
 		let ticket_model = Mutation::update_ticket(
 			db,
 			unconfirmed_ticket.clone(),
