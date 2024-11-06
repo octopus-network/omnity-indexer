@@ -2,7 +2,6 @@ use crate::entity::ticket;
 use crate::graphql::terms_amount::query_terms_amount;
 use crate::service::{Delete, Mutation, Query};
 use crate::{with_omnity_canister, Arg, ChainId};
-use ic_agent::{export::Principal, Agent};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -32,55 +31,6 @@ pub enum ReleaseTokenStatus {
 	Confirmed(String),
 }
 
-async fn process_ticket_status_from_bitcoin(
-	db: &DbConn,
-	unconfirmed_ticket: ticket::Model,
-	agent: &Agent,
-	canister_id: Principal,
-) -> Result<(), Box<dyn Error>> {
-	let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
-		.query_method(
-			agent.clone(),
-			canister_id,
-			"release_token_status",
-			"Syncing mint token status from bitcoin: ",
-			"Mint bitcoin token status result: ",
-			None,
-			None,
-			"ReleaseTokenStatus",
-		)
-		.await?
-		.convert_to_release_token_status();
-
-	if let ReleaseTokenStatus::Submitted(tx_hash) | ReleaseTokenStatus::Confirmed(tx_hash) =
-		mint_token_status
-	{
-		let ticket_model = Mutation::update_ticket(
-			db,
-			unconfirmed_ticket.clone(),
-			Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
-			Some(Some(tx_hash)),
-			None,
-			None,
-			None,
-			None,
-		)
-		.await?;
-
-		info!(
-			"btc ticket id({:?}) finally status:{:?} and its hash is {:?} ",
-			ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-		);
-	} else {
-		info!(
-			"btc ticket id({:?}) current status {:?}",
-			unconfirmed_ticket.ticket_id, mint_token_status
-		);
-	}
-
-	Ok(())
-}
-
 // sync tickets status that transfered from routes to BTC/BRC20 custom
 pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	let btc_customs: Vec<BtcCustom> = vec![
@@ -97,31 +47,50 @@ pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<
 	for btc_custom in btc_customs.iter() {
 		with_omnity_canister(btc_custom.canister, |agent, canister_id| async move {
 			info!("Syncing release token status from bitcoin ... ");
+			//step1: get ticket that dest is bitcion and status is waiting for comformation by dst
+			let unconfirmed_tickets =
+				Query::get_unconfirmed_tickets(db, btc_custom.chain.clone()).await?;
 
-			if let (Ok(unconfirmed_tickets), _) = (
-				Query::get_unconfirmed_tickets(db, btc_custom.chain.clone()).await,
-				Query::get_unconfirmed_deleted_tickets(db, btc_custom.chain.clone()).await,
-			) {
-				for unconfirmed_ticket in unconfirmed_tickets {
-					let _ = process_ticket_status_from_bitcoin(
-						db,
-						unconfirmed_ticket,
-						&agent,
+			//step2: get release_token_status by ticket id
+			for unconfirmed_ticket in unconfirmed_tickets {
+				let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
+					.query_method(
+						agent.clone(),
 						canister_id,
+						"release_token_status",
+						"Syncing mint token status from bitcoin: ",
+						"Mint bitcoin token status result: ",
+						None,
+						None,
+						"ReleaseTokenStatus",
+					)
+					.await?
+					.convert_to_release_token_status();
+
+				if let ReleaseTokenStatus::Submitted(tx_hash)
+				| ReleaseTokenStatus::Confirmed(tx_hash) = mint_token_status
+				{
+					//step3: update ticket status to finalized
+					let ticket_model = Mutation::update_ticket(
+						db,
+						unconfirmed_ticket.clone(),
+						Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+						Some(Some(tx_hash)),
+						None,
+						None,
+						None,
+						None,
+					)
+					.await?;
+
+					info!(
+						"btc ticket id({:?}) finally status:{:?} and its hash is {:?} ",
+						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 					);
-				}
-			} else if let (_, Ok(unconfirmed_tickets)) = (
-				Query::get_unconfirmed_tickets(db, btc_custom.chain.clone()).await,
-				Query::get_unconfirmed_deleted_tickets(db, btc_custom.chain.clone()).await,
-			) {
-				for unconfirmed_ticket in unconfirmed_tickets {
-					let _unconfirmed_ticket =
-						ticket::Model::from_deleted_ticket(unconfirmed_ticket);
-					let _ = process_ticket_status_from_bitcoin(
-						db,
-						_unconfirmed_ticket,
-						&agent,
-						canister_id,
+				} else {
+					info!(
+						"btc ticket id({:?}) current status {:?}",
+						unconfirmed_ticket.ticket_id, mint_token_status
 					);
 				}
 			}
