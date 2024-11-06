@@ -24,6 +24,14 @@ impl Query {
 	) -> Result<Option<ticket::Model>, DbErr> {
 		Ticket::find_by_id(ticket_id).one(db).await
 	}
+	pub async fn get_deleted_ticket_by_id(
+		db: &DbConn,
+		deleted_ticket_id: String,
+	) -> Result<Option<deleted_mint_ticket::Model>, DbErr> {
+		DeletedMintTicket::find_by_id(deleted_ticket_id)
+			.one(db)
+			.await
+	}
 	pub async fn get_token_ledger_id_on_chain_by_id(
 		db: &DbConn,
 		chain_id: String,
@@ -66,7 +74,7 @@ impl Query {
 			.await
 	}
 
-	pub async fn get_unconfirmed_deleted_mint_tickets(
+	pub async fn get_unconfirmed_deleted_tickets(
 		db: &DbConn,
 		dest: String,
 	) -> Result<Vec<deleted_mint_ticket::Model>, DbErr> {
@@ -74,6 +82,7 @@ impl Query {
 			.filter(
 				Condition::all()
 					.add(deleted_mint_ticket::Column::Status.ne(TicketStatus::Finalized))
+					.add(deleted_mint_ticket::Column::Status.ne(TicketStatus::Unknown))
 					.add(deleted_mint_ticket::Column::DstChain.eq(dest)),
 			)
 			.all(db)
