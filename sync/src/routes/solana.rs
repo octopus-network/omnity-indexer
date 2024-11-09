@@ -16,7 +16,7 @@ pub const SOLANA_ROUTE_CHAIN_ID: &str = "eSolana";
 #[derive(CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TxStatus {
 	Finalized,
-	Unknown,
+	Pending,
 	TxFailed { e: TxError },
 }
 
@@ -108,7 +108,7 @@ pub async fn ticket_status_from_solana_route(
 						)
 						.await?;
 					}
-					TxStatus::Unknown => {
+					TxStatus::Pending => {
 						info!("{:?} is Unknown in Solana", ticket.clone())
 					}
 					TxStatus::TxFailed { e } => {
