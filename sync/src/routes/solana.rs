@@ -3,9 +3,11 @@ use crate::service::{Mutation, Query};
 use crate::{with_omnity_canister, CallError, TicketId};
 use candid::CandidType;
 use candid::{Decode, Encode};
+use core::fmt;
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
+use std::convert::TryFrom;
 use std::error::Error;
 use std::str;
 
@@ -15,7 +17,39 @@ pub const SOLANA_ROUTE_CHAIN_ID: &str = "eSolana";
 pub enum TxStatus {
 	Finalized,
 	Unknown,
-	TxFailed { e: String },
+	TxFailed { e: TxError },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, CandidType, Deserialize, Serialize)]
+pub struct TxError {
+	pub block_hash: String,
+	pub signature: String,
+	pub error: String,
+}
+impl fmt::Display for TxError {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(
+			f,
+			"TxError: block_hash={}, signature={}, error={}",
+			self.block_hash, self.signature, self.error
+		)
+	}
+}
+impl std::error::Error for TxError {}
+impl TryFrom<anyhow::Error> for TxError {
+	type Error = anyhow::Error;
+
+	fn try_from(e: anyhow::Error) -> Result<Self, Self::Error> {
+		if let Some(tx_error) = e.downcast_ref::<TxError>() {
+			Ok(TxError {
+				block_hash: tx_error.block_hash.to_owned(),
+				signature: tx_error.signature.to_owned(),
+				error: tx_error.error.to_owned(),
+			})
+		} else {
+			Err(e)
+		}
+	}
 }
 
 #[derive(CandidType, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -26,7 +60,8 @@ pub struct MintTokenRequest {
 	pub token_mint: String,
 	pub status: TxStatus,
 	pub signature: Option<String>,
-	pub retry: u64,
+	pub retry_4_building: u64,
+	pub retry_4_status: u64,
 }
 
 pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
