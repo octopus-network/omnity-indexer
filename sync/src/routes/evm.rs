@@ -87,20 +87,34 @@ pub async fn sync_all_token_ledger_id_from_evm_route(db: &DbConn) -> Result<(), 
 
 pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing release token status from evm route ... ");
-
 	let evm_routes = EvmRoutes::new();
 
 	for evm_route in evm_routes.routes.iter() {
-		let unconfirmed_tickets =
-			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await?;
-		for unconfirmed_ticket in unconfirmed_tickets {
-			sync_ticket_status_from_evm_route(
-				db,
-				evm_route.canister,
-				evm_route.chain.clone(),
-				unconfirmed_ticket,
-			)
-			.await?;
+		if let (Ok(unconfirmed_tickets), Ok(deleted_unconfirmed_tickets)) = (
+			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await,
+			Query::get_unconfirmed_deleted_tickets(db, evm_route.chain.clone()).await,
+		) {
+			for unconfirmed_ticket in unconfirmed_tickets {
+				sync_ticket_status_from_evm_route(
+					db,
+					evm_route.canister,
+					evm_route.chain.clone(),
+					unconfirmed_ticket,
+				)
+				.await?;
+			}
+
+			for deleted_unconfirmed_ticket in deleted_unconfirmed_tickets {
+				let _unconfirmed_ticket =
+					ticket::Model::from_deleted_ticket(deleted_unconfirmed_ticket);
+				sync_ticket_status_from_evm_route(
+					db,
+					evm_route.canister,
+					evm_route.chain.clone(),
+					_unconfirmed_ticket,
+				)
+				.await?;
+			}
 		}
 	}
 	Ok(())
@@ -151,7 +165,7 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 	.await
 }
 
-pub async fn sync_ticket_status_from_evm_route(
+async fn sync_ticket_status_from_evm_route(
 	db: &DbConn,
 	canister: &str,
 	_chain: ChainId,
@@ -173,22 +187,35 @@ pub async fn sync_ticket_status_from_evm_route(
 			.convert_to_mint_evm_token_status();
 
 		if let MintEvmTokenStatus::Finalized { tx_hash } = mint_evm_token_status {
-			let ticket_model = Mutation::update_ticket(
+			if let Ok(ticket_model) = Mutation::update_ticket(
 				db,
 				ticket.clone(),
 				Some(TicketStatus::Finalized),
-				Some(Some(tx_hash)),
+				Some(Some(tx_hash.clone())),
 				None,
 				None,
 				None,
 				None,
 			)
-			.await?;
-
-			info!(
-				"evm id({:?}) status:{:?} and its hash is {:?} ",
-				ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-			);
+			.await
+			{
+				info!(
+					"evm id({:?}) status:{:?} and its hash is {:?} ",
+					ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+				);
+			} else if let Ok(d_ticket_model) = Mutation::update_deleted_ticket_statu_and_tx_hash(
+				db,
+				ticket.into(),
+				Some(tx_hash),
+				TicketStatus::Finalized,
+			)
+			.await
+			{
+				info!(
+					"Deleted ticket id({:?}) status:{:?} and finalized on block {:?}",
+					d_ticket_model.ticket_id, d_ticket_model.status, d_ticket_model.tx_hash
+				);
+			}
 		}
 		Ok(())
 	})

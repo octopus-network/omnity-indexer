@@ -24,6 +24,14 @@ impl Query {
 	) -> Result<Option<ticket::Model>, DbErr> {
 		Ticket::find_by_id(ticket_id).one(db).await
 	}
+	pub async fn get_deleted_ticket_by_id(
+		db: &DbConn,
+		deleted_ticket_id: String,
+	) -> Result<Option<deleted_mint_ticket::Model>, DbErr> {
+		DeletedMintTicket::find_by_id(deleted_ticket_id)
+			.one(db)
+			.await
+	}
 	pub async fn get_token_ledger_id_on_chain_by_id(
 		db: &DbConn,
 		chain_id: String,
@@ -66,14 +74,17 @@ impl Query {
 			.await
 	}
 
-	pub async fn get_unconfirmed_deleted_mint_tickets(
+	pub async fn get_unconfirmed_deleted_tickets(
 		db: &DbConn,
 		dest: String,
 	) -> Result<Vec<deleted_mint_ticket::Model>, DbErr> {
 		DeletedMintTicket::find()
 			.filter(
 				Condition::all()
-					.add(deleted_mint_ticket::Column::Status.ne(TicketStatus::Finalized))
+					.add(
+						deleted_mint_ticket::Column::Status
+							.eq(TicketStatus::WaitingForConfirmByDest),
+					)
 					.add(deleted_mint_ticket::Column::DstChain.eq(dest)),
 			)
 			.all(db)
@@ -539,5 +550,18 @@ impl Mutation {
 		active_model.amount = Set(amount);
 		let token_on_chain = active_model.update(db).await?;
 		Ok(token_on_chain)
+	}
+
+	pub async fn update_deleted_ticket_statu_and_tx_hash(
+		db: &DbConn,
+		ticket: deleted_mint_ticket::Model,
+		tx_hash: Option<String>,
+		status: TicketStatus,
+	) -> Result<deleted_mint_ticket::Model, DbErr> {
+		let mut active_model: deleted_mint_ticket::ActiveModel = ticket.into();
+		active_model.tx_hash = Set(tx_hash);
+		active_model.status = Set(status);
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
 	}
 }

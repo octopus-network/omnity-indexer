@@ -362,6 +362,26 @@ impl ticket::Model {
 			intermediate_tx_hash: None,
 		}
 	}
+
+	pub fn from_deleted_ticket(deleted_ticket: deleted_mint_ticket::Model) -> Self {
+		Self {
+			ticket_id: deleted_ticket.ticket_id,
+			ticket_seq: deleted_ticket.ticket_seq,
+			ticket_type: deleted_ticket.ticket_type,
+			ticket_time: deleted_ticket.ticket_time,
+			src_chain: deleted_ticket.src_chain,
+			dst_chain: deleted_ticket.dst_chain,
+			action: deleted_ticket.action,
+			token: deleted_ticket.token,
+			amount: deleted_ticket.amount,
+			sender: deleted_ticket.sender,
+			receiver: deleted_ticket.receiver,
+			memo: deleted_ticket.memo,
+			status: deleted_ticket.status,
+			tx_hash: deleted_ticket.tx_hash,
+			intermediate_tx_hash: None,
+		}
+	}
 }
 
 impl core::fmt::Display for ticket::Model {
