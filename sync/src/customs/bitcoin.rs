@@ -245,12 +245,12 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 			mint_ticket.clone().tx_hash,
 			mint_ticket.clone().intermediate_tx_hash,
 		) {
-			let _ = process_deleted_mint_tickets(db, tx_hash, mint_ticket.clone()).await?;
+			process_deleted_mint_tickets(db, tx_hash, mint_ticket.clone()).await?;
 		} else if let (None, Some(tx_hash)) = (
 			mint_ticket.clone().tx_hash,
 			mint_ticket.clone().intermediate_tx_hash,
 		) {
-			let _ = process_deleted_mint_tickets(db, tx_hash, mint_ticket.clone()).await?;
+			process_deleted_mint_tickets(db, tx_hash, mint_ticket.clone()).await?;
 		}
 	}
 	Ok(())
