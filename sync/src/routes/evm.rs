@@ -172,7 +172,6 @@ async fn sync_ticket_status_from_evm_route(
 	ticket: ticket::Model,
 ) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(canister, |agent, canister_id| async move {
-		info!("EVMIDDDDDD({:?})", ticket.clone());
 		let mint_evm_token_status = Arg::TI(ticket.ticket_id.clone())
 			.query_method(
 				agent.clone(),
@@ -186,12 +185,6 @@ async fn sync_ticket_status_from_evm_route(
 			)
 			.await?
 			.convert_to_mint_evm_token_status();
-
-		info!(
-			"EVMID({:?}) status:{:?} ",
-			ticket.clone(),
-			mint_evm_token_status
-		);
 
 		if let MintEvmTokenStatus::Finalized { tx_hash } = mint_evm_token_status {
 			if let Ok(ticket_model) = Mutation::update_ticket(

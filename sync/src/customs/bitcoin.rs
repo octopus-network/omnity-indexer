@@ -139,7 +139,7 @@ async fn process_deleted_mint_tickets(
 	let existing_ticket = Query::get_ticket_by_id(db, tx_hash.clone()).await?;
 	let removed_ticket = Query::get_deleted_ticket_by_id(db, tx_hash.clone()).await?;
 
-	if let (Some(ticket_should_be_removed), _) = (&existing_ticket, &removed_ticket) {
+	if let (Some(ticket_should_be_removed), None) = (&existing_ticket, &removed_ticket) {
 		if let Ok(_) =
 			Mutation::save_deleted_mint_ticket(db, ticket_should_be_removed.clone().into()).await
 		{
@@ -178,6 +178,26 @@ async fn process_deleted_mint_tickets(
 						}
 					}
 					None => {
+						let intermediate_tx_hash = match (
+							mint_ticket.clone().tx_hash,
+							mint_ticket.clone().intermediate_tx_hash,
+						) {
+							(Some(hash), None) => Some(hash),
+							(None, Some(hash)) => Some(hash),
+							_ => None,
+						};
+						Mutation::update_ticket(
+							db,
+							mint_ticket.clone(),
+							Some(crate::entity::sea_orm_active_enums::TicketStatus::Unknown),
+							None,
+							None,
+							None,
+							Some(intermediate_tx_hash),
+							None,
+						)
+						.await?;
+						Mutation::update_ticket_tx_hash(db, mint_ticket.clone(), None).await?;
 						info!(
 							"Ticket id({:?}) is waiting to be finalized",
 							mint_ticket.clone().tx_hash
@@ -186,7 +206,7 @@ async fn process_deleted_mint_tickets(
 				}
 			}
 		}
-	} else if let (None, _) = (&existing_ticket, &removed_ticket) {
+	} else if let (None, None) = (&existing_ticket, &removed_ticket) {
 		//update mint tickets status if there is no corresponding transfer tickets.
 		let intermediate_tx_hash = match (
 			mint_ticket.clone().tx_hash,
@@ -208,7 +228,7 @@ async fn process_deleted_mint_tickets(
 		)
 		.await?;
 		Mutation::update_ticket_tx_hash(db, mint_ticket.clone(), None).await?;
-	} else if let (_, Some(_removed_ticket)) = (&existing_ticket, &removed_ticket) {
+	} else if let (None, Some(_removed_ticket)) = (&existing_ticket, &removed_ticket) {
 		match &_removed_ticket.tx_hash {
 			Some(tx_hash) => {
 				Mutation::update_ticket(
@@ -239,12 +259,12 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 	let updated_mint_tickets = Query::get_updated_mint_tickets(db).await?;
 
 	for mint_ticket in updated_mint_tickets {
-		if let (Some(tx_hash), _) = (
+		if let (Some(tx_hash), None) = (
 			mint_ticket.clone().tx_hash,
 			mint_ticket.clone().intermediate_tx_hash,
 		) {
 			process_deleted_mint_tickets(db, tx_hash, mint_ticket.clone()).await?;
-		} else if let (_, Some(tx_hash)) = (
+		} else if let (None, Some(tx_hash)) = (
 			mint_ticket.clone().tx_hash,
 			mint_ticket.clone().intermediate_tx_hash,
 		) {
