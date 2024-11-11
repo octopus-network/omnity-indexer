@@ -90,7 +90,7 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 	let evm_routes = EvmRoutes::new();
 
 	for evm_route in evm_routes.routes.iter() {
-		if let (Ok(unconfirmed_tickets), _) = (
+		if let (Ok(unconfirmed_tickets), Ok(deleted_unconfirmed_tickets)) = (
 			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await,
 			Query::get_unconfirmed_deleted_tickets(db, evm_route.chain.clone()).await,
 		) {
@@ -103,12 +103,10 @@ pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), B
 				)
 				.await?;
 			}
-		} else if let (_, Ok(unconfirmed_tickets)) = (
-			Query::get_unconfirmed_tickets(db, evm_route.chain.clone()).await,
-			Query::get_unconfirmed_deleted_tickets(db, evm_route.chain.clone()).await,
-		) {
-			for unconfirmed_ticket in unconfirmed_tickets {
-				let _unconfirmed_ticket = ticket::Model::from_deleted_ticket(unconfirmed_ticket);
+
+			for deleted_unconfirmed_ticket in deleted_unconfirmed_tickets {
+				let _unconfirmed_ticket =
+					ticket::Model::from_deleted_ticket(deleted_unconfirmed_ticket);
 				sync_ticket_status_from_evm_route(
 					db,
 					evm_route.canister,
@@ -174,6 +172,7 @@ async fn sync_ticket_status_from_evm_route(
 	ticket: ticket::Model,
 ) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(canister, |agent, canister_id| async move {
+		info!("EVMIDDDDDD({:?})", ticket.clone());
 		let mint_evm_token_status = Arg::TI(ticket.ticket_id.clone())
 			.query_method(
 				agent.clone(),
@@ -187,6 +186,12 @@ async fn sync_ticket_status_from_evm_route(
 			)
 			.await?
 			.convert_to_mint_evm_token_status();
+
+		info!(
+			"EVMID({:?}) status:{:?} ",
+			ticket.clone(),
+			mint_evm_token_status
+		);
 
 		if let MintEvmTokenStatus::Finalized { tx_hash } = mint_evm_token_status {
 			if let Ok(ticket_model) = Mutation::update_ticket(
