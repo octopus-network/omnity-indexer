@@ -239,14 +239,12 @@ pub async fn update_deleted_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Erro
 	let updated_mint_tickets = Query::get_updated_mint_tickets(db).await?;
 
 	for mint_ticket in updated_mint_tickets {
-		info!("mint ticket ({:?}) is not finalized", mint_ticket.clone());
-
-		if let (Some(tx_hash), None) = (
+		if let (Some(tx_hash), _) = (
 			mint_ticket.clone().tx_hash,
 			mint_ticket.clone().intermediate_tx_hash,
 		) {
 			process_deleted_mint_tickets(db, tx_hash, mint_ticket.clone()).await?;
-		} else if let (None, Some(tx_hash)) = (
+		} else if let (_, Some(tx_hash)) = (
 			mint_ticket.clone().tx_hash,
 			mint_ticket.clone().intermediate_tx_hash,
 		) {

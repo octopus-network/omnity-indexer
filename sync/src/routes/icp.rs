@@ -67,6 +67,13 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing release token status from icp route ... ");
 
+
+	// if let Ok(a) = Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await {
+	// 	println!("ICP未确认ticket : {:?}", a);
+	// }
+	
+
+
 	if let (Ok(unconfirmed_tickets), _) = (
 		Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
 		Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
@@ -79,8 +86,11 @@ pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dy
 		Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
 	) {
 		for unconfirmed_ticket in unconfirmed_tickets {
+			// 这里不行，为什么？
+			info!("ICP未确认ticket ({:?})", unconfirmed_ticket.clone());
+
 			let _unconfirmed_ticket = ticket::Model::from_deleted_ticket(unconfirmed_ticket);
-			ticket_status_from_icp_route(db, _unconfirmed_ticket).await?;
+			ticket_status_from_icp_route(db, _unconfirmed_ticket.clone()).await?;
 		}
 	}
 	Ok(())
