@@ -81,7 +81,10 @@ impl Query {
 		DeletedMintTicket::find()
 			.filter(
 				Condition::all()
-					.add(deleted_mint_ticket::Column::Status.eq(TicketStatus::WaitingForConfirmByDest))
+					.add(
+						deleted_mint_ticket::Column::Status
+							.eq(TicketStatus::WaitingForConfirmByDest),
+					)
 					.add(deleted_mint_ticket::Column::DstChain.eq(dest)),
 			)
 			.all(db)
@@ -547,5 +550,18 @@ impl Mutation {
 		active_model.amount = Set(amount);
 		let token_on_chain = active_model.update(db).await?;
 		Ok(token_on_chain)
+	}
+
+	pub async fn update_deleted_ticket_statu_and_tx_hash(
+		db: &DbConn,
+		ticket: deleted_mint_ticket::Model,
+		tx_hash: Option<String>,
+		status: TicketStatus,
+	) -> Result<deleted_mint_ticket::Model, DbErr> {
+		let mut active_model: deleted_mint_ticket::ActiveModel = ticket.into();
+		active_model.tx_hash = Set(tx_hash);
+		active_model.status = Set(status);
+		let ticket = active_model.update(db).await?;
+		Ok(ticket)
 	}
 }

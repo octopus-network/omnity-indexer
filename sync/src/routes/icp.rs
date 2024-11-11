@@ -67,30 +67,17 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing release token status from icp route ... ");
 
-
-	// if let Ok(a) = Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await {
-	// 	println!("ICP未确认ticket : {:?}", a);
-	// }
-	
-
-
-	if let (Ok(unconfirmed_tickets), _) = (
+	if let (Ok(unconfirmed_tickets), Ok(deleted_unconfirmed_tickets)) = (
 		Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
 		Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
 	) {
 		for unconfirmed_ticket in unconfirmed_tickets {
 			ticket_status_from_icp_route(db, unconfirmed_ticket).await?;
 		}
-	} else if let (_, Ok(unconfirmed_tickets)) = (
-		Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
-		Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
-	) {
-		for unconfirmed_ticket in unconfirmed_tickets {
-			// 这里不行，为什么？
-			info!("ICP未确认ticket ({:?})", unconfirmed_ticket.clone());
-
-			let _unconfirmed_ticket = ticket::Model::from_deleted_ticket(unconfirmed_ticket);
-			ticket_status_from_icp_route(db, _unconfirmed_ticket.clone()).await?;
+		for deleted_unconfirmed_ticket in deleted_unconfirmed_tickets {
+			let formated_deleted_unconfirmed_ticket =
+				ticket::Model::from_deleted_ticket(deleted_unconfirmed_ticket);
+			ticket_status_from_icp_route(db, formated_deleted_unconfirmed_ticket.clone()).await?;
 		}
 	}
 	Ok(())
@@ -126,23 +113,38 @@ async fn ticket_status_from_icp_route(
 				.await?
 				{
 					let tx_hash = rep.contract_id + "-" + &block_index.to_string();
+
 					// update ticket status to finalized
-					let ticket_model = Mutation::update_ticket(
+					if let Ok(ticket_model) = Mutation::update_ticket(
 						db,
 						ticket.clone(),
 						Some(TicketStatus::Finalized),
-						Some(Some(tx_hash)),
+						Some(Some(tx_hash.clone())),
 						None,
 						None,
 						None,
 						None,
 					)
-					.await?;
-
-					info!(
-						"Ticket id({:?}) status:{:?} and finalized on block {:?}",
-						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-					);
+					.await
+					{
+						info!(
+							"Ticket id({:?}) status:{:?} and finalized on block {:?}",
+							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+						);
+					} else if let Ok(d_ticket_model) =
+						Mutation::update_deleted_ticket_statu_and_tx_hash(
+							db,
+							ticket.into(),
+							Some(tx_hash),
+							TicketStatus::Finalized,
+						)
+						.await
+					{
+						info!(
+							"Deleted ticket id({:?}) status:{:?} and finalized on block {:?}",
+							d_ticket_model.ticket_id, d_ticket_model.status, d_ticket_model.tx_hash
+						);
+					}
 				}
 			}
 			Ok(())

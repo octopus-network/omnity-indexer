@@ -189,22 +189,35 @@ async fn sync_ticket_status_from_evm_route(
 			.convert_to_mint_evm_token_status();
 
 		if let MintEvmTokenStatus::Finalized { tx_hash } = mint_evm_token_status {
-			let ticket_model = Mutation::update_ticket(
+			if let Ok(ticket_model) = Mutation::update_ticket(
 				db,
 				ticket.clone(),
 				Some(TicketStatus::Finalized),
-				Some(Some(tx_hash)),
+				Some(Some(tx_hash.clone())),
 				None,
 				None,
 				None,
 				None,
 			)
-			.await?;
-
-			info!(
-				"evm id({:?}) status:{:?} and its hash is {:?} ",
-				ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-			);
+			.await
+			{
+				info!(
+					"evm id({:?}) status:{:?} and its hash is {:?} ",
+					ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+				);
+			} else if let Ok(d_ticket_model) = Mutation::update_deleted_ticket_statu_and_tx_hash(
+				db,
+				ticket.into(),
+				Some(tx_hash),
+				TicketStatus::Finalized,
+			)
+			.await
+			{
+				info!(
+					"Deleted ticket id({:?}) status:{:?} and finalized on block {:?}",
+					d_ticket_model.ticket_id, d_ticket_model.status, d_ticket_model.tx_hash
+				);
+			}
 		}
 		Ok(())
 	})
