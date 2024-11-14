@@ -250,6 +250,31 @@ async fn process_deleted_mint_tickets(
 				);
 			}
 		}
+	} else if let (Some(ticket_should_be_removed), Some(_removed_ticket)) =
+		(&existing_ticket, &removed_ticket)
+	{
+		let _ = Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await;
+		match &_removed_ticket.tx_hash {
+			Some(tx_hash) => {
+				Mutation::update_ticket(
+					db,
+					mint_ticket.clone(),
+					Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+					Some(Some(tx_hash.to_owned())),
+					None,
+					None,
+					None,
+					None,
+				)
+				.await?;
+			}
+			None => {
+				info!(
+					"Ticket id({:?}) is waiting to be finalized",
+					mint_ticket.clone().tx_hash
+				);
+			}
+		}
 	}
 	Ok(())
 }

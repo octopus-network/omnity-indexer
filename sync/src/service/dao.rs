@@ -83,7 +83,7 @@ impl Query {
 				Condition::all()
 					.add(
 						deleted_mint_ticket::Column::Status
-							.eq(TicketStatus::WaitingForConfirmByDest),
+							.ne(TicketStatus::Finalized),
 					)
 					.add(deleted_mint_ticket::Column::DstChain.eq(dest)),
 			)
