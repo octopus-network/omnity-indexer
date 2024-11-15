@@ -253,7 +253,11 @@ async fn process_deleted_mint_tickets(
 	} else if let (Some(ticket_should_be_removed), Some(_removed_ticket)) =
 		(&existing_ticket, &removed_ticket)
 	{
-		let _ = Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await;
+		if let Ok(row) =
+			Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await
+		{
+			info!("{:?} row has been deleted", row);
+		}
 		match &_removed_ticket.tx_hash {
 			Some(tx_hash) => {
 				Mutation::update_ticket(

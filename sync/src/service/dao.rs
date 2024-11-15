@@ -81,10 +81,7 @@ impl Query {
 		DeletedMintTicket::find()
 			.filter(
 				Condition::all()
-					.add(
-						deleted_mint_ticket::Column::Status
-							.ne(TicketStatus::Finalized),
-					)
+					.add(deleted_mint_ticket::Column::Status.ne(TicketStatus::Finalized))
 					.add(deleted_mint_ticket::Column::DstChain.eq(dest)),
 			)
 			.all(db)
