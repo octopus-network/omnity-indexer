@@ -1,4 +1,5 @@
 use crate::entity::{sea_orm_active_enums::TicketStatus, ticket};
+use crate::routes::MintTokenStatus;
 use crate::service::{Mutation, Query};
 use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg, ChainId};
 use log::info;
@@ -10,12 +11,6 @@ use std::error::Error;
 struct EvmRoute {
 	pub canister: &'static str,
 	pub chain: ChainId,
-}
-
-#[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum MintEvmTokenStatus {
-	Finalized { tx_hash: String },
-	Unknown,
 }
 
 pub struct EvmRoutes {
@@ -181,12 +176,12 @@ async fn sync_ticket_status_from_evm_route(
 				"Mint token status from evm route result: ",
 				None,
 				None,
-				"MintEvmTokenStatus",
+				"MintTokenStatus",
 			)
 			.await?
-			.convert_to_mint_evm_token_status();
+			.convert_to_mint_token_status();
 
-		if let MintEvmTokenStatus::Finalized { tx_hash } = mint_evm_token_status {
+		if let MintTokenStatus::Finalized { tx_hash } = mint_evm_token_status {
 			if let Ok(ticket_model) = Mutation::update_ticket(
 				db,
 				ticket.clone(),

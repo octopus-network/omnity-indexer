@@ -1,4 +1,5 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
+use crate::routes::MintTokenStatus;
 use crate::service::{Mutation, Query};
 use crate::{with_omnity_canister, Arg, ChainId};
 use log::info;
@@ -10,12 +11,6 @@ use std::error::Error;
 struct OsmoRoute {
 	pub canister: &'static str,
 	pub chain: ChainId,
-}
-
-#[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum MintCosmwasmTokenStatus {
-	Finalized { tx_hash: String },
-	Unknown,
 }
 
 pub async fn sync_all_tickets_status_from_cosmwasm_route(
@@ -49,12 +44,12 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 						"Mint token status from osmosis route result: ",
 						None,
 						None,
-						"MintCosmwasmTokenStatus",
+						"MintTokenStatus",
 					)
 					.await?
-					.convert_to_mint_cosmwasm_token_status();
+					.convert_to_mint_token_status();
 
-				if let MintCosmwasmTokenStatus::Finalized { tx_hash } = mint_osmosis_token_status {
+				if let MintTokenStatus::Finalized { tx_hash } = mint_osmosis_token_status {
 					let ticket_model = Mutation::update_ticket(
 						db,
 						unconfirmed_ticket.clone(),

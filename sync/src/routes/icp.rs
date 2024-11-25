@@ -9,7 +9,7 @@ use std::error::Error;
 pub const ROUTE_CHAIN_ID: &str = "eICP";
 
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum MintTokenStatus {
+pub enum IcpMintTokenStatus {
 	Finalized { block_index: u64 },
 	Unknown,
 }
@@ -99,12 +99,12 @@ async fn ticket_status_from_icp_route(
 					"Mint token status from icp route result: ",
 					None,
 					None,
-					"MintTokenStatus",
+					"IcpMintTokenStatus",
 				)
 				.await?
-				.convert_to_mint_token_status();
+				.convert_to_icp_mint_token_status();
 
-			if let MintTokenStatus::Finalized { block_index } = mint_token_status {
+			if let IcpMintTokenStatus::Finalized { block_index } = mint_token_status {
 				if let Some(rep) = Query::get_token_ledger_id_on_chain_by_id(
 					db,
 					ROUTE_CHAIN_ID.to_owned(),
