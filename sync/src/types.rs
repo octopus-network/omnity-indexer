@@ -199,6 +199,25 @@ impl core::fmt::Display for TokenResp {
 	}
 }
 
+#[derive(CandidType, Clone, Debug, Serialize, Deserialize)]
+pub struct CosmwasmTokenResp {
+	pub token_id: TokenId,
+	pub symbol: String,
+	pub decimals: u8,
+	pub icon: Option<String>,
+	pub rune_id: Option<String>,
+	pub token_denom: Option<String>,
+}
+impl core::fmt::Display for CosmwasmTokenResp {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		write!(
+			f,
+			"\ntoken id:{} \nsymbol:{}  \ndecimals:{} \nicon:{:?} \nrune id:{:?} \ncosmwasm contract:{:?}",
+			self.token_id, self.symbol, self.decimals, self.icon, self.rune_id, self.token_denom
+		)
+	}
+}
+
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct Token {
 	pub token_id: TokenId,
