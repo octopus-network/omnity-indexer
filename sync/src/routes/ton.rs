@@ -1,7 +1,7 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::routes::MintTokenStatus;
 use crate::service::{Mutation, Query};
-use crate::{with_omnity_canister, Arg};
+use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg};
 use log::info;
 use sea_orm::DbConn;
 use std::error::Error;
@@ -49,6 +49,47 @@ pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), B
 				}
 			}
 		}
+		Ok(())
+	})
+	.await
+}
+
+pub async fn sync_all_ton_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Box<dyn Error>> {
+	with_omnity_canister("TON_CANISTER_ID", |agent, canister_id| async move {
+		let token_ledgers = Arg::V(Vec::<u8>::new())
+			.query_method(
+				agent.clone(),
+				canister_id,
+				"get_token_list",
+				"Syncing token ledger id from ton routes ...",
+				"Token ledger id from ton routes result: ",
+				None,
+				None,
+				"Vec<TonTokenResp>",
+			)
+			.await?
+			.convert_to_vec_ton_token_resp();
+		for token_resp in token_ledgers {
+			if let Some(ton_contract) = &token_resp.ton_contract {
+				let token_ledger_id_on_chain_model = token_ledger_id_on_chain::Model::new(
+					"Ton".to_owned(),
+					token_resp.token_id,
+					ton_contract.to_owned(),
+				);
+				// Save to the database
+				let token_ledger_id_on_chain =
+					Mutation::save_all_token_ledger_id_on_chain(db, token_ledger_id_on_chain_model)
+						.await?;
+
+				info!(
+					"Token {:?} in Chain id({:?})' Contract id is {:?}",
+					token_ledger_id_on_chain.token_id,
+					token_ledger_id_on_chain.chain_id,
+					token_ledger_id_on_chain.contract_id
+				);
+			}
+		}
+
 		Ok(())
 	})
 	.await
