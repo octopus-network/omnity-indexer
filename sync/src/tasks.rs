@@ -6,7 +6,7 @@ use crate::hub::{
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
 use crate::Delete;
 use crate::{
-	customs::{bitcoin, sicp},
+	customs::{bitcoin, doge, sicp},
 	evm, hub,
 	routes::{cosmwasm, icp, solana, ton},
 };
@@ -99,6 +99,12 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { hub::sync_tokens_on_chains(&db_conn).await },
 	);
 
+	let sync_ticket_status_from_doge = spawn_sync_task(
+		db_conn.clone(),
+		TICKET_SYNC_INTERVAL,
+		|db_conn| async move { doge::sync_ticket_status_from_doge(&db_conn).await },
+	);
+
 	let sync_ticket_status_from_solana = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
@@ -176,6 +182,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_all_token_ledger_id_from_cosmwasm,
 		sync_all_token_ledger_id_from_ton,
 		sync_tokens_on_chains_from_hub,
+		sync_ticket_status_from_doge,
 		sync_ticket_status_from_solana,
 		sync_ticket_status_from_bitcoin,
 		sync_ticket_status_from_sicp,

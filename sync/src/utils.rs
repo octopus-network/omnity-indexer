@@ -1,7 +1,8 @@
 use crate::types::*;
 use crate::{
-	customs::bitcoin::ReleaseTokenStatus, customs::sicp::ICPCustomRelaseTokenStatus,
-	routes::icp::IcpMintTokenStatus, routes::MintTokenStatus, Error as OmnityError, FETCH_LIMIT,
+	customs::bitcoin::ReleaseTokenStatus, customs::doge::DogecoinReleaseTokenStatus,
+	customs::sicp::ICPCustomRelaseTokenStatus, routes::icp::IcpMintTokenStatus,
+	routes::MintTokenStatus, Error as OmnityError, FETCH_LIMIT,
 };
 use anyhow::{anyhow, Result};
 use candid::{Decode, Encode};
@@ -116,6 +117,7 @@ pub enum ReturnType {
 	VecToken(Vec<Token>),
 	VecOmnityPendingTicket(Vec<(TicketId, OmnityTicket)>),
 	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
+	DogecoinReleaseTokenStatus(DogecoinReleaseTokenStatus),
 	Non(()),
 }
 
@@ -208,6 +210,12 @@ impl ReturnType {
 		match self {
 			Self::ICPCustomRelaseTokenStatus(icp) => return icp.clone(),
 			_ => return ICPCustomRelaseTokenStatus::Unknown,
+		}
+	}
+	pub fn convert_to_release_dogecoin_token_status(&self) -> DogecoinReleaseTokenStatus {
+		match self {
+			Self::DogecoinReleaseTokenStatus(doge) => return doge.clone(),
+			_ => return DogecoinReleaseTokenStatus::Unknown,
 		}
 	}
 }
@@ -343,6 +351,13 @@ impl Arg {
 				let decoded_return_output = Decode!(&return_output, ICPCustomRelaseTokenStatus)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::ICPCustomRelaseTokenStatus(
+					decoded_return_output,
+				));
+			}
+			"DogecoinCustomRelaseTokenStatus" => {
+				let decoded_return_output = Decode!(&return_output, DogecoinReleaseTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::DogecoinReleaseTokenStatus(
 					decoded_return_output,
 				));
 			}
