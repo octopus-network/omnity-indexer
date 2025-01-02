@@ -2,6 +2,7 @@ pub mod cosmwasm;
 pub mod evm;
 pub mod icp;
 pub mod solana;
+pub mod sui;
 pub mod ton;
 use serde::{Deserialize, Serialize};
 
