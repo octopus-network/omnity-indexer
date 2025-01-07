@@ -318,16 +318,31 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 			for (seq, ticket) in new_tickets.iter() {
 				let mut updated_memo = None;
+				let mut bridge_fee = None;
 				if let Some(memo) = ticket.clone().memo {
 					if memo.len() > 0 {
 						if let Ok(new_ticket_memo) = str::from_utf8(&memo) {
 							updated_memo = Some(new_ticket_memo.to_string());
+							// DeletedMintTickets are for minting BTC->ICP/EVM, only added if
+							// minting from Ethereum is active.
+							if let Ok(parsed) =
+								serde_json::from_str::<serde_json::Value>(&new_ticket_memo)
+							{
+								if let Some(fee) = parsed.get("bridge_fee") {
+									bridge_fee = Some(fee.to_string());
+								}
+							}
 						}
 					}
 				}
 
-				let ticket_modle =
-					ticket::Model::from_omnity_ticket(*seq, ticket.clone(), updated_memo).into();
+				let ticket_modle = ticket::Model::from_omnity_ticket(
+					*seq,
+					ticket.clone(),
+					updated_memo,
+					bridge_fee,
+				)
+				.into();
 				Mutation::save_ticket(db, ticket_modle).await?;
 			}
 		}
@@ -441,10 +456,20 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 			for (_ticket_id, pending_ticket) in new_pending_tickets.iter() {
 				let mut updated_memo = None;
+				let mut bridge_fee = None;
 				if let Some(memo) = pending_ticket.clone().memo {
 					if memo.len() > 0 {
 						if let Ok(new_ticket_memo) = str::from_utf8(&memo) {
 							updated_memo = Some(new_ticket_memo.to_string());
+							// DeletedMintTickets are for minting BTC->ICP/EVM, only added if
+							// minting from Ethereum is active.
+							if let Ok(parsed) =
+								serde_json::from_str::<serde_json::Value>(&new_ticket_memo)
+							{
+								if let Some(fee) = parsed.get("bridge_fee") {
+									bridge_fee = Some(fee.to_string());
+								}
+							}
 						}
 					}
 				}
@@ -452,6 +477,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				let ticket_model = ticket::Model::from_omnity_pending_ticket(
 					pending_ticket.clone().to_owned(),
 					updated_memo,
+					bridge_fee,
 				)
 				.into();
 				Mutation::save_ticket(db, ticket_model).await?;

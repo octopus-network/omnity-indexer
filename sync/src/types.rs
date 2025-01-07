@@ -359,6 +359,7 @@ impl ticket::Model {
 		seq: u64,
 		omnity_ticket: OmnityTicket,
 		updated_memo: Option<String>,
+		bridge_fee: Option<String>,
 	) -> Self {
 		Self {
 			ticket_id: omnity_ticket.ticket_id.to_owned(),
@@ -376,12 +377,14 @@ impl ticket::Model {
 			status: TicketStatus::WaitingForConfirmByDest.into(),
 			tx_hash: None,
 			intermediate_tx_hash: None,
+			bridge_fee,
 		}
 	}
 
 	pub fn from_omnity_pending_ticket(
 		pending_ticket: OmnityTicket,
 		updated_memo: Option<String>,
+		bridge_fee: Option<String>,
 	) -> Self {
 		Self {
 			ticket_id: pending_ticket.ticket_id.to_owned(),
@@ -399,6 +402,7 @@ impl ticket::Model {
 			status: TicketStatus::Pending.into(),
 			tx_hash: None,
 			intermediate_tx_hash: None,
+			bridge_fee,
 		}
 	}
 
@@ -419,6 +423,7 @@ impl ticket::Model {
 			status: deleted_ticket.status,
 			tx_hash: deleted_ticket.tx_hash,
 			intermediate_tx_hash: None,
+			bridge_fee: None,
 		}
 	}
 }

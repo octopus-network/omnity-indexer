@@ -24,6 +24,7 @@ pub struct Model {
 	pub status: TicketStatus,
 	pub tx_hash: Option<String>,
 	pub intermediate_tx_hash: Option<String>,
+	pub bridge_fee: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
