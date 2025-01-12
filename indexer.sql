@@ -88,6 +88,7 @@ COPY public.seaql_migrations (version, applied_at) FROM stdin;
 m20240507_055143_one	1728346779
 m20240701_000001_two	1728346779
 m20240802_000001_three	1728346779
+m20250111_000001_four	1736654929
 \.
 
 CREATE TABLE public.ticket (
@@ -105,7 +106,8 @@ CREATE TABLE public.ticket (
     memo character varying,
     status public.ticket_status NOT NULL,
     tx_hash character varying,
-    intermediate_tx_hash character varying
+    intermediate_tx_hash character varying,
+    bridge_fee character varying
 );
 
 CREATE TABLE public.token_ledger_id_on_chain (
@@ -135,6 +137,13 @@ CREATE TABLE public.token_volume (
     token_id character varying NOT NULL,
     ticket_count character varying NOT NULL,
     historical_volume character varying NOT NULL
+);
+
+CREATE TABLE public.bridge_fee_log (
+    chain_id character varying NOT NULL,
+    date character varying NOT NULL,
+    fee_token_id character varying NOT NULL,
+    amount character varying NOT NULL
 );
 
 ALTER TABLE ONLY public.chain_meta
@@ -189,3 +198,9 @@ ALTER TABLE ONLY public.pending_ticket
 
 ALTER TABLE ONLY public.token_volume
     ADD CONSTRAINT fk_token_id_volume FOREIGN KEY (token_id) REFERENCES public.token_meta(token_id);
+
+ALTER TABLE ONLY public.bridge_fee_log
+    ADD CONSTRAINT pk_bridge_fee_log PRIMARY KEY (chain_id, date);
+
+ALTER TABLE ONLY public.bridge_fee_log
+    ADD CONSTRAINT fk_log_chain_id FOREIGN KEY (chain_id) REFERENCES public.chain_meta(chain_id);

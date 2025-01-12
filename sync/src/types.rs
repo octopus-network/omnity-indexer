@@ -1,7 +1,7 @@
 use crate::entity;
 use candid::CandidType;
 use entity::{
-	chain_meta, deleted_mint_ticket, pending_ticket, sea_orm_active_enums, ticket,
+	bridge_fee_log, chain_meta, deleted_mint_ticket, pending_ticket, sea_orm_active_enums, ticket,
 	token_ledger_id_on_chain, token_meta, token_on_chain, token_volume,
 };
 use ic_cdk::api::call::RejectionCode;
@@ -631,6 +631,17 @@ impl From<sea_orm_active_enums::TxAction> for TxAction {
 			sea_orm_active_enums::TxAction::RedeemIcpChainKeyAssets => {
 				TxAction::RedeemIcpChainKeyAssets(IcpChainKeyToken::CKBTC)
 			}
+		}
+	}
+}
+
+impl bridge_fee_log::Model {
+	pub fn new(chain_id: String, date: String, fee_token_id: String, amount: String) -> Self {
+		Self {
+			chain_id,
+			date,
+			fee_token_id,
+			amount,
 		}
 	}
 }

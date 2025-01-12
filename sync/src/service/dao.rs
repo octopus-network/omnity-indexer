@@ -1,13 +1,14 @@
 use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
 use crate::entity::{
-	chain_meta, deleted_mint_ticket, pending_ticket, ticket, token_ledger_id_on_chain, token_meta,
-	token_on_chain, token_volume,
+	bridge_fee_log, chain_meta, deleted_mint_ticket, pending_ticket, ticket,
+	token_ledger_id_on_chain, token_meta, token_on_chain, token_volume,
 };
 use crate::entity::{
-	chain_meta::Entity as ChainMeta, deleted_mint_ticket::Entity as DeletedMintTicket,
-	pending_ticket::Entity as PendingTicket, ticket::Entity as Ticket,
-	token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain, token_meta::Entity as TokenMeta,
-	token_on_chain::Entity as TokenOnChain, token_volume::Entity as TokenVolume,
+	bridge_fee_log::Entity as BridgeFeeLog, chain_meta::Entity as ChainMeta,
+	deleted_mint_ticket::Entity as DeletedMintTicket, pending_ticket::Entity as PendingTicket,
+	ticket::Entity as Ticket, token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain,
+	token_meta::Entity as TokenMeta, token_on_chain::Entity as TokenOnChain,
+	token_volume::Entity as TokenVolume,
 };
 use log::info;
 use sea_orm::{sea_query::OnConflict, *};
@@ -17,6 +18,9 @@ pub struct Query;
 impl Query {
 	pub async fn get_all_tokens(db: &DbConn) -> Result<Vec<token_meta::Model>, DbErr> {
 		TokenMeta::find().all(db).await
+	}
+	pub async fn get_all_chain(db: &DbConn) -> Result<Vec<chain_meta::Model>, DbErr> {
+		ChainMeta::find().all(db).await
 	}
 	pub async fn get_ticket_by_id(
 		db: &DbConn,
@@ -148,6 +152,24 @@ impl Query {
 	) -> Result<Vec<ticket::Model>, DbErr> {
 		Ticket::find()
 			.filter(Condition::all().add(ticket::Column::Token.eq(token)))
+			.all(db)
+			.await
+	}
+
+	pub async fn get_not_null_fee_tickets(
+		db: &DbConn,
+		chain: String,
+		start_at: i64,
+		end_at: i64,
+	) -> Result<Vec<ticket::Model>, DbErr> {
+		Ticket::find()
+			.filter(
+				Condition::all()
+					.add(ticket::Column::SrcChain.eq(chain))
+					.add(ticket::Column::BridgeFee.is_not_null())
+					.add(ticket::Column::TicketTime.gte(start_at))
+					.add(ticket::Column::TicketTime.lte(end_at)),
+			)
 			.all(db)
 			.await
 	}
@@ -444,7 +466,7 @@ impl Mutation {
 				info!("insert pending ticket index result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the pending ticket index already exists, updated ticket!",);
+				info!("the pending ticket index already exists, updated ticket!");
 			}
 		}
 
@@ -479,6 +501,32 @@ impl Mutation {
 			}
 		}
 		Ok(token_volume::Model { ..token_volume })
+	}
+
+	pub async fn save_bridge_fee_log(
+		db: &DbConn,
+		bridge_fee_log: bridge_fee_log::Model,
+	) -> Result<bridge_fee_log::Model, DbErr> {
+		let active_model: bridge_fee_log::ActiveModel = bridge_fee_log.clone().into();
+		let on_conflict = OnConflict::columns([
+			bridge_fee_log::Column::ChainId,
+			bridge_fee_log::Column::Date,
+		])
+		.do_nothing()
+		.to_owned();
+		let insert_result = BridgeFeeLog::insert(active_model.clone())
+			.on_conflict(on_conflict)
+			.exec(db)
+			.await;
+		match insert_result {
+			Ok(ret) => {
+				info!("insert bridge fee log result : {:?}", ret);
+			}
+			Err(_) => {
+				info!("the bridge fee log already exists",);
+			}
+		}
+		Ok(bridge_fee_log::Model { ..bridge_fee_log })
 	}
 
 	pub async fn update_ticket(
