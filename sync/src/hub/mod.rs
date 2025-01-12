@@ -3,7 +3,7 @@ use crate::{
 	service::{Mutation, Query},
 	ticket, token_volume, with_omnity_canister, Arg, ChainId, TokenId,
 };
-use chrono::{Datelike, NaiveDate, Utc};
+use chrono::{Datelike, NaiveDate, Utc, DateTime};
 use log::info;
 use sea_orm::DbConn;
 use std::{error::Error, str};
@@ -14,12 +14,12 @@ pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 pub const TOKEN_VOLUME_SYNC_INTERVAL: u64 = 60;
-pub const FEE_LOG_SYNC_INTERVAL: u64 = 6; //24 hrs
+pub const FEE_LOG_SYNC_INTERVAL: u64 = 43200; //12 hrs
 
 pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing with bridge fee log...");
 
-	let date = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap_or_default();
+	let mut date = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap_or_default();
 	let datetime = date.and_hms_opt(0, 0, 0).unwrap_or_default();
 	let mut start_time_nano = datetime.and_utc().timestamp_nanos_opt().unwrap_or_default();
 	let one_day_nano: i64 = 24 * 60 * 60 * 1_000_000_000;
@@ -32,7 +32,7 @@ pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	let midnight = today.and_hms_opt(0, 0, 0).unwrap_or_default();
 	let today_nano = midnight.and_utc().timestamp_nanos_opt().unwrap_or_default();
 
-	while end_time_nano < today_nano {
+	while end_time_nano <= today_nano {
 		for chain in Query::get_all_chain(db).await? {
 			for ticket in Query::get_not_null_fee_tickets(
 				db,
@@ -42,13 +42,16 @@ pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			)
 			.await?
 			{
-				// todo
 				let amount = ticket
 					.bridge_fee
 					.unwrap_or_default()
 					.parse::<u128>()
 					.unwrap_or_default();
 				total_amount += amount;
+
+				date = DateTime::from_timestamp_nanos(start_time_nano).date_naive();
+				println!("date{:?}", date);
+
 				let bridge_fee_log = bridge_fee_log::Model::new(
 					chain.clone().chain_id,
 					date.to_string(),
@@ -56,10 +59,10 @@ pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					total_amount.to_string(),
 				);
 				Mutation::save_bridge_fee_log(db, bridge_fee_log).await?;
-				start_time_nano = end_time_nano;
-				end_time_nano += one_day_nano;
 			}
 		}
+		start_time_nano = end_time_nano;
+		end_time_nano += one_day_nano;
 	}
 
 	Ok(())

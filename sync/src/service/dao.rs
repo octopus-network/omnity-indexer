@@ -240,6 +240,13 @@ impl Delete {
 			.exec(db)
 			.await
 	}
+
+	pub async fn remove_bridge_fee_log(db: &DbConn) -> Result<DeleteResult, DbErr> {
+		BridgeFeeLog::delete_many()
+			.filter(Condition::all().add(bridge_fee_log::Column::ChainId.is_not_null()))
+			.exec(db)
+			.await
+	}
 }
 
 pub struct Mutation;
