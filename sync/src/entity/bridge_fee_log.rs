@@ -11,6 +11,8 @@ pub struct Model {
 	pub date: String,
 	pub fee_token_id: String,
 	pub amount: String,
+	pub total_ticket: i32,
+	pub seqs: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

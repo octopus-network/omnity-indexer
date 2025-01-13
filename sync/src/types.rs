@@ -636,12 +636,21 @@ impl From<sea_orm_active_enums::TxAction> for TxAction {
 }
 
 impl bridge_fee_log::Model {
-	pub fn new(chain_id: String, date: String, fee_token_id: String, amount: String) -> Self {
+	pub fn new(
+		chain_id: String,
+		date: String,
+		fee_token_id: String,
+		amount: String,
+		total_ticket: i32,
+		seqs: String,
+	) -> Self {
 		Self {
 			chain_id,
 			date,
 			fee_token_id,
 			amount,
+			total_ticket,
+			seqs,
 		}
 	}
 }

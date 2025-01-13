@@ -21,6 +21,12 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(BridgeFeeLog::Date).string().not_null())
 					.col(ColumnDef::new(BridgeFeeLog::FeeTokenId).string().not_null())
 					.col(ColumnDef::new(BridgeFeeLog::Amount).string().not_null())
+					.col(
+						ColumnDef::new(BridgeFeeLog::TotalTicket)
+							.integer()
+							.not_null(),
+					)
+					.col(ColumnDef::new(BridgeFeeLog::Seqs).string().not_null())
 					.primary_key(
 						Index::create()
 							.name("pk_bridge_fee_log")
@@ -47,4 +53,6 @@ pub enum BridgeFeeLog {
 	Date,
 	FeeTokenId,
 	Amount,
+	TotalTicket,
+	Seqs,
 }

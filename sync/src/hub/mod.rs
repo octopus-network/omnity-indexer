@@ -3,7 +3,7 @@ use crate::{
 	service::{Mutation, Query},
 	ticket, token_volume, with_omnity_canister, Arg, ChainId, TokenId,
 };
-use chrono::{Datelike, NaiveDate, Utc, DateTime};
+use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use log::info;
 use sea_orm::DbConn;
 use std::{error::Error, str};
@@ -14,7 +14,7 @@ pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 pub const TOKEN_VOLUME_SYNC_INTERVAL: u64 = 60;
-pub const FEE_LOG_SYNC_INTERVAL: u64 = 43200; //12 hrs
+pub const FEE_LOG_SYNC_INTERVAL: u64 = 6; //12 hrs
 
 pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing with bridge fee log...");
@@ -25,14 +25,15 @@ pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	let one_day_nano: i64 = 24 * 60 * 60 * 1_000_000_000;
 	let mut end_time_nano: i64 = start_time_nano + one_day_nano;
 
-	let mut total_amount = 0;
-
 	let now = Utc::now();
 	let today = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap_or_default();
 	let midnight = today.and_hms_opt(0, 0, 0).unwrap_or_default();
 	let today_nano = midnight.and_utc().timestamp_nanos_opt().unwrap_or_default();
 
 	while end_time_nano <= today_nano {
+		let mut total_amount = 0;
+		let mut total_ticket = 0;
+		let mut seqs = String::new();
 		for chain in Query::get_all_chain(db).await? {
 			for ticket in Query::get_not_null_fee_tickets(
 				db,
@@ -48,15 +49,19 @@ pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					.parse::<u128>()
 					.unwrap_or_default();
 				total_amount += amount;
+				total_ticket += 1;
+				seqs.push_str(ticket.ticket_seq.unwrap_or_default().to_string().as_str());
+				seqs.push_str("/");
 
 				date = DateTime::from_timestamp_nanos(start_time_nano).date_naive();
-				println!("date{:?}", date);
 
 				let bridge_fee_log = bridge_fee_log::Model::new(
 					chain.clone().chain_id,
 					date.to_string(),
 					chain.clone().fee_token.unwrap_or_default(),
 					total_amount.to_string(),
+					total_ticket,
+					seqs.clone(),
 				);
 				Mutation::save_bridge_fee_log(db, bridge_fee_log).await?;
 			}
