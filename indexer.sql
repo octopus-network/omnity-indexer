@@ -143,7 +143,9 @@ CREATE TABLE public.bridge_fee_log (
     chain_id character varying NOT NULL,
     date character varying NOT NULL,
     fee_token_id character varying NOT NULL,
-    amount character varying NOT NULL
+    amount character varying NOT NULL,
+    total_ticket integer NOT NULL,
+    seqs character varying NOT NULL
 );
 
 ALTER TABLE ONLY public.chain_meta
