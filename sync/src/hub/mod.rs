@@ -14,7 +14,7 @@ pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 pub const TOKEN_VOLUME_SYNC_INTERVAL: u64 = 60;
-pub const FEE_LOG_SYNC_INTERVAL: u64 = 1800; //12 hrs
+pub const FEE_LOG_SYNC_INTERVAL: u64 = 36000; //10 hrs
 
 pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing with bridge fee log...");
