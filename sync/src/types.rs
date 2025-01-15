@@ -360,6 +360,7 @@ impl ticket::Model {
 		omnity_ticket: OmnityTicket,
 		updated_memo: Option<String>,
 		bridge_fee: Option<String>,
+		date: String,
 	) -> Self {
 		Self {
 			ticket_id: omnity_ticket.ticket_id.to_owned(),
@@ -378,6 +379,7 @@ impl ticket::Model {
 			tx_hash: None,
 			intermediate_tx_hash: None,
 			bridge_fee,
+			date,
 		}
 	}
 
@@ -385,6 +387,7 @@ impl ticket::Model {
 		pending_ticket: OmnityTicket,
 		updated_memo: Option<String>,
 		bridge_fee: Option<String>,
+		date: String,
 	) -> Self {
 		Self {
 			ticket_id: pending_ticket.ticket_id.to_owned(),
@@ -403,6 +406,7 @@ impl ticket::Model {
 			tx_hash: None,
 			intermediate_tx_hash: None,
 			bridge_fee,
+			date,
 		}
 	}
 
@@ -424,6 +428,7 @@ impl ticket::Model {
 			tx_hash: deleted_ticket.tx_hash,
 			intermediate_tx_hash: None,
 			bridge_fee: None,
+			date: deleted_ticket.date,
 		}
 	}
 }
@@ -523,6 +528,7 @@ impl From<ticket::Model> for deleted_mint_ticket::Model {
 			memo: ticket.memo,
 			status: ticket.status.into(),
 			tx_hash: ticket.tx_hash,
+			date: ticket.date,
 		}
 	}
 }

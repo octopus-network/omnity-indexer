@@ -23,6 +23,7 @@ pub struct Model {
 	pub memo: Option<String>,
 	pub status: TicketStatus,
 	pub tx_hash: Option<String>,
+	pub date: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

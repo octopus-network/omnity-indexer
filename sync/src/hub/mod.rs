@@ -14,47 +14,51 @@ pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
 pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
 pub const TOKEN_VOLUME_SYNC_INTERVAL: u64 = 60;
-pub const FEE_LOG_SYNC_INTERVAL: u64 = 6; //12 hrs
+pub const FEE_LOG_SYNC_INTERVAL: u64 = 3; //12 hrs
 
 pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	info!("Syncing with bridge fee log...");
 
-	let mut date = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap_or_default();
-	let datetime = date.and_hms_opt(0, 0, 0).unwrap_or_default();
-	let mut start_time_nano = datetime.and_utc().timestamp_nanos_opt().unwrap_or_default();
-	let one_day_nano: i64 = 24 * 60 * 60 * 1_000_000_000;
-	let mut end_time_nano: i64 = start_time_nano + one_day_nano;
+	for chain in Query::get_all_chain(db).await? {
+		let mut date = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap_or_default();
+		let datetime = date.and_hms_opt(0, 0, 0).unwrap_or_default();
+		let mut start_time_nano = datetime.and_utc().timestamp_nanos_opt().unwrap_or_default();
+		let one_day_nano: i64 = 24 * 60 * 60 * 1_000_000_000;
+		let mut end_time_nano: i64 = start_time_nano + one_day_nano;
 
-	let now = Utc::now();
-	let today = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap_or_default();
-	let midnight = today.and_hms_opt(0, 0, 0).unwrap_or_default();
-	let today_nano = midnight.and_utc().timestamp_nanos_opt().unwrap_or_default();
+		let now = Utc::now();
+		let today = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap_or_default();
+		let midnight = today.and_hms_opt(0, 0, 0).unwrap_or_default();
+		let today_nano = midnight.and_utc().timestamp_nanos_opt().unwrap_or_default();
 
-	while end_time_nano <= today_nano {
-		let mut total_amount = 0;
-		let mut total_ticket = 0;
-		let mut seqs = String::new();
-		for chain in Query::get_all_chain(db).await? {
-			for ticket in Query::get_not_null_fee_tickets(
+		while end_time_nano <= today_nano {
+			let mut total_amount = 0;
+			let mut total_ticket = 0;
+			let mut seqs = String::new();
+
+			let ticket_list = Query::get_not_null_fee_tickets(
 				db,
 				chain.clone().chain_id,
 				start_time_nano,
 				end_time_nano - 1,
 			)
-			.await?
-			{
-				let amount = ticket
-					.bridge_fee
-					.unwrap_or_default()
-					.parse::<u128>()
-					.unwrap_or_default();
-				total_amount += amount;
-				total_ticket += 1;
-				seqs.push_str(ticket.ticket_seq.unwrap_or_default().to_string().as_str());
-				seqs.push_str("/");
+			.await?;
 
+			if ticket_list.len() != 0 {
+				for ticket in ticket_list.clone() {
+					let amount = ticket
+						.bridge_fee
+						.unwrap_or_default()
+						.parse::<u128>()
+						.unwrap_or_default();
+					total_amount += amount;
+					total_ticket += 1;
+					seqs.push_str(ticket.ticket_seq.unwrap_or_default().to_string().as_str());
+					seqs.push_str("/");
+				}
+			}
+			if total_ticket != 0 {
 				date = DateTime::from_timestamp_nanos(start_time_nano).date_naive();
-
 				let bridge_fee_log = bridge_fee_log::Model::new(
 					chain.clone().chain_id,
 					date.to_string(),
@@ -65,11 +69,11 @@ pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				);
 				Mutation::save_bridge_fee_log(db, bridge_fee_log).await?;
 			}
-		}
-		start_time_nano = end_time_nano;
-		end_time_nano += one_day_nano;
-	}
 
+			start_time_nano = end_time_nano;
+			end_time_nano += one_day_nano;
+		}
+	}
 	Ok(())
 }
 
@@ -394,12 +398,14 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 						}
 					}
 				}
-
+				let date =
+					DateTime::from_timestamp_nanos(ticket.clone().ticket_time as i64).to_string();
 				let ticket_modle = ticket::Model::from_omnity_ticket(
 					*seq,
 					ticket.clone(),
 					updated_memo,
 					bridge_fee,
+					date,
 				)
 				.into();
 				Mutation::save_ticket(db, ticket_modle).await?;
@@ -533,10 +539,14 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					}
 				}
 
+				let date =
+					DateTime::from_timestamp_nanos(pending_ticket.clone().ticket_time as i64)
+						.to_string();
 				let ticket_model = ticket::Model::from_omnity_pending_ticket(
 					pending_ticket.clone().to_owned(),
 					updated_memo,
 					bridge_fee,
+					date,
 				)
 				.into();
 				Mutation::save_ticket(db, ticket_model).await?;

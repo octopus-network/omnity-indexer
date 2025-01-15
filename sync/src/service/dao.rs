@@ -530,7 +530,7 @@ impl Mutation {
 				info!("insert bridge fee log result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the bridge fee log already exists",);
+				info!("the bridge fee log already exists");
 			}
 		}
 		Ok(bridge_fee_log::Model { ..bridge_fee_log })

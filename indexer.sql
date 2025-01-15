@@ -58,7 +58,8 @@ CREATE TABLE public.deleted_mint_ticket (
     receiver character varying NOT NULL,
     memo character varying,
     status public.ticket_status NOT NULL,
-    tx_hash character varying
+    tx_hash character varying,
+    date character varying NOT NULL
 );
 
 CREATE TABLE public.pending_ticket (
@@ -107,7 +108,8 @@ CREATE TABLE public.ticket (
     status public.ticket_status NOT NULL,
     tx_hash character varying,
     intermediate_tx_hash character varying,
-    bridge_fee character varying
+    bridge_fee character varying,
+    date character varying NOT NULL
 );
 
 CREATE TABLE public.token_ledger_id_on_chain (

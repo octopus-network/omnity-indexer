@@ -166,6 +166,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(Ticket::TxHash).string().null())
 					.col(ColumnDef::new(Ticket::IntermediateTxHash).string().null())
 					.col(ColumnDef::new(Ticket::BridgeFee).string().null())
+					.col(ColumnDef::new(Ticket::Date).string().not_null())
 					.to_owned(),
 			)
 			.await?;
@@ -260,6 +261,7 @@ enum Ticket {
 	TxHash,
 	IntermediateTxHash,
 	BridgeFee,
+	Date,
 }
 
 #[derive(Iden, EnumIter)]

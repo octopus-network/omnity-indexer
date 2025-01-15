@@ -85,6 +85,7 @@ impl MigrationTrait for Migration {
 							),
 					)
 					.col(ColumnDef::new(DeletedMintTicket::TxHash).string().null())
+					.col(ColumnDef::new(DeletedMintTicket::Date).string().not_null())
 					.to_owned(),
 			)
 			.await?;
@@ -230,6 +231,7 @@ enum DeletedMintTicket {
 	Memo,
 	Status,
 	TxHash,
+	Date,
 }
 
 // #[derive(DeriveIden)]
