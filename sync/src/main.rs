@@ -5,7 +5,7 @@ use log4rs::{
 	append::console::ConsoleAppender,
 	config::{Appender, Root},
 };
-use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
+use omnity_indexer_sync::{tasks::*, utils::*};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,7 +24,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	let db_url = std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
 	let db = Database::new(db_url.clone()).await;
-	execute_sync_tasks(db.get_connection()).await;
+
+	let task = std::env::var("TASK")?;
+	if task == "removedb" {
+		execute_rm_db_tasks(db.get_connection()).await;
+	} else if task == "task1800" {
+		execute_tasks_1800(db.get_connection()).await;
+	} else if task == "task8" {
+		execute_tasks_8(db.get_connection()).await;
+	} else if task == "task600" {
+		execute_tasks_600(db.get_connection()).await;
+	} else if task == "task30" {
+		execute_tasks_30(db.get_connection()).await;
+	} else if task == "task60" {
+		execute_tasks_60(db.get_connection()).await;
+	} else if task == "task18000" {
+		execute_tasks_18000(db.get_connection()).await;
+	}
 
 	Ok(())
 }
