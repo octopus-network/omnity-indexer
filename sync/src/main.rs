@@ -6,9 +6,17 @@ use log4rs::{
 	config::{Appender, Root},
 };
 use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
+use warp::Filter;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+	let port: u16 = std::env::var("PORT")
+		.unwrap_or_else(|_| "8080".to_string())
+		.parse()
+		.expect("PORT must be a number");
+	let health_route = warp::path!("health").map(|| warp::reply::json(&"OK"));
+	warp::serve(health_route).run(([0, 0, 0, 0], port)).await;
+
 	dotenv().ok();
 	let stdout = ConsoleAppender::builder().build();
 	let config = log4rs::config::Config::builder()

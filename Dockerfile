@@ -47,6 +47,6 @@ USER appuser
 
 # Copy the executable from the "build" stage.
 COPY --from=build /app/target/release/omnity_indexer_sync /bin/
-
+EXPOSE 8080
 # What the container should run when it is started.
-CMD ["/bin/omnity_indexer_sync", "sleep", "infinity"]
+CMD ["/bin/omnity_indexer_sync"]

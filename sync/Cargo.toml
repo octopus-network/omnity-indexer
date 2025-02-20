@@ -49,6 +49,7 @@ reqwest = { version = "0.12", features = ["json"] }
 graphql_client = "0.14.0"
 ic-cdk = "0.14"
 hex = "0.4.3"
+warp = "0.3.7"
 
 [dev-dependencies]
 serde_cbor = "0.11.2"
