@@ -10,13 +10,6 @@ use warp::Filter;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	let port: u16 = std::env::var("PORT")
-		.unwrap_or_else(|_| "8080".to_string())
-		.parse()
-		.expect("PORT must be a number");
-	let health_route = warp::path!("health").map(|| warp::reply::json(&"OK"));
-	warp::serve(health_route).run(([0, 0, 0, 0], port)).await;
-
 	dotenv().ok();
 	let stdout = ConsoleAppender::builder().build();
 	let config = log4rs::config::Config::builder()
@@ -33,6 +26,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let db_url = std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
 	let db = Database::new(db_url.clone()).await;
 	execute_sync_tasks(db.get_connection()).await;
+
+	let port: u16 = std::env::var("PORT")
+		.unwrap_or_else(|_| "8080".to_string())
+		.parse()
+		.map_err(|_| anyhow!("PORT must be a valid number"))?;
+	let health_route = warp::path!("health").map(|| warp::reply::json(&"OK"));
+	tokio::spawn(async move {
+		warp::serve(health_route).run(([0, 0, 0, 0], port)).await;
+	});
 
 	Ok(())
 }
