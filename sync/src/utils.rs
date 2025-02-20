@@ -78,10 +78,10 @@ impl Database {
 		let mut opt = ConnectOptions::new(db_url);
 		opt.max_connections(100)
 			.min_connections(28)
-			.connect_timeout(Duration::from_secs(8))
-			.acquire_timeout(Duration::from_secs(8))
-			.idle_timeout(Duration::from_secs(8))
-			.max_lifetime(Duration::from_secs(8))
+			.connect_timeout(Duration::from_secs(100))
+			.acquire_timeout(Duration::from_secs(100))
+			.idle_timeout(Duration::from_secs(100))
+			.max_lifetime(Duration::from_secs(100))
 			.sqlx_logging(false)
 			.sqlx_logging_level(log::LevelFilter::Info);
 
