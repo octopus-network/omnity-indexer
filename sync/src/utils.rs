@@ -77,7 +77,7 @@ impl Database {
 	pub async fn new(db_url: String) -> Self {
 		let mut opt = ConnectOptions::new(db_url);
 		opt.max_connections(100)
-			.min_connections(10)
+			.min_connections(28)
 			.connect_timeout(Duration::from_secs(8))
 			.acquire_timeout(Duration::from_secs(8))
 			.idle_timeout(Duration::from_secs(8))
