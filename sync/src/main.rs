@@ -23,10 +23,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// 	std::process::exit(1);
 	// }
 
-	let db_url = std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
-	let db = Database::new(db_url.clone()).await;
-	execute_sync_tasks(db.get_connection()).await;
-
 	let port: u16 = std::env::var("PORT")
 		.unwrap_or_else(|_| "8080".to_string())
 		.parse()
@@ -35,6 +31,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	tokio::spawn(async move {
 		warp::serve(health_route).run(([0, 0, 0, 0], port)).await;
 	});
+
+	let db_url = std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
+	let db = Database::new(db_url.clone()).await;
+	execute_sync_tasks(db.get_connection()).await;
 
 	Ok(())
 }
