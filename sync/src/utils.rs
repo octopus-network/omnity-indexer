@@ -77,11 +77,11 @@ impl Database {
 	pub async fn new(db_url: String) -> Self {
 		let mut opt = ConnectOptions::new(db_url);
 		opt.max_connections(100)
-			.min_connections(10)
-			.connect_timeout(Duration::from_secs(8))
-			.acquire_timeout(Duration::from_secs(8))
-			.idle_timeout(Duration::from_secs(8))
-			.max_lifetime(Duration::from_secs(8))
+			.min_connections(24)
+			.connect_timeout(Duration::from_secs(80))
+			.acquire_timeout(Duration::from_secs(80))
+			.idle_timeout(Duration::from_secs(80))
+			.max_lifetime(Duration::from_secs(80))
 			.sqlx_logging(false)
 			.sqlx_logging_level(log::LevelFilter::Info);
 
