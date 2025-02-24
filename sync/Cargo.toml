@@ -25,7 +25,7 @@ tokio = { version = "1.29", features = ["full"] }
 axum = "0.6.18"
 axum-macros = "0.3"
 dotenvy = "0.15.7"
-async-graphql-axum = "5.0.10"
+async-graphql-axum = "7.0.15"
 log = { version = "0.4", default-features = false }
 log4rs = "1.0"
 chrono = "0.4"
