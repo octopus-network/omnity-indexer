@@ -6,7 +6,7 @@ use log4rs::{
 	config::{Appender, Root},
 };
 use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
-use warp::Filter;
+// use warp::Filter;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -23,14 +23,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// 	std::process::exit(1);
 	// }
 
-	let port: u16 = std::env::var("PORT")
-		.unwrap_or_else(|_| "8080".to_string())
-		.parse()
-		.map_err(|_| anyhow!("PORT must be a valid number"))?;
-	let health_route = warp::path!("health").map(|| warp::reply::json(&"OK"));
-	tokio::spawn(async move {
-		warp::serve(health_route).run(([0, 0, 0, 0], port)).await;
-	});
+	// let port: u16 = std::env::var("PORT")
+	// 	.unwrap_or_else(|_| "8080".to_string())
+	// 	.parse()
+	// 	.map_err(|_| anyhow!("PORT must be a valid number"))?;
+	// let health_route = warp::path!("health").map(|| warp::reply::json(&"OK"));
+	// tokio::spawn(async move {
+	// 	warp::serve(health_route).run(([0, 0, 0, 0], port)).await;
+	// });
 
 	let db_url = std::env::var("DATABASE_URL").map_err(|_| anyhow!("DATABASE_URL is not found"))?;
 	let db = Database::new(db_url.clone()).await;

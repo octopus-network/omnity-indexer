@@ -15,7 +15,7 @@ COPY . /app
 RUN apt-get update && apt-get install -y pkg-config libssl-dev
 
 # Build the application.
-RUN cargo build --locked --release -p omnity-indexer-sync
+RUN cargo build --release -p omnity-indexer-sync
 
 ################################################################################
 # Create a new stage for running the application that contains the minimal

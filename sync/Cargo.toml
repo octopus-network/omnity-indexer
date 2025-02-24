@@ -29,7 +29,7 @@ async-graphql-axum = "5.0.10"
 log = { version = "0.4", default-features = false }
 log4rs = "1.0"
 chrono = "0.4"
-sea-orm = { version = "0.12", features = [
+sea-orm = { version = "1.1.6", features = [
     "debug-print",
     "runtime-tokio-rustls",
     "sqlx-postgres",
