@@ -1,8 +1,8 @@
 use crate::types::*;
 use crate::{
 	customs::bitcoin::ReleaseTokenStatus, customs::doge::DogecoinReleaseTokenStatus,
-	customs::sicp::ICPCustomRelaseTokenStatus, routes::icp::IcpMintTokenStatus,
-	routes::MintTokenStatus, Error as OmnityError, FETCH_LIMIT,
+	customs::sicp::ICPCustomRelaseTokenStatus, customs::solana_custom::SolanaCustomReleaseTokenStatus,
+	routes::icp::IcpMintTokenStatus, routes::MintTokenStatus, Error as OmnityError, FETCH_LIMIT,
 };
 use anyhow::{anyhow, Result};
 use candid::{Decode, Encode};
@@ -77,7 +77,7 @@ impl Database {
 	pub async fn new(db_url: String) -> Self {
 		let mut opt = ConnectOptions::new(db_url);
 		opt.max_connections(100)
-			.min_connections(24)
+			.min_connections(25)
 			.connect_timeout(Duration::from_secs(80))
 			.acquire_timeout(Duration::from_secs(80))
 			.idle_timeout(Duration::from_secs(80))
@@ -118,6 +118,7 @@ pub enum ReturnType {
 	VecOmnityPendingTicket(Vec<(TicketId, OmnityTicket)>),
 	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
 	DogecoinReleaseTokenStatus(DogecoinReleaseTokenStatus),
+	SolanaCustomReleaseTokenStatus(SolanaCustomReleaseTokenStatus),
 	Non(()),
 }
 
@@ -216,6 +217,12 @@ impl ReturnType {
 		match self {
 			Self::DogecoinReleaseTokenStatus(doge) => return doge.clone(),
 			_ => return DogecoinReleaseTokenStatus::Unknown,
+		}
+	}
+	pub fn convert_to_release_solann_custom_token_status(&self) -> SolanaCustomReleaseTokenStatus {
+		match self {
+			Self::SolanaCustomReleaseTokenStatus(solana) => return solana.clone(),
+			_ => return SolanaCustomReleaseTokenStatus::Unknown,
 		}
 	}
 }
@@ -358,6 +365,14 @@ impl Arg {
 				let decoded_return_output = Decode!(&return_output, DogecoinReleaseTokenStatus)?;
 				info!("{:?} {:?}", log_two, decoded_return_output);
 				return Ok(ReturnType::DogecoinReleaseTokenStatus(
+					decoded_return_output,
+				));
+			}
+			"SolanaCustomRelaseTokenStatus" => {
+				let decoded_return_output =
+					Decode!(&return_output, SolanaCustomReleaseTokenStatus)?;
+				info!("{:?} {:?}", log_two, decoded_return_output);
+				return Ok(ReturnType::SolanaCustomReleaseTokenStatus(
 					decoded_return_output,
 				));
 			}

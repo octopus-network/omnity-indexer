@@ -6,7 +6,7 @@ use crate::hub::{
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
 use crate::Delete;
 use crate::{
-	customs::{bitcoin, doge, sicp},
+	customs::{bitcoin, doge, sicp, solana_custom},
 	evm, hub,
 	routes::{cosmwasm, icp, solana, sui, ton},
 };
@@ -112,10 +112,16 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { doge::sync_ticket_status_from_doge(&db_conn).await },
 	);
 
-	let sync_ticket_status_from_solana = spawn_sync_task(
+	let sync_ticket_status_from_solana_route = spawn_sync_task(
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { solana::sync_ticket_status_from_solana_route(&db_conn).await },
+	);
+
+	let sync_ticket_status_from_solana_custom = spawn_sync_task(
+		db_conn.clone(),
+		TICKET_SYNC_INTERVAL,
+		|db_conn| async move { solana_custom::sync_ticket_status_from_solana_custom(&db_conn).await },
 	);
 
 	let sync_ticket_status_from_bitcoin = spawn_sync_task(
@@ -197,7 +203,8 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_tokens_on_chains_from_hub,
 		sync_ticket_status_from_sui,
 		sync_ticket_status_from_doge,
-		sync_ticket_status_from_solana,
+		sync_ticket_status_from_solana_route,
+		sync_ticket_status_from_solana_custom,
 		sync_ticket_status_from_bitcoin,
 		sync_ticket_status_from_sicp,
 		sync_ticket_status_from_eicp,
