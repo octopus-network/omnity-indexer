@@ -1,7 +1,14 @@
 use crate::{
-	bridge_fee_log, pending_ticket,
+	bridge_fee_log,
+	// entity::chain_meta,
+	pending_ticket,
 	service::{Mutation, Query},
-	ticket, token_volume, with_omnity_canister, Arg, ChainId, TokenId,
+	ticket,
+	token_volume,
+	with_omnity_canister,
+	Arg,
+	ChainId,
+	TokenId,
 };
 use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use log::info;
@@ -262,10 +269,16 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			if chains.is_empty() {
 				break;
 			}
-
 			for chain in chains.iter() {
 				Mutation::save_chain(db, chain.clone().into()).await?;
 			}
+
+			// let mut chains_model: Vec<chain_meta::Model> = Vec::new();
+			// for chain in chains.iter() {
+			// 	chains_model.push(chain.clone().into());
+			// }
+			// Mutation::bulk_save_chain(db, chains_model).await?;
+
 			from_seq += chains.len() as u64;
 		}
 		Ok(())

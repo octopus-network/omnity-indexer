@@ -87,6 +87,7 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(ChainMeta::ContractAddress).string().null())
 					.col(ColumnDef::new(ChainMeta::Counterparties).json().null())
 					.col(ColumnDef::new(ChainMeta::FeeToken).string().null())
+					// .col(ColumnDef::new(ChainMeta::Whatever).string().null())
 					.to_owned(),
 			)
 			.await?;
@@ -227,6 +228,7 @@ pub enum ChainMeta {
 	ContractAddress,
 	Counterparties,
 	FeeToken,
+	// Whatever,
 }
 
 #[derive(DeriveIden)]

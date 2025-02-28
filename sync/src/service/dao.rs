@@ -341,6 +341,52 @@ impl Mutation {
 		Ok(chain_meta::Model { ..chain_meta })
 	}
 
+	pub async fn bulk_save_chain(
+		db: &DbConn,
+		bulk_chain_meta: Vec<chain_meta::Model>,
+	) -> Result<Vec<chain_meta::Model>, DbErr> {
+		let active_models: Vec<chain_meta::ActiveModel> = bulk_chain_meta
+			.clone()
+			.into_iter()
+			.map(|chain_meta| chain_meta::ActiveModel {
+				chain_id: Set(chain_meta.chain_id),
+				canister_id: Set(chain_meta.canister_id),
+				chain_type: Set(chain_meta.chain_type),
+				chain_state: Set(chain_meta.chain_state),
+				contract_address: Set(chain_meta.contract_address),
+				counterparties: Set(chain_meta.counterparties),
+				fee_token: Set(chain_meta.fee_token),
+			})
+			.collect();
+
+		let insert_result = chain_meta::Entity::insert_many(active_models)
+			.on_conflict(
+				OnConflict::column(chain_meta::Column::ChainId)
+					.update_columns([
+						chain_meta::Column::CanisterId,
+						chain_meta::Column::ChainType,
+						chain_meta::Column::ChainState,
+						chain_meta::Column::ContractAddress,
+						chain_meta::Column::Counterparties,
+						chain_meta::Column::FeeToken,
+					])
+					.to_owned(),
+			)
+			.exec(db)
+			.await;
+
+		match insert_result {
+			Ok(result) => {
+				info!("Inserted or updated {:?} rows", result);
+				Ok(bulk_chain_meta)
+			}
+			Err(err) => {
+				info!("Failed to insert or update chains: {:?}", err);
+				Err(err)
+			}
+		}
+	}
+
 	pub async fn save_token(
 		db: &DbConn,
 		token_meta: token_meta::Model,
