@@ -6,7 +6,7 @@ use log4rs::{
 	config::{Appender, Root},
 };
 use omnity_indexer_sync::{tasks::execute_sync_tasks, utils::*};
-// use warp::Filter;
+use warp::Filter;
 use std::time::Instant;
 
 #[tokio::main]
