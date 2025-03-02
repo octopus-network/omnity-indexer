@@ -76,7 +76,7 @@ pub struct Database {
 impl Database {
 	pub async fn new(db_url: String) -> Self {
 		let mut opt = ConnectOptions::new(db_url);
-		opt.max_connections(100)
+		opt.max_connections(25)
 			.min_connections(24)
 			.connect_timeout(Duration::from_secs(80))
 			.acquire_timeout(Duration::from_secs(80))

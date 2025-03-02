@@ -57,7 +57,7 @@ sea-orm-cli migrate down -u postgres://postgres:omnity_go@localhost/omnity
 SELECT * FROM chain_meta;
 \d chain_meta;
 DROP DATABASE omnity;
-
+sea-orm-cli migrate up -u postgres://postgres:omnity_go@localhost/omnity --verbose
 # generate entity
 #sea-orm-cli generate entity -o sync/src/entity
 # drop the schema
