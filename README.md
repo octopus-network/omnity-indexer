@@ -59,7 +59,7 @@ sea-orm-cli migrate up -u postgres://postgres:omnity_go@localhost/omnity
 ### Build and run the omnity indexer sync
 
 ```bash
-cargo build --locked --release -p omnity-indexer-sync
+cargo build --release -p omnity-indexer-sync
 
 # update config.toml use your indentity and canister id
 

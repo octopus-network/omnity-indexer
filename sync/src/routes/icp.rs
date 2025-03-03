@@ -112,7 +112,7 @@ async fn ticket_status_from_icp_route(
 				)
 				.await?
 				{
-					let tx_hash = rep.contract_id + "-" + &block_index.to_string();
+					let tx_hash = rep.contract_id + "_" + &block_index.to_string();
 
 					// update ticket status to finalized
 					if let Ok(ticket_model) = Mutation::update_ticket(

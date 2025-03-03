@@ -1,8 +1,9 @@
 use crate::types::*;
 use crate::{
 	customs::bitcoin::ReleaseTokenStatus, customs::doge::DogecoinReleaseTokenStatus,
-	customs::sicp::ICPCustomRelaseTokenStatus, customs::solana_custom::SolanaCustomReleaseTokenStatus,
-	routes::icp::IcpMintTokenStatus, routes::MintTokenStatus, Error as OmnityError, FETCH_LIMIT,
+	customs::sicp::ICPCustomRelaseTokenStatus,
+	customs::solana_custom::SolanaCustomReleaseTokenStatus, routes::icp::IcpMintTokenStatus,
+	routes::MintTokenStatus, Error as OmnityError, FETCH_LIMIT,
 };
 use anyhow::{anyhow, Result};
 use candid::{Decode, Encode};

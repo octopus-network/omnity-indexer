@@ -40,22 +40,31 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 
 				if let ICPCustomRelaseTokenStatus::Finalized { tx_hash } = release_icp_token_status
 				{
-					let ticket_model = Mutation::update_ticket(
+					if let Some(rep) = Query::get_token_ledger_id_on_chain_by_id(
 						db,
-						unconfirmed_ticket.clone(),
-						Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
-						Some(Some(tx_hash)),
-						None,
-						None,
-						None,
-						None,
+						ICP_CUSTOM_CHAIN_ID.to_owned(),
+						unconfirmed_ticket.clone().token,
 					)
-					.await?;
+					.await?
+					{
+						let updated_tx_hash = rep.contract_id + "_" + &tx_hash;
+						let ticket_model = Mutation::update_ticket(
+							db,
+							unconfirmed_ticket.clone(),
+							Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
+							Some(Some(updated_tx_hash)),
+							None,
+							None,
+							None,
+							None,
+						)
+						.await?;
 
-					info!(
-						"icp custom ticket id({:?}) finally status:{:?} and its hash is {:?} ",
-						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-					);
+						info!(
+							"icp custom ticket id({:?}) finally status:{:?} and its hash is {:?} ",
+							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+						);
+					}
 				}
 			}
 
