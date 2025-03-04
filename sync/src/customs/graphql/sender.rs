@@ -18,8 +18,7 @@ pub async fn query_sender_fm_runescan(address: String) -> Result<String, anyhow:
 	let request_body = SenderQuery::build_query(variables);
 	let client = Client::new();
 	let response = client
-		.post("https://hasura-secondary-graphql-engine-2252klcbva-uc.a.run.app/v1/graphql")
-		.header("x-hasura-admin-secret", "C26sQVLsq3Adzd7CoHfv")
+		.post("not being used")
 		.json(&request_body)
 		.send()
 		.await
