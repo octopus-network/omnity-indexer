@@ -85,7 +85,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 					let mut updated_tx_hash = String::new();
 					match token_id == "sICP-native-ICP" {
 						true => {
-							let icp_hash = fetch_transactions("20953351").await?;
+							let icp_hash = fetch_transactions(&tx_hash).await?;
 							updated_tx_hash.push_str(&icp_hash);
 						}
 						false => {
