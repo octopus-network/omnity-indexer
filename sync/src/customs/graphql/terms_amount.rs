@@ -22,8 +22,7 @@ pub async fn query_terms_amount(variables: &str) -> Result<i64, anyhow::Error> {
 	let client = Client::new();
 
 	let response = client
-		.post("https://hasura-secondary-graphql-engine-2252klcbva-uc.a.run.app/v1/graphql")
-		.header("x-hasura-admin-secret", "C26sQVLsq3Adzd7CoHfv")
+		.post("https://runescan-hasura-graphql-engine-219952077564.us-central1.run.app/v1/graphql")
 		.json(&request_body)
 		.send()
 		.await
