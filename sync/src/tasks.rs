@@ -4,7 +4,7 @@
 // 	TOKEN_SYNC_INTERVAL, TOKEN_VOLUME_SYNC_INTERVAL,
 // };
 // use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
-use crate::Delete;
+// use crate::Delete;
 // use crate::{
 // 	customs::{bitcoin, doge, sicp},
 // 	evm, hub,
@@ -41,27 +41,27 @@ where
 }
 
 pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
-	let remove_database = async {
-		let _ = Delete::remove_chains(&db_conn).await;
-		let _ = Delete::remove_tokens(&db_conn).await;
-		let _ = Delete::remove_tickets(&db_conn).await;
-		// let _ = Delete::remove_token_on_chains(&db_conn).await;
-		// let _ = Delete::remove_token_ledger_id_on_chain(&db_conn).await;
-		// let _ = Delete::remove_deleted_mint_tickets(&db_conn).await;
-		// let _ = Delete::remove_pending_mint_tickets(&db_conn).await;
-		// let _ = Delete::remove_token_volumes(&db_conn).await;
-		// let _ = Delete::remove_bridge_fee_log(&db_conn).await;
-	};
+	// let remove_database = async {
+	// 	let _ = Delete::remove_chains(&db_conn).await;
+	// 	let _ = Delete::remove_tokens(&db_conn).await;
+	// 	let _ = Delete::remove_tickets(&db_conn).await;
+	// 	// let _ = Delete::remove_token_on_chains(&db_conn).await;
+	// 	// let _ = Delete::remove_token_ledger_id_on_chain(&db_conn).await;
+	// 	// let _ = Delete::remove_deleted_mint_tickets(&db_conn).await;
+	// 	// let _ = Delete::remove_pending_mint_tickets(&db_conn).await;
+	// 	// let _ = Delete::remove_token_volumes(&db_conn).await;
+	// 	// let _ = Delete::remove_bridge_fee_log(&db_conn).await;
+	// };
 
-	let sync_chains_task =
-		spawn_sync_task(db_conn.clone(), CHAIN_SYNC_INTERVAL, |db_conn| async move {
-			hub::sync_chains(&db_conn).await
-		});
+	// let sync_chains_task =
+	// 	spawn_sync_task(db_conn.clone(), CHAIN_SYNC_INTERVAL, |db_conn| async move {
+	// 		hub::sync_chains(&db_conn).await
+	// 	});
 
-	let sync_tokens_task =
-		spawn_sync_task(db_conn.clone(), TOKEN_SYNC_INTERVAL, |db_conn| async move {
-			hub::sync_tokens(&db_conn).await
-		});
+	// let sync_tokens_task =
+	// 	spawn_sync_task(db_conn.clone(), TOKEN_SYNC_INTERVAL, |db_conn| async move {
+	// 		hub::sync_tokens(&db_conn).await
+	// 	});
 
 	let sync_tickets_task = spawn_sync_task(
 		db_conn.clone(),
@@ -190,9 +190,9 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 	// );
 
 	let _ = tokio::join!(
-		remove_database,
-		sync_chains_task,
-		sync_tokens_task,
+		// remove_database,
+		// sync_chains_task,
+		// sync_tokens_task,
 		sync_tickets_task,
 		// sync_all_token_ledger_id_on_chain_from_icp,
 		// sync_all_token_ledger_id_from_evm,
