@@ -85,8 +85,9 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 					let mut updated_tx_hash = String::new();
 					match token_id == "sICP-native-ICP" {
 						true => {
-							let icp_hash = fetch_transactions(&tx_hash).await?;
-							updated_tx_hash.push_str(&icp_hash);
+							if let Ok(icp_hash) = fetch_transactions(&tx_hash).await {
+								updated_tx_hash.push_str(&icp_hash);
+							}
 						}
 						false => {
 							if let Some(rep) = Query::get_token_ledger_id_on_chain_by_id(
@@ -100,7 +101,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 							}
 						}
 					}
-					let ticket_model = Mutation::update_ticket(
+					if let Ok(ticket_model) = Mutation::update_ticket(
 						db,
 						unconfirmed_ticket.clone(),
 						Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
@@ -110,12 +111,13 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 						None,
 						None,
 					)
-					.await?;
-
-					info!(
-						"icp custom ticket id({:?}) and its hash is {:?} ",
-						ticket_model.ticket_id, ticket_model.tx_hash
-					);
+					.await
+					{
+						info!(
+							"icp custom ticket id({:?}) and its hash is {:?} ",
+							ticket_model.ticket_id, ticket_model.tx_hash
+						);
+					}
 				}
 			}
 
