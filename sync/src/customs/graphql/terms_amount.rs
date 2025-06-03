@@ -22,40 +22,20 @@ pub async fn query_terms_amount(variables: &str) -> Result<i64, anyhow::Error> {
 	let client = Client::new();
 
 	let response = client
-		.post("https://runescan-hasura-graphql-engine-219952077564.us-central1.run.app/v1/graphql")
+		.post("https://runescan-hasura-mainnet-219952077564.us-central1.run.app/v1/graphql")
 		.json(&request_body)
 		.send()
-		.await
-		.expect("Error sending request");
+		.await?;
 
-	let response_body: Response<amount_query::ResponseData> =
-		response.json().await.expect("Error deserializing response");
+	let response_body: Response<amount_query::ResponseData> = response.json().await?;
 
-	let data = &response_body.data.as_ref().expect("Missing response data");
-
-	match &response_body
-		.data
-		.as_ref()
-		.expect("Missing response data")
-		.runes
-		.len()
-	{
-		1 => {
-			if let Some(rune_stats) = &data.runes[0].rs_rune_stats {
-				if let Some(rune_stats_runes) = &rune_stats.runes {
-					if let Some(amount) = &rune_stats_runes.terms_amount {
-						// println!("{:?}", amount);
-						Ok(*amount)
-					} else {
-						Err(format_err!("Missing terms_amount"))
-					}
-				} else {
-					Err(format_err!("Missing runes"))
-				}
-			} else {
-				Err(format_err!("Missing rs_rune_stats"))
+	if let Some(data) = response_body.data {
+		if let Some(runes) = data.runes.first() {
+			if let Some(terms_amount) = runes.terms_amount {
+				return Ok(terms_amount);
 			}
 		}
-		_ => Err(format_err!("Missing Rune data")),
 	}
+
+	Err(anyhow!("Failed to get terms amount from response"))
 }

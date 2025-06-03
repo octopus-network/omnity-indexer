@@ -1,9 +1,5 @@
 query AmountQuery($token_id: String!) {
   runes(where: {spaced_rune: {_eq: $token_id}}) {
-    rs_rune_stats {
-      runes {
-        terms_amount
-      }
-    }
+    terms_amount
   }
 }
