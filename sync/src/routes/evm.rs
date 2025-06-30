@@ -131,7 +131,7 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 				canister_id,
 				"get_token_list",
 				"Syncing token ledger id from evm routes ...",
-				"Token ledger id from evm routes result: ",
+				"  ",
 				None,
 				None,
 				"Vec<TokenResp>",
@@ -146,16 +146,16 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 					evm_contract.to_owned(),
 				);
 				// Save to the database
-				let token_ledger_id_on_chain =
+				let _token_ledger_id_on_chain =
 					Mutation::save_all_token_ledger_id_on_chain(db, token_ledger_id_on_chain_model)
 						.await?;
 
-				info!(
-					"Token {:?} in Chain id({:?})' Contract id is {:?}",
-					token_ledger_id_on_chain.token_id,
-					token_ledger_id_on_chain.chain_id,
-					token_ledger_id_on_chain.contract_id
-				);
+				// info!(
+				// 	"Token {:?} in Chain id({:?})' Contract id is {:?}",
+				// 	token_ledger_id_on_chain.token_id,
+				// 	token_ledger_id_on_chain.chain_id,
+				// 	token_ledger_id_on_chain.contract_id
+				// );
 			}
 		}
 

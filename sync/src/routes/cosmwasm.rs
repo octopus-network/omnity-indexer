@@ -41,7 +41,7 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 						canister_id,
 						"mint_token_status",
 						"Syncing mint token status from osmosis route ...",
-						"Mint token status from osmosis route result: ",
+						"  ",
 						None,
 						None,
 						"MintTokenStatus",
@@ -84,7 +84,7 @@ pub async fn sync_all_cosmwasm_token_ledger_id_on_chain(db: &DbConn) -> Result<(
 				canister_id,
 				"get_token_list",
 				"Syncing token ledger id from osmosis route ...",
-				"Token ledger id from osmosis route result: ",
+				"  ",
 				None,
 				None,
 				"Vec<CosmwasmTokenResp>",
@@ -100,16 +100,9 @@ pub async fn sync_all_cosmwasm_token_ledger_id_on_chain(db: &DbConn) -> Result<(
 					token_denom.to_owned(),
 				);
 				// Save to the database
-				let token_ledger_id_on_chain =
+				let _token_ledger_id_on_chain =
 					Mutation::save_all_token_ledger_id_on_chain(db, token_ledger_id_on_chain_model)
 						.await?;
-
-				info!(
-					"Token {:?} in Chain id({:?})' Contract id is {:?}",
-					token_ledger_id_on_chain.token_id,
-					token_ledger_id_on_chain.chain_id,
-					token_ledger_id_on_chain.contract_id
-				);
 			}
 		}
 

@@ -71,7 +71,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 						canister_id,
 						"mint_token_status",
 						"Syncing mint token status from icp custom: ",
-						"Release icp custom token status result: ",
+						"  ",
 						None,
 						None,
 						"ICPCustomRelaseTokenStatus",
@@ -137,7 +137,7 @@ pub async fn sync_all_icrc_token_canister_id_from_sicp(db: &DbConn) -> Result<()
 					canister_id,
 					"get_token_list",
 					"Syncing token canister id from sicp ...",
-					"Token canister id from sicp result: ",
+					"  ",
 					None,
 					None,
 					"Vec<Token>",
@@ -152,18 +152,11 @@ pub async fn sync_all_icrc_token_canister_id_from_sicp(db: &DbConn) -> Result<()
 						canister.to_owned(),
 					);
 
-					let token_canister_id_on_chain = Mutation::save_all_token_ledger_id_on_chain(
+					let _token_canister_id_on_chain = Mutation::save_all_token_ledger_id_on_chain(
 						db,
 						token_canister_id_on_chain_model,
 					)
 					.await?;
-
-					info!(
-						"Token {:?} in Chain id({:?})' Canister id is {:?}",
-						token_canister_id_on_chain.token_id,
-						token_canister_id_on_chain.chain_id,
-						token_canister_id_on_chain.contract_id
-					);
 				}
 			}
 

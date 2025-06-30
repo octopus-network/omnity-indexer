@@ -52,15 +52,6 @@ impl Query {
 			.one(db)
 			.await
 	}
-	// pub async fn get_latest_pending_ticket(
-	// 	db: &DbConn,
-	// ) -> Result<Option<pending_ticket::Model>, DbErr> {
-	// 	PendingTicket::find()
-	// 		.filter(pending_ticket::Column::TicketIndex.is_not_null())
-	// 		.order_by_desc(pending_ticket::Column::TicketIndex)
-	// 		.one(db)
-	// 		.await
-	// }
 	pub async fn get_unconfirmed_tickets(
 		db: &DbConn,
 		dest: String,
@@ -68,10 +59,9 @@ impl Query {
 		Ticket::find()
 			.filter(
 				Condition::all()
-					// The ticket is not finalized
 					.add(ticket::Column::Status.ne(TicketStatus::Finalized))
+					.add(ticket::Column::Status.ne(TicketStatus::Failed))
 					.add(ticket::Column::Status.ne(TicketStatus::Unknown))
-					// The ticket's destination chain matches `dest`
 					.add(ticket::Column::DstChain.eq(dest)),
 			)
 			.all(db)
@@ -111,9 +101,7 @@ impl Query {
 		Ticket::find()
 			.filter(
 				Condition::all()
-					// The ticket is for minting action
 					.add(ticket::Column::Action.eq(TxAction::Mint))
-					// The ticket amount is not updated yet
 					.add(ticket::Column::Amount.eq(0.to_string())),
 			)
 			.all(db)
@@ -124,9 +112,7 @@ impl Query {
 		Ticket::find()
 			.filter(
 				Condition::all()
-					// The ticket is for minting action
 					.add(ticket::Column::Action.eq(TxAction::Mint))
-					// The ticket amount is updated
 					.add(ticket::Column::Amount.ne(0.to_string()))
 					.add(
 						Condition::any()
@@ -273,9 +259,7 @@ impl Mutation {
 			Ok(ret) => {
 				info!("insert token ledger id result : {:?}", ret);
 			}
-			Err(_) => {
-				info!("the token ledger id already exists, updated it !");
-			}
+			Err(_) => {}
 		}
 		Ok(token_ledger_id_on_chain::Model {
 			..token_ledger_id_on_chain
@@ -303,16 +287,12 @@ impl Mutation {
 				info!("insert token on chain result : {:?}", ret);
 			}
 			Err(_) => {
-				let model = Self::update_token_on_chain(
+				let _model = Self::update_token_on_chain(
 					db,
 					token_on_chain.clone(),
 					token_on_chain.clone().amount,
 				)
 				.await?;
-				info!(
-					"the token on chain already exists, updated it ! {:?}",
-					model
-				);
 			}
 		}
 		Ok(token_on_chain::Model { ..token_on_chain })
@@ -334,9 +314,7 @@ impl Mutation {
 			Ok(ret) => {
 				info!("insert chain result : {:?}", ret);
 			}
-			Err(_) => {
-				info!("the chain already exists, updated chain !");
-			}
+			Err(_) => {}
 		}
 		Ok(chain_meta::Model { ..chain_meta })
 	}
@@ -357,9 +335,7 @@ impl Mutation {
 			Ok(ret) => {
 				info!("insert token result : {:?}", ret);
 			}
-			Err(_) => {
-				info!("token already exists, updated token !");
-			}
+			Err(_) => {}
 		}
 
 		Ok(token_meta::Model { ..token_meta })
@@ -379,7 +355,6 @@ impl Mutation {
 				info!("insert ticket result : {:?}", ret);
 			}
 			Err(_) => {
-				info!("the ticket already exited, need to update ticket !");
 				if let Some(t) = Query::get_ticket_by_id(db, ticket.clone().ticket_id).await? {
 					if t.ticket_seq == None && t.status == TicketStatus::Finalized {
 						let model = Self::update_ticket(
@@ -418,44 +393,12 @@ impl Mutation {
 			Ok(ret) => {
 				info!("insert deleted mint ticket result : {:?}", ret);
 			}
-			Err(_) => {
-				info!("the deleted mint ticket already exists");
-			}
+			Err(_) => {}
 		}
 
 		Ok(deleted_mint_ticket::Model { ..deleted_ticket })
 	}
 
-	// pub async fn save_pending_ticket(
-	// 	db: &DbConn,
-	// 	pending_ticket: pending_ticket::Model,
-	// ) -> Result<pending_ticket::Model, DbErr> {
-	// 	let active_model: pending_ticket::ActiveModel = pending_ticket.clone().into();
-	// 	let on_conflict = OnConflict::column(pending_ticket::Column::TicketId)
-	// 		.do_nothing()
-	// 		.to_owned();
-	// 	let insert_result = PendingTicket::insert(active_model.clone())
-	// 		.on_conflict(on_conflict)
-	// 		.exec(db)
-	// 		.await;
-	// 	match insert_result {
-	// 		Ok(ret) => {
-	// 			info!("insert pending ticket result : {:?}", ret);
-	// 		}
-	// 		Err(_) => {
-	// 			info!("the pending ticket already exists, need to update ticket !");
-	// 			let res = PendingTicket::update(active_model)
-	// 				.filter(
-	// 					pending_ticket::Column::TicketId.eq(&pending_ticket.ticket_id.to_owned()),
-	// 				)
-	// 				.exec(db)
-	// 				.await
-	// 				.map(|ticket| ticket);
-	// 			info!("update pending ticket result : {:?}", res);
-	// 		}
-	// 	}
-	// 	Ok(pending_ticket::Model { ..pending_ticket })
-	// }
 	pub async fn save_pending_ticket_index(
 		db: &DbConn,
 		pending_ticket: pending_ticket::Model,
@@ -472,9 +415,7 @@ impl Mutation {
 			Ok(ret) => {
 				info!("insert pending ticket index result : {:?}", ret);
 			}
-			Err(_) => {
-				info!("the pending ticket index already exists, updated ticket!");
-			}
+			Err(_) => {}
 		}
 
 		Ok(pending_ticket::Model { ..pending_ticket })
@@ -497,14 +438,13 @@ impl Mutation {
 				info!("insert token volume result : {:?}", ret);
 			}
 			Err(_) => {
-				let model = Self::update_token_volume(
+				let _model = Self::update_token_volume(
 					db,
 					token_volume.clone(),
 					token_volume.clone().ticket_count,
 					token_volume.clone().historical_volume,
 				)
 				.await?;
-				info!("the token volume already exists, updated it ! {:?}", model);
 			}
 		}
 		Ok(token_volume::Model { ..token_volume })
@@ -529,9 +469,7 @@ impl Mutation {
 			Ok(ret) => {
 				info!("insert bridge fee log result : {:?}", ret);
 			}
-			Err(_) => {
-				info!("the bridge fee log already exists");
-			}
+			Err(_) => {}
 		}
 		Ok(bridge_fee_log::Model { ..bridge_fee_log })
 	}

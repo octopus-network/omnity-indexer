@@ -78,15 +78,6 @@ impl MigrationTrait for Migration {
 			)
 			.await
 	}
-
-	async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-		manager
-			.drop_table(Table::drop().table(TokenOnChain::Table).to_owned())
-			.await?;
-		manager
-			.drop_table(Table::drop().table(TokenLedgerIdOnChain::Table).to_owned())
-			.await
-	}
 }
 
 #[derive(DeriveIden)]

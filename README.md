@@ -38,6 +38,7 @@ docker compose exec -it postgres bash
 psql -U postgres
 
 # create omnity db
+# DROP DATABASE omnity;
 CREATE DATABASE omnity ENCODING = 'UTF8';
 
 # exit docker 
@@ -50,7 +51,7 @@ cargo install sea-orm-cli
 sea-orm-cli migrate up -u postgres://postgres:omnity_go@localhost/omnity
 
 # generate entity
-#sea-orm-cli generate entity -o sync/src/entity
+# sea-orm-cli generate entity -u postgres://postgres:omnity_go@localhost:5432/omnity -o src/entities
 # drop the schema
 #sea-orm-cli migrate down -u postgres://postgres:omnity_go@localhost/omnity
 

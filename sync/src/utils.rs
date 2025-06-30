@@ -276,19 +276,19 @@ impl Arg {
 			"u64" => {
 				let decoded_return_output =
 					Decode!(&return_output, Result<u64, OmnityError>)?.unwrap();
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::U64(decoded_return_output));
 			}
 			"Vec<ChainMeta>" => {
 				let decoded_return_output =
 					Decode!(&return_output, Result<Vec<ChainMeta>, OmnityError>)?.unwrap();
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::VecChainMeta(decoded_return_output));
 			}
 			"Vec<TokenMeta>" => {
 				let decoded_return_output =
 					Decode!(&return_output, Result<Vec<TokenMeta>, OmnityError>)?.unwrap();
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::VecTokenMeta(decoded_return_output));
 			}
 			"Vec<(u64, OmnityTicket)>" => {
@@ -297,53 +297,53 @@ impl Arg {
 					Result<Vec<(u64, OmnityTicket)>, OmnityError>
 				)?
 				.unwrap();
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?} ", log_two);
 				return Ok(ReturnType::VecOmnityTicket(decoded_return_output));
 			}
 			"IcpMintTokenStatus" => {
 				let decoded_return_output = Decode!(&return_output, IcpMintTokenStatus)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::IcpMintTokenStatus(decoded_return_output));
 			}
 			"ReleaseTokenStatus" => {
 				let decoded_return_output = Decode!(&return_output, ReleaseTokenStatus)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::ReleaseTokenStatus(decoded_return_output));
 			}
 			"Vec<OmnityTokenOnChain>" => {
 				let decoded_return_output =
 					Decode!(&return_output, Result<Vec<OmnityTokenOnChain>, OmnityError>)?.unwrap();
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::OmnityTokenOnChain(decoded_return_output));
 			}
 			"MintTokenStatus" => {
 				let decoded_return_output = Decode!(&return_output, MintTokenStatus)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::MintTokenStatus(decoded_return_output));
 			}
 			"Option<Principal>" => {
 				let decoded_return_output = Decode!(&return_output, Option<Principal>)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::CanisterId(decoded_return_output));
 			}
 			"Vec<TokenResp>" => {
 				let decoded_return_output = Decode!(&return_output, Vec<TokenResp>)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::VecTokenResp(decoded_return_output));
 			}
 			"Vec<CosmwasmTokenResp>" => {
 				let decoded_return_output = Decode!(&return_output, Vec<CosmwasmTokenResp>)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::VecCosmwasmTokenResp(decoded_return_output));
 			}
 			"Vec<TonTokenResp>" => {
 				let decoded_return_output = Decode!(&return_output, Vec<TonTokenResp>)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::VecTonTokenResp(decoded_return_output));
 			}
 			"Vec<Token>" => {
 				let decoded_return_output = Decode!(&return_output, Vec<Token>)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::VecToken(decoded_return_output));
 			}
 			"Vec<(TicketId, OmnityTicket)>" => {
@@ -352,19 +352,19 @@ impl Arg {
 					Result<Vec<(TicketId, OmnityTicket)>, OmnityError>
 				)?
 				.unwrap();
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::VecOmnityPendingTicket(decoded_return_output));
 			}
 			"ICPCustomRelaseTokenStatus" => {
 				let decoded_return_output = Decode!(&return_output, ICPCustomRelaseTokenStatus)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::ICPCustomRelaseTokenStatus(
 					decoded_return_output,
 				));
 			}
 			"DogecoinCustomRelaseTokenStatus" => {
 				let decoded_return_output = Decode!(&return_output, DogecoinReleaseTokenStatus)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::DogecoinReleaseTokenStatus(
 					decoded_return_output,
 				));
@@ -372,15 +372,15 @@ impl Arg {
 			"SolanaCustomRelaseTokenStatus" => {
 				let decoded_return_output =
 					Decode!(&return_output, SolanaCustomReleaseTokenStatus)?;
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::SolanaCustomReleaseTokenStatus(
 					decoded_return_output,
 				));
 			}
 			_ => {
-				let decoded_return_output =
+				let _decoded_return_output =
 					Decode!(&return_output, Result<(), OmnityError>)?.unwrap();
-				info!("{:?} {:?}", log_two, decoded_return_output);
+				info!("{:?}", log_two);
 				return Ok(ReturnType::Non(()));
 			}
 		};

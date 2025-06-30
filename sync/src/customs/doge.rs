@@ -33,7 +33,7 @@ pub async fn sync_ticket_status_from_doge(db: &DbConn) -> Result<(), Box<dyn Err
 						canister_id,
 						"release_token_status",
 						"Syncing mint token status from doge custom: ",
-						"Release doge custom token status result: ",
+						"  ",
 						None,
 						None,
 						"DogecoinCustomRelaseTokenStatus",

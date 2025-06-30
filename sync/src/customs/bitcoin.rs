@@ -1,7 +1,7 @@
 use crate::entity::ticket;
 use crate::graphql::terms_amount::query_terms_amount;
 use crate::service::{Delete, Mutation, Query};
-use crate::{with_omnity_canister, Arg, ChainId};
+use crate::{types::TicketId, with_omnity_canister, Arg, ChainId};
 use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -13,22 +13,15 @@ struct BtcCustom {
 	pub chain: ChainId,
 }
 
-/// The status of a release_token request.
 #[derive(candid::CandidType, Clone, Debug, PartialEq, Eq, Deserialize)]
 pub enum ReleaseTokenStatus {
-	/// The custom has no data for this request.
-	/// The request id is either invalid or too old.
 	Unknown,
-	/// The request is in the batch queue.
 	Pending,
-	/// Waiting for a signature on a transaction satisfy this request.
 	Signing,
-	/// Sending the transaction satisfying this request.
 	Sending(String),
-	/// Awaiting for confirmations on the transaction satisfying this request.
 	Submitted(String),
-	/// Confirmed a transaction satisfying this request.
 	Confirmed(String),
+	Failed(Option<TicketId>),
 }
 
 // sync tickets status that transfered from routes to BTC/BRC20 custom
@@ -87,6 +80,22 @@ pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<
 						"btc ticket id({:?}) finally status:{:?} and its hash is {:?} ",
 						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
 					);
+				} else if let ReleaseTokenStatus::Failed(tx_id) = mint_token_status {
+					let update_hash = match tx_id {
+						None => "None".to_string(),
+						Some(tx) => tx,
+					};
+					let _ = Mutation::update_ticket(
+						db,
+						unconfirmed_ticket.clone(),
+						Some(crate::entity::sea_orm_active_enums::TicketStatus::Failed),
+						Some(Some(update_hash)),
+						None,
+						None,
+						None,
+						None,
+					)
+					.await?;
 				} else {
 					info!(
 						"btc ticket id({:?}) current status {:?}",

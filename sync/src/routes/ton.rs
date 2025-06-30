@@ -21,7 +21,7 @@ pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), B
 					canister_id,
 					"mint_token_status",
 					"Syncing mint token status from ton route ...",
-					"Mint token status from ton route result: ",
+					" ",
 					None,
 					None,
 					"MintTokenStatus",
@@ -62,7 +62,7 @@ pub async fn sync_all_ton_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 				canister_id,
 				"get_token_list",
 				"Syncing token ledger id from ton routes ...",
-				"Token ledger id from ton routes result: ",
+				"  ",
 				None,
 				None,
 				"Vec<TonTokenResp>",
@@ -77,16 +77,9 @@ pub async fn sync_all_ton_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 					ton_contract.to_owned(),
 				);
 				// Save to the database
-				let token_ledger_id_on_chain =
+				let _token_ledger_id_on_chain =
 					Mutation::save_all_token_ledger_id_on_chain(db, token_ledger_id_on_chain_model)
 						.await?;
-
-				info!(
-					"Token {:?} in Chain id({:?})' Contract id is {:?}",
-					token_ledger_id_on_chain.token_id,
-					token_ledger_id_on_chain.chain_id,
-					token_ledger_id_on_chain.contract_id
-				);
 			}
 		}
 

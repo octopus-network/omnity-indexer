@@ -55,6 +55,7 @@ impl MigrationTrait for Migration {
 						TicketStatus::WaitingForConfirmByDest,
 						TicketStatus::Finalized,
 						TicketStatus::Pending,
+						TicketStatus::Failed,
 					])
 					.to_owned(),
 			)
@@ -161,6 +162,7 @@ impl MigrationTrait for Migration {
 							TicketStatus::WaitingForConfirmByDest,
 							TicketStatus::Finalized,
 							TicketStatus::Pending,
+							TicketStatus::Failed,
 						],
 					))
 					.col(ColumnDef::new(Ticket::TxHash).string().null())
@@ -179,38 +181,6 @@ impl MigrationTrait for Migration {
 					.name("idx-ticket_seq")
 					.table(Ticket::Table)
 					.col(Ticket::TicketSeq)
-					.to_owned(),
-			)
-			.await
-	}
-
-	async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-		// drop index
-		manager
-			.drop_index(Index::drop().name("idx-ticket_seq").to_owned())
-			.await?;
-		// drop tables
-		manager
-			.drop_table(Table::drop().table(Ticket::Table).to_owned())
-			.await?;
-		manager
-			.drop_table(Table::drop().table(TokenMeta::Table).to_owned())
-			.await?;
-		manager
-			.drop_table(Table::drop().table(ChainMeta::Table).to_owned())
-			.await?;
-		// drop enum
-		manager
-			.drop_type(
-				Type::drop()
-					.if_exists()
-					.names([
-						SeaRc::new(ChainType::Type) as DynIden,
-						SeaRc::new(ChainState::Type) as DynIden,
-						SeaRc::new(TicketType::Type) as DynIden,
-						SeaRc::new(TxAction::Type) as DynIden,
-						SeaRc::new(TicketStatus::Type) as DynIden,
-					])
 					.to_owned(),
 			)
 			.await
@@ -243,7 +213,7 @@ pub enum TokenMeta {
 }
 
 #[derive(DeriveIden)]
-enum Ticket {
+pub enum Ticket {
 	Table,
 	TicketId,
 	TicketSeq,
@@ -324,4 +294,6 @@ pub enum TicketStatus {
 	Finalized,
 	#[iden = "Pending"]
 	Pending,
+	#[iden = "Failed"]
+	Failed,
 }

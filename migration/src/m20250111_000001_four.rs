@@ -1,5 +1,6 @@
-use super::m20240507_055143_one::ChainMeta;
-use sea_orm_migration::prelude::*;
+use super::m20240507_055143_one::{ChainMeta, Ticket, TicketStatus};
+use super::m20240802_000001_three::DeletedMintTicket;
+use sea_orm_migration::{prelude::*, sea_query::extension::postgres::Type};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -41,7 +42,52 @@ impl MigrationTrait for Migration {
 
 	async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
 		manager
-			.drop_table(Table::drop().table(BridgeFeeLog::Table).to_owned())
+			.alter_type(
+				Type::alter()
+					.name(TicketStatus::Type)
+					.add_value(Alias::new("Failed"))
+					.to_owned(),
+			)
+			.await?;
+		manager
+			.alter_table(
+				Table::alter()
+					.table(Ticket::Table)
+					.modify_column(ColumnDef::new(Ticket::Status).not_null().enumeration(
+						Alias::new("ticket_status"),
+						[
+							TicketStatus::Unknown,
+							TicketStatus::WaitingForConfirmBySrc,
+							TicketStatus::WaitingForConfirmByDest,
+							TicketStatus::Finalized,
+							TicketStatus::Pending,
+							TicketStatus::Failed,
+						],
+					))
+					.to_owned(),
+			)
+			.await?;
+		manager
+			.alter_table(
+				Table::alter()
+					.table(DeletedMintTicket::Table)
+					.modify_column(
+						ColumnDef::new(DeletedMintTicket::Status)
+							.not_null()
+							.enumeration(
+								Alias::new("ticket_status"),
+								[
+									TicketStatus::Unknown,
+									TicketStatus::WaitingForConfirmBySrc,
+									TicketStatus::WaitingForConfirmByDest,
+									TicketStatus::Finalized,
+									TicketStatus::Pending,
+									TicketStatus::Failed,
+								],
+							),
+					)
+					.to_owned(),
+			)
 			.await
 	}
 }

@@ -304,6 +304,7 @@ pub enum TicketStatus {
 	WaitingForConfirmByDest,
 	Finalized,
 	Pending,
+	Failed,
 }
 
 impl From<TicketStatus> for sea_orm_active_enums::TicketStatus {
@@ -318,6 +319,7 @@ impl From<TicketStatus> for sea_orm_active_enums::TicketStatus {
 			}
 			TicketStatus::Finalized => sea_orm_active_enums::TicketStatus::Finalized,
 			TicketStatus::Pending => sea_orm_active_enums::TicketStatus::Pending,
+			TicketStatus::Failed => sea_orm_active_enums::TicketStatus::Failed,
 		}
 	}
 }
@@ -333,6 +335,7 @@ impl From<sea_orm_active_enums::TicketStatus> for TicketStatus {
 			}
 			sea_orm_active_enums::TicketStatus::Finalized => TicketStatus::Finalized,
 			sea_orm_active_enums::TicketStatus::Pending => TicketStatus::Pending,
+			sea_orm_active_enums::TicketStatus::Failed => TicketStatus::Failed,
 		}
 	}
 }

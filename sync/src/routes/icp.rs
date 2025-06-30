@@ -25,7 +25,7 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 						canister_id,
 						"get_token_ledger",
 						"Syncing token ledger id from icp route ...",
-						"Token ledger id from icp route result: ",
+						"  ",
 						None,
 						None,
 						"Option<Principal>",
@@ -43,18 +43,11 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 						token_ledger_id,
 					);
 					// Save to the database
-					let token_ledger_id_on_chain = Mutation::save_all_token_ledger_id_on_chain(
+					let _token_ledger_id_on_chain = Mutation::save_all_token_ledger_id_on_chain(
 						db,
 						token_ledger_id_on_chain_model,
 					)
 					.await?;
-
-					info!(
-						"Token {:?} in Chain id({:?})' Canister id is {:?}",
-						token_ledger_id_on_chain.token_id,
-						token_ledger_id_on_chain.chain_id,
-						token_ledger_id_on_chain.contract_id
-					);
 				}
 			}
 
