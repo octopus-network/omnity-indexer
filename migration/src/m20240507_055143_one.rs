@@ -92,6 +92,22 @@ impl MigrationTrait for Migration {
 			)
 			.await?;
 
+		manager
+			.create_table(
+				Table::create()
+					.table(LaunchPad::Table)
+					.if_not_exists()
+					.col(
+						ColumnDef::new(LaunchPad::LaunchPad)
+							.string()
+							.not_null()
+							.primary_key(),
+					)
+					.col(ColumnDef::new(LaunchPad::CainisterId).string().not_null())
+					.to_owned(),
+			)
+			.await?;
+
 		// Create TokenMeta table
 		manager
 			.create_table(
@@ -115,6 +131,13 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(TokenMeta::Icon).text().null())
 					.col(ColumnDef::new(TokenMeta::Metadata).json().not_null())
 					.col(ColumnDef::new(TokenMeta::DstChains).json().not_null())
+					.col(ColumnDef::new(TokenMeta::LaunchPad).string().null())
+					.foreign_key(
+						ForeignKey::create()
+							.name("fk_launch_pad")
+							.from(TokenMeta::Table, TokenMeta::LaunchPad)
+							.to(LaunchPad::Table, LaunchPad::LaunchPad),
+					)
 					.to_owned(),
 			)
 			.await?;
@@ -210,6 +233,7 @@ pub enum TokenMeta {
 	Icon,
 	Metadata,
 	DstChains,
+	LaunchPad,
 }
 
 #[derive(DeriveIden)]
@@ -296,4 +320,12 @@ pub enum TicketStatus {
 	Pending,
 	#[iden = "Failed"]
 	Failed,
+}
+
+//2025.07.09
+#[derive(DeriveIden)]
+pub enum LaunchPad {
+	Table,
+	LaunchPad,
+	CainisterId,
 }

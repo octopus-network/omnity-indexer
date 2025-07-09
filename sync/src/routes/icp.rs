@@ -18,14 +18,13 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
+			info!("icp token ledger id on chain在工作 ... ");
 			for token in Query::get_all_tokens(db).await? {
 				let token_ledger = Arg::TokId(token.clone().token_id)
 					.query_method(
 						agent.clone(),
 						canister_id,
 						"get_token_ledger",
-						"Syncing token ledger id from icp route ...",
-						"  ",
 						None,
 						None,
 						"Option<Principal>",
@@ -42,7 +41,6 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 						token.clone().token_id,
 						token_ledger_id,
 					);
-					// Save to the database
 					let _token_ledger_id_on_chain = Mutation::save_all_token_ledger_id_on_chain(
 						db,
 						token_ledger_id_on_chain_model,
@@ -58,8 +56,6 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 }
 
 pub async fn sync_ticket_status_from_icp_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("Syncing release token status from icp route ... ");
-
 	if let (Ok(unconfirmed_tickets), Ok(deleted_unconfirmed_tickets)) = (
 		Query::get_unconfirmed_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
 		Query::get_unconfirmed_deleted_tickets(db, ROUTE_CHAIN_ID.to_owned()).await,
@@ -83,13 +79,12 @@ async fn ticket_status_from_icp_route(
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
+			info!("icp route状态更新在工作 ... ");
 			let mint_token_status = Arg::TI(ticket.ticket_id.clone())
 				.query_method(
 					agent.clone(),
 					canister_id,
 					"mint_token_status",
-					"Syncing mint token status from icp route ...",
-					"Mint token status from icp route result: ",
 					None,
 					None,
 					"IcpMintTokenStatus",

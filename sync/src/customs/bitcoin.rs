@@ -24,35 +24,30 @@ pub enum ReleaseTokenStatus {
 	Failed(Option<TicketId>),
 }
 
-// sync tickets status that transfered from routes to BTC/BRC20 custom
 pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	let btc_customs: Vec<BtcCustom> = vec![
 		BtcCustom {
 			canister: "OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
 			chain: "Bitcoin".to_owned(),
 		},
-		BtcCustom {
-			canister: "OMNITY_CUSTOMS_BITCOIN_BRC20_CANISTER_ID",
-			chain: "Bitcoinbrc20".to_owned(),
-		},
+		// BtcCustom {
+		// 	canister: "OMNITY_CUSTOMS_BITCOIN_BRC20_CANISTER_ID",
+		// 	chain: "Bitcoinbrc20".to_owned(),
+		// },
 	];
 
 	for btc_custom in btc_customs.iter() {
 		with_omnity_canister(btc_custom.canister, |agent, canister_id| async move {
-			info!("Syncing release token status from bitcoin ... ");
-			//step1: get ticket that dest is bitcion and status is waiting for comformation by dst
+			info!("BTC状态更新在工作 ... ");
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, btc_custom.chain.clone()).await?;
 
-			//step2: get release_token_status by ticket id
 			for unconfirmed_ticket in unconfirmed_tickets {
 				let mint_token_status = Arg::TI(unconfirmed_ticket.ticket_id.clone())
 					.query_method(
 						agent.clone(),
 						canister_id,
 						"release_token_status",
-						"Syncing mint token status from bitcoin: ",
-						"Mint bitcoin token status result: ",
 						None,
 						None,
 						"ReleaseTokenStatus",
@@ -63,8 +58,7 @@ pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<
 				if let ReleaseTokenStatus::Submitted(tx_hash)
 				| ReleaseTokenStatus::Confirmed(tx_hash) = mint_token_status
 				{
-					//step3: update ticket status to finalized
-					let ticket_model = Mutation::update_ticket(
+					let _ticket_model = Mutation::update_ticket(
 						db,
 						unconfirmed_ticket.clone(),
 						Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
@@ -76,10 +70,10 @@ pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<
 					)
 					.await?;
 
-					info!(
-						"btc ticket id({:?}) finally status:{:?} and its hash is {:?} ",
-						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-					);
+					// info!(
+					// 	"btc ticket id({:?}) finally status:{:?} and its hash is {:?} ",
+					// 	ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+					// );
 				} else if let ReleaseTokenStatus::Failed(tx_id) = mint_token_status {
 					let update_hash = match tx_id {
 						None => "None".to_string(),
@@ -98,7 +92,7 @@ pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<
 					.await?;
 				} else {
 					info!(
-						"btc ticket id({:?}) current status {:?}",
+						"btc ticket id({:?}) 状态: {:?}",
 						unconfirmed_ticket.ticket_id, mint_token_status
 					);
 				}
@@ -120,7 +114,7 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			// Fetch the amount from the runescan graphql api
 			let amount = query_terms_amount(token_id).await.unwrap();
 			// Insert the amount into the ticket meta
-			let updated_ticket = Mutation::update_ticket(
+			let _updated_ticket = Mutation::update_ticket(
 				db,
 				ticket,
 				None,
@@ -131,10 +125,10 @@ pub async fn update_mint_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				None,
 			)
 			.await?;
-			info!(
-				"Ticket id({:?}) has changed its amount to {:?}",
-				updated_ticket.ticket_id, updated_ticket.amount
-			);
+			// info!(
+			// 	"Ticket id({:?}) has changed its amount to {:?}",
+			// 	updated_ticket.ticket_id, updated_ticket.amount
+			// );
 		}
 	}
 	Ok(())

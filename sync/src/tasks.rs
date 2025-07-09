@@ -4,10 +4,11 @@ use crate::hub::{
 	TOKEN_SYNC_INTERVAL, TOKEN_VOLUME_SYNC_INTERVAL,
 };
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
+use crate::Delete;
 use crate::{
 	customs::{bitcoin, doge, sicp, solana_custom},
 	evm, hub,
-	routes::{cosmwasm, icp, solana, sui, ton},
+	routes::{cosmwasm, icp, solana, ton},
 };
 use futures::Future;
 use log::error;
@@ -35,17 +36,24 @@ where
 }
 
 pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
-	let _remove_database = async {
-		// let _ = Delete::remove_chains(&db_conn).await;
-		// let _ = Delete::remove_tokens(&db_conn).await;
+	let remove_database = async {
+		let _ = Delete::remove_chains(&db_conn).await;
+		let _ = Delete::remove_tokens(&db_conn).await;
 		// let _ = Delete::remove_tickets(&db_conn).await;
-		// let _ = Delete::remove_token_on_chains(&db_conn).await;
-		// let _ = Delete::remove_token_ledger_id_on_chain(&db_conn).await;
+		let _ = Delete::remove_token_on_chains(&db_conn).await;
+		let _ = Delete::remove_token_ledger_id_on_chain(&db_conn).await;
 		// let _ = Delete::remove_deleted_mint_tickets(&db_conn).await;
 		// let _ = Delete::remove_pending_mint_tickets(&db_conn).await;
-		// let _ = Delete::remove_token_volumes(&db_conn).await;
-		// let _ = Delete::remove_bridge_fee_log(&db_conn).await;
+		let _ = Delete::remove_token_volumes(&db_conn).await;
+		let _ = Delete::remove_bridge_fee_log(&db_conn).await;
+		let _ = Delete::remove_launch_pad(&db_conn).await;
 	};
+
+	// let _sync_ticket_status_from_sui = spawn_sync_task(
+	// 	db_conn.clone(),
+	// 	TICKET_SYNC_INTERVAL,
+	// 	|db_conn| async move { sui::sync_ticket_status_from_sui(&db_conn).await },
+	// );
 
 	let sync_chains_task =
 		spawn_sync_task(db_conn.clone(), CHAIN_SYNC_INTERVAL, |db_conn| async move {
@@ -97,12 +105,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		db_conn.clone(),
 		TOKEN_ON_CHAIN_SYNC_INTERVAL,
 		|db_conn| async move { hub::sync_tokens_on_chains(&db_conn).await },
-	);
-
-	let sync_ticket_status_from_sui = spawn_sync_task(
-		db_conn.clone(),
-		TICKET_SYNC_INTERVAL,
-		|db_conn| async move { sui::sync_ticket_status_from_sui(&db_conn).await },
 	);
 
 	let sync_ticket_status_from_doge = spawn_sync_task(
@@ -190,7 +192,8 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 	);
 
 	let _ = tokio::join!(
-		// remove_database,
+		remove_database,
+		// sync_ticket_status_from_sui,
 		sync_chains_task,
 		sync_tokens_task,
 		sync_tickets_task,
@@ -200,7 +203,6 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_all_token_ledger_id_from_cosmwasm,
 		sync_all_token_ledger_id_from_ton,
 		sync_tokens_on_chains_from_hub,
-		sync_ticket_status_from_sui,
 		sync_ticket_status_from_doge,
 		sync_ticket_status_from_solana_route,
 		sync_ticket_status_from_solana_custom,

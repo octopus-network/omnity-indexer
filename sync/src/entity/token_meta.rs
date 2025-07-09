@@ -15,16 +15,31 @@ pub struct Model {
 	pub icon: Option<String>,
 	pub metadata: Json,
 	pub dst_chains: Json,
+	pub launch_pad: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+	#[sea_orm(
+		belongs_to = "super::launch_pad::Entity",
+		from = "Column::LaunchPad",
+		to = "super::launch_pad::Column::LaunchPad",
+		on_update = "NoAction",
+		on_delete = "NoAction"
+	)]
+	LaunchPad,
 	#[sea_orm(has_many = "super::token_ledger_id_on_chain::Entity")]
 	TokenLedgerIdOnChain,
 	#[sea_orm(has_many = "super::token_on_chain::Entity")]
 	TokenOnChain,
 	#[sea_orm(has_one = "super::token_volume::Entity")]
 	TokenVolume,
+}
+
+impl Related<super::launch_pad::Entity> for Entity {
+	fn to() -> RelationDef {
+		Relation::LaunchPad.def()
+	}
 }
 
 impl Related<super::token_ledger_id_on_chain::Entity> for Entity {

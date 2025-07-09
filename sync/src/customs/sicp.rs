@@ -59,8 +59,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!("Syncing release token status from icp custom ... ");
-
+			info!("icp custom状态更新在工作 ... ");
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, ICP_CUSTOM_CHAIN_ID.to_owned()).await?;
 
@@ -70,8 +69,6 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 						agent.clone(),
 						canister_id,
 						"mint_token_status",
-						"Syncing mint token status from icp custom: ",
-						"  ",
 						None,
 						None,
 						"ICPCustomRelaseTokenStatus",
@@ -131,13 +128,12 @@ pub async fn sync_all_icrc_token_canister_id_from_sicp(db: &DbConn) -> Result<()
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
+			info!("token canister id from sicp状态更新在工作 ... ");
 			let token_canisters = Arg::V(Vec::<u8>::new())
 				.query_method(
 					agent.clone(),
 					canister_id,
 					"get_token_list",
-					"Syncing token canister id from sicp ...",
-					"  ",
 					None,
 					None,
 					"Vec<Token>",
@@ -159,7 +155,6 @@ pub async fn sync_all_icrc_token_canister_id_from_sicp(db: &DbConn) -> Result<()
 					.await?;
 				}
 			}
-
 			Ok(())
 		},
 	)

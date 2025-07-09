@@ -5,6 +5,7 @@ pub mod prelude;
 pub mod bridge_fee_log;
 pub mod chain_meta;
 pub mod deleted_mint_ticket;
+pub mod launch_pad;
 pub mod pending_ticket;
 pub mod sea_orm_active_enums;
 pub mod ticket;

@@ -31,7 +31,7 @@ pub enum TxStatus {
 
 pub async fn sync_ticket_status_from_sui(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("SUI_CANISTER_ID", |agent, canister_id| async move {
-		info!("Syncing release token status from sui ... ");
+		info!("sui状态更新在工作 ... ");
 		let unconfirmed_tickets =
 			Query::get_unconfirmed_tickets(db, SUI_CHAIN_ID.to_owned()).await?;
 

@@ -65,7 +65,7 @@ pub struct MintTokenRequest {
 }
 
 pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("Syncing release token status from Solana ... ");
+	info!("Solana状态更新在工作 ... ");
 	let unconfirmed_tickets =
 		Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 	for unconfirmed_ticket in unconfirmed_tickets {

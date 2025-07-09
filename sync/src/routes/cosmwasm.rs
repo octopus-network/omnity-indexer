@@ -17,10 +17,10 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 	db: &DbConn,
 ) -> Result<(), Box<dyn Error>> {
 	let osmosis_routes: Vec<OsmoRoute> = vec![
-		OsmoRoute {
-			canister: "OSMOSIS_TEST5_CHAIN_ID",
-			chain: "osmo-test-5".to_owned(),
-		},
+		// OsmoRoute {
+		// 	canister: "OSMOSIS_TEST5_CHAIN_ID",
+		// 	chain: "osmo-test-5".to_owned(),
+		// },
 		OsmoRoute {
 			canister: "OSMOSIS1_CHAIN_ID",
 			chain: "osmosis-1".to_owned(),
@@ -29,8 +29,7 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 
 	for osmosis_route in osmosis_routes.iter() {
 		with_omnity_canister(osmosis_route.canister, |agent, canister_id| async move {
-			info!("Syncing release token status from osmosis ... ");
-
+			info!("osmosis状态更新在工作 ... ");
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, osmosis_route.chain.clone()).await?;
 
@@ -40,8 +39,6 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 						agent.clone(),
 						canister_id,
 						"mint_token_status",
-						"Syncing mint token status from osmosis route ...",
-						"  ",
 						None,
 						None,
 						"MintTokenStatus",
@@ -50,7 +47,7 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 					.convert_to_mint_token_status();
 
 				if let MintTokenStatus::Finalized { tx_hash } = mint_osmosis_token_status {
-					let ticket_model = Mutation::update_ticket(
+					let _ticket_model = Mutation::update_ticket(
 						db,
 						unconfirmed_ticket.clone(),
 						Some(TicketStatus::Finalized),
@@ -62,10 +59,10 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 					)
 					.await?;
 
-					info!(
-						"osmosis route ticket id({:?}) status:{:?} and its hash is {:?} ",
-						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-					);
+					// info!(
+					// 	"osmosis route ticket id({:?}) status:{:?} and its hash is {:?} ",
+					// 	ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+					// );
 				}
 			}
 
@@ -78,13 +75,12 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 
 pub async fn sync_all_cosmwasm_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OSMOSIS1_CHAIN_ID", |agent, canister_id| async move {
+		info!("cosmwasm token_ledger_id_on_chain状态更新在工作 ... ");
 		let token_ledgers = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
 				canister_id,
 				"get_token_list",
-				"Syncing token ledger id from osmosis route ...",
-				"  ",
 				None,
 				None,
 				"Vec<CosmwasmTokenResp>",
@@ -105,7 +101,6 @@ pub async fn sync_all_cosmwasm_token_ledger_id_on_chain(db: &DbConn) -> Result<(
 						.await?;
 			}
 		}
-
 		Ok(())
 	})
 	.await?;

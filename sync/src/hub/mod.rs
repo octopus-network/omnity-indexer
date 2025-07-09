@@ -1,3 +1,4 @@
+use crate::entity::{launch_pad, token_meta};
 use crate::{
 	bridge_fee_log, pending_ticket,
 	service::{Mutation, Query},
@@ -9,15 +10,15 @@ use sea_orm::DbConn;
 use std::{error::Error, str};
 
 pub const FETCH_LIMIT: u64 = 50;
-pub const CHAIN_SYNC_INTERVAL: u64 = 1800;
-pub const TOKEN_SYNC_INTERVAL: u64 = 1800;
+pub const CHAIN_SYNC_INTERVAL: u64 = 1800; // 30 min
+pub const TOKEN_SYNC_INTERVAL: u64 = 1800; // 30 min
 pub const TICKET_SYNC_INTERVAL: u64 = 8;
-pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600;
-pub const TOKEN_VOLUME_SYNC_INTERVAL: u64 = 60;
+pub const TOKEN_ON_CHAIN_SYNC_INTERVAL: u64 = 600; // 10 min
+pub const TOKEN_VOLUME_SYNC_INTERVAL: u64 = 60; // 1 min
 pub const FEE_LOG_SYNC_INTERVAL: u64 = 18000; //5 hrs
 
 pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("Syncing with bridge fee log...");
+	info!("bridge fee log在工作...");
 
 	for chain in Query::get_all_chain(db).await? {
 		let mut date = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap_or_default();
@@ -78,7 +79,7 @@ pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 }
 
 pub async fn update_volume(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("Syncing with token volumes...");
+	info!("token volumes在工作 ...");
 
 	for token in Query::get_all_tokens(db).await? {
 		let token_tickets = Query::get_token_tickets(db, token.clone().token_id).await?;
@@ -181,13 +182,12 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // full synchronization for token on chain
 pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		info!("tokens on chains在工作 ... ");
 		let tokens_on_chains_size = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
 				canister_id,
 				"get_token_position_size",
-				"Syncing tokens on chains ...",
-				"Tokens on chain size: ",
 				None,
 				None,
 				"u64",
@@ -203,8 +203,6 @@ pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					agent.clone(),
 					canister_id,
 					"get_chain_tokens",
-					"Syncing tokens on chains from offset ...",
-					"Total tokens from chains from offset: ",
 					Some(from_seq),
 					Some(None::<TokenId>),
 					"Vec<OmnityTokenOnChain>",
@@ -229,13 +227,12 @@ pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		info!("同步chains在工作 ... ");
 		let chain_size = Arg::query_method(
 			Arg::V(Vec::<u8>::new()),
 			agent.clone(),
 			canister_id,
 			"get_chain_size",
-			"Syncing chains ...",
-			"Chain size: ",
 			None,
 			None,
 			"u64",
@@ -250,8 +247,6 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					agent.clone(),
 					canister_id,
 					"get_chain_metas",
-					"Syncing chains metadata ...",
-					"Sync chains from offset: ",
 					Some(FETCH_LIMIT),
 					None,
 					"Vec<ChainMeta>",
@@ -276,13 +271,12 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // full synchronization for tokens
 pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		info!("同步tokens在工作 ... ");
 		let token_size = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
 				canister_id,
 				"get_token_size",
-				"Syncing tokens ... ",
-				"Total token size: ",
 				None,
 				None,
 				"u64",
@@ -297,8 +291,6 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					agent.clone(),
 					canister_id,
 					"get_token_metas",
-					"Syncing tokens metadata ...",
-					" ",
 					Some(FETCH_LIMIT),
 					None,
 					"Vec<TokenMeta>",
@@ -311,7 +303,70 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			}
 
 			for token in tokens.iter() {
-				Mutation::save_token(db, token.clone().into()).await?;
+				with_omnity_canister(
+					"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
+					|agent, canister_id| async move {
+						let etching_canister = Arg::TokId(token.clone().name)
+							.query_method(
+								agent.clone(),
+								canister_id,
+								"query_etching_canister_by_runes",
+								None,
+								None,
+								"Option<String>",
+							)
+							.await?
+							.convert_to_string();
+
+						match etching_canister {
+							Some(canister) => {
+								// let mut launch_pad = String::new();
+								// info!("TTTTT {:?}/{:?}", &token.clone().name, &canister);
+								match canister.as_str() {
+									"u32fb-xyaaa-aaaaj-az4eq-cai" => {
+										// launch_pad.push_str("odin");
+										let launch_pad = "odin".to_string();
+										let launch_pad_model =
+											launch_pad::Model::new(launch_pad.clone(), canister);
+										Mutation::save_launch_pad(db, launch_pad_model).await?;
+
+										let updated_token =
+											token_meta::Model::new(token.clone(), Some(launch_pad));
+										Mutation::save_token(db, updated_token).await?;
+									}
+									"gga4m-4yaaa-aaaae-qakzq-cai" => {
+										// launch_pad.push_str("blockminer");
+										let launch_pad = "blockminer".to_string();
+										info!("RRRR {:?}/{:?}", &token.clone(), &launch_pad);
+										let launch_pad_model =
+											launch_pad::Model::new(launch_pad.clone(), canister);
+										Mutation::save_launch_pad(db, launch_pad_model).await?;
+
+										let updated_token =
+											token_meta::Model::new(token.clone(), Some(launch_pad));
+										Mutation::save_token(db, updated_token).await?;
+									}
+									_ => {
+										let updated_token =
+											token_meta::Model::new(token.clone(), None);
+										Mutation::save_token(db, updated_token).await?;
+									}
+								}
+
+								// let updated_token =
+								// 	token_meta::Model::new(token.clone(), Some(launch_pad));
+								// Mutation::save_token(db, updated_token).await?;
+							}
+							None => {
+								let updated_token = token_meta::Model::new(token.clone(), None);
+								Mutation::save_token(db, updated_token).await?;
+							}
+						}
+
+						Ok(())
+					},
+				)
+				.await?;
 			}
 			offset += tokens.len() as u64;
 		}
@@ -323,14 +378,13 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // increment synchronization for ledger tickets and full synchronization for pending tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
+		info!("同步tickets在工作 ... ");
 		// Ledger tickets
 		let ticket_size = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
 				canister_id,
 				"sync_ticket_size",
-				"Syncing tickets from hub ... ",
-				"Total ticket size: ",
 				None,
 				None,
 				"u64",
@@ -340,7 +394,7 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 		//get latest ticket seq from  postgresql database
 		let latest_ticket_seq = Query::get_latest_ticket(db).await?.map(|t| {
-			info!("Latest ticket : {:?}", t);
+			info!("Latest ticket : {:?}", t.ticket_id);
 			t.ticket_seq
 		});
 		let offset = match latest_ticket_seq {
@@ -366,8 +420,6 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					agent.clone(),
 					canister_id,
 					"sync_tickets",
-					"Syncing tickets from hub ...",
-					"Synced tickets : ",
 					Some(limit),
 					None,
 					"Vec<(u64, OmnityTicket)>",
@@ -418,8 +470,6 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 				agent.clone(),
 				canister_id,
 				"get_pending_ticket_size",
-				"Syncing pending tickets from hub ... ",
-				"Total pending ticket size: ",
 				None,
 				None,
 				"u64",
@@ -434,8 +484,6 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 					agent.clone(),
 					canister_id,
 					"get_pending_tickets",
-					"Synced pending tickets now :",
-					" ",
 					Some(FETCH_LIMIT),
 					None,
 					"Vec<(TicketId, OmnityTicket)>",

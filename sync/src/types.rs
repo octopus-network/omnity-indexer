@@ -1,8 +1,9 @@
 use crate::entity;
 use candid::CandidType;
 use entity::{
-	bridge_fee_log, chain_meta, deleted_mint_ticket, pending_ticket, sea_orm_active_enums, ticket,
-	token_ledger_id_on_chain, token_meta, token_on_chain, token_volume,
+	bridge_fee_log, chain_meta, deleted_mint_ticket, launch_pad, pending_ticket,
+	sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
+	token_volume,
 };
 use ic_cdk::api::call::RejectionCode;
 use serde::{Deserialize, Serialize};
@@ -92,8 +93,8 @@ impl core::fmt::Display for TokenMeta {
 	}
 }
 
-impl From<TokenMeta> for token_meta::Model {
-	fn from(token_meta: TokenMeta) -> Self {
+impl token_meta::Model {
+	pub fn new(token_meta: TokenMeta, launch_pad: Option<String>) -> Self {
 		token_meta::Model {
 			token_id: token_meta.token_id,
 			name: token_meta.name,
@@ -103,6 +104,7 @@ impl From<TokenMeta> for token_meta::Model {
 			icon: token_meta.icon,
 			metadata: json!(token_meta.metadata),
 			dst_chains: json!(token_meta.dst_chains),
+			launch_pad,
 		}
 	}
 }
@@ -119,6 +121,15 @@ impl From<token_meta::Model> for TokenMeta {
 			metadata: serde_json::from_value(model.metadata).expect("Failed to parse metadata"),
 			dst_chains: serde_json::from_value(model.dst_chains)
 				.expect("Failed to parse dst_chains"),
+		}
+	}
+}
+
+impl launch_pad::Model {
+	pub fn new(launch_pad: String, cainister_id: String) -> Self {
+		Self {
+			launch_pad,
+			cainister_id,
 		}
 	}
 }
@@ -460,27 +471,6 @@ impl core::fmt::Display for ticket::Model {
 	}
 }
 
-// impl pending_ticket::Model {
-// 	pub fn from_omnity_pending_ticket(
-// 		omnity_pending_ticket: OmnityTicket,
-// 		updated_memo: Option<String>,
-// 	) -> Self {
-// 		Self {
-// 			ticket_id: omnity_pending_ticket.ticket_id.to_owned(),
-// 			ticket_type: omnity_pending_ticket.ticket_type.into(),
-// 			ticket_time: omnity_pending_ticket.ticket_time as i64,
-// 			src_chain: omnity_pending_ticket.src_chain.to_owned(),
-// 			dst_chain: omnity_pending_ticket.dst_chain.to_owned(),
-// 			action: omnity_pending_ticket.action.into(),
-// 			token: omnity_pending_ticket.token.to_owned(),
-// 			amount: omnity_pending_ticket.amount.to_owned(),
-// 			sender: omnity_pending_ticket.sender.to_owned(),
-// 			receiver: omnity_pending_ticket.receiver.to_owned(),
-// 			memo: updated_memo,
-// 			ticket_index: Default::default(),
-// 		}
-// 	}
-// }
 impl pending_ticket::Model {
 	pub fn from_index(pending_index: i32) -> Self {
 		Self {
@@ -493,26 +483,6 @@ impl core::fmt::Display for pending_ticket::Model {
 		write!(f, "\nticket index:{}", self.ticket_index)
 	}
 }
-
-// impl core::fmt::Display for pending_ticket::Model {
-// 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-// 		write!(
-//             f,
-//             "\nticket id:{} \nticket type:{:?} \ncreated time:{} \nsrc chain:{} \ndst_chain:{}
-// \naction:{:?} \ntoken:{} \namount:{} \nsender:{:?} \nrecevier:{} \nmemo:{:?}",
-// self.ticket_id,             self.ticket_type,
-//             self.ticket_time,
-//             self.src_chain,
-//             self.dst_chain,
-//             self.action,
-//             self.token,
-//             self.amount,
-//             self.sender,
-//             self.receiver,
-//             self.memo,
-//         )
-// 	}
-// }
 
 impl From<ticket::Model> for deleted_mint_ticket::Model {
 	fn from(ticket: ticket::Model) -> Self {

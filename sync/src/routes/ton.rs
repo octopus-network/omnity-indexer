@@ -11,7 +11,7 @@ pub const TON_ROUTE_CHAIN_ID: &str = "Ton";
 
 pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("TON_CANISTER_ID", |agent, canister_id| async move {
-		info!("Syncing release token status from Ton ... ");
+		info!("Ton状态更新在工作 ... ");
 		let unconfirmed_tickets =
 			Query::get_unconfirmed_tickets(db, TON_ROUTE_CHAIN_ID.to_owned()).await?;
 		for unconfirmed_ticket in unconfirmed_tickets {
@@ -20,8 +20,6 @@ pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), B
 					agent.clone(),
 					canister_id,
 					"mint_token_status",
-					"Syncing mint token status from ton route ...",
-					" ",
 					None,
 					None,
 					"MintTokenStatus",
@@ -56,13 +54,12 @@ pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), B
 
 pub async fn sync_all_ton_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("TON_CANISTER_ID", |agent, canister_id| async move {
+		info!("ton token ledger id on chain状态更新在工作 ... ");
 		let token_ledgers = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
 				canister_id,
 				"get_token_list",
-				"Syncing token ledger id from ton routes ...",
-				"  ",
 				None,
 				None,
 				"Vec<TonTokenResp>",

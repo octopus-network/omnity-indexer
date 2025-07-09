@@ -85,7 +85,6 @@ pub async fn sync_all_token_ledger_id_from_evm_route(db: &DbConn) -> Result<(), 
 }
 
 pub async fn sync_all_tickets_status_from_evm_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("Syncing release token status from evm route ... ");
 	let evm_routes = EvmRoutes::new();
 
 	for evm_route in evm_routes.routes.iter() {
@@ -125,13 +124,12 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 	chain: ChainId,
 ) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(canister, |agent, canister_id| async move {
+		info!("evm token ledger id on chain在工作 ... ");
 		let token_ledgers = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
 				canister_id,
 				"get_token_list",
-				"Syncing token ledger id from evm routes ...",
-				"  ",
 				None,
 				None,
 				"Vec<TokenResp>",
@@ -145,7 +143,6 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 					token_resp.token_id,
 					evm_contract.to_owned(),
 				);
-				// Save to the database
 				let _token_ledger_id_on_chain =
 					Mutation::save_all_token_ledger_id_on_chain(db, token_ledger_id_on_chain_model)
 						.await?;
@@ -171,13 +168,12 @@ async fn sync_ticket_status_from_evm_route(
 	ticket: ticket::Model,
 ) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(canister, |agent, canister_id| async move {
+		info!("evm状态更新在工作 ... ");
 		let mint_evm_token_status = Arg::TI(ticket.ticket_id.clone())
 			.query_method(
 				agent.clone(),
 				canister_id,
 				"mint_token_status",
-				"Syncing mint token status from evm route ...",
-				"Mint token status from evm route result: ",
 				None,
 				None,
 				"MintTokenStatus",
