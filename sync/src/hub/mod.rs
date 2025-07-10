@@ -1,4 +1,4 @@
-use crate::entity::{launch_pad, token_meta};
+use crate::entity::{launchpad, token_meta};
 use crate::{
 	bridge_fee_log, pending_ticket,
 	service::{Mutation, Query},
@@ -320,14 +320,11 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 						match etching_canister {
 							Some(canister) => {
-								// let mut launch_pad = String::new();
-								// info!("TTTTT {:?}/{:?}", &token.clone().name, &canister);
 								match canister.as_str() {
 									"u32fb-xyaaa-aaaaj-az4eq-cai" => {
-										// launch_pad.push_str("odin");
 										let launch_pad = "odin".to_string();
 										let launch_pad_model =
-											launch_pad::Model::new(launch_pad.clone(), canister);
+											launchpad::Model::new(launch_pad.clone(), canister);
 										Mutation::save_launch_pad(db, launch_pad_model).await?;
 
 										let updated_token =
@@ -335,11 +332,9 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 										Mutation::save_token(db, updated_token).await?;
 									}
 									"gga4m-4yaaa-aaaae-qakzq-cai" => {
-										// launch_pad.push_str("blockminer");
 										let launch_pad = "blockminer".to_string();
-										info!("RRRR {:?}/{:?}", &token.clone(), &launch_pad);
 										let launch_pad_model =
-											launch_pad::Model::new(launch_pad.clone(), canister);
+											launchpad::Model::new(launch_pad.clone(), canister);
 										Mutation::save_launch_pad(db, launch_pad_model).await?;
 
 										let updated_token =

@@ -1,11 +1,11 @@
 use crate::entity::sea_orm_active_enums::{TicketStatus, TxAction};
 use crate::entity::{
-	bridge_fee_log, chain_meta, deleted_mint_ticket, launch_pad, pending_ticket, ticket,
+	bridge_fee_log, chain_meta, deleted_mint_ticket, launchpad, pending_ticket, ticket,
 	token_ledger_id_on_chain, token_meta, token_on_chain, token_volume,
 };
 use crate::entity::{
 	bridge_fee_log::Entity as BridgeFeeLog, chain_meta::Entity as ChainMeta,
-	deleted_mint_ticket::Entity as DeletedMintTicket, launch_pad::Entity as LaunchPad,
+	deleted_mint_ticket::Entity as DeletedMintTicket, launchpad::Entity as Launchpad,
 	pending_ticket::Entity as PendingTicket, ticket::Entity as Ticket,
 	token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain, token_meta::Entity as TokenMeta,
 	token_on_chain::Entity as TokenOnChain, token_volume::Entity as TokenVolume,
@@ -235,8 +235,8 @@ impl Delete {
 	}
 
 	pub async fn remove_launch_pad(db: &DbConn) -> Result<DeleteResult, DbErr> {
-		LaunchPad::delete_many()
-			.filter(Condition::all().add(launch_pad::Column::LaunchPad.is_not_null()))
+		Launchpad::delete_many()
+			.filter(Condition::all().add(launchpad::Column::Launchpad.is_not_null()))
 			.exec(db)
 			.await
 	}
@@ -483,23 +483,23 @@ impl Mutation {
 
 	pub async fn save_launch_pad(
 		db: &DbConn,
-		launch_pad: launch_pad::Model,
-	) -> Result<launch_pad::Model, DbErr> {
-		let active_model: launch_pad::ActiveModel = launch_pad.clone().into();
-		let on_conflict = OnConflict::column(launch_pad::Column::LaunchPad)
+		launchpad: launchpad::Model,
+	) -> Result<launchpad::Model, DbErr> {
+		let active_model: launchpad::ActiveModel = launchpad.clone().into();
+		let on_conflict = OnConflict::column(launchpad::Column::Launchpad)
 			.do_nothing()
 			.to_owned();
-		let insert_result = LaunchPad::insert(active_model.clone())
+		let insert_result = Launchpad::insert(active_model.clone())
 			.on_conflict(on_conflict)
 			.exec(db)
 			.await;
 		match insert_result {
 			Ok(ret) => {
-				info!("insert launch pad result : {:?}", ret);
+				info!("insert launchpad result : {:?}", ret);
 			}
 			Err(_) => {}
 		}
-		Ok(launch_pad::Model { ..launch_pad })
+		Ok(launchpad::Model { ..launchpad })
 	}
 
 	pub async fn update_ticket(

@@ -45,7 +45,7 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		// let _ = Delete::remove_deleted_mint_tickets(&db_conn).await;
 		// let _ = Delete::remove_pending_mint_tickets(&db_conn).await;
 		let _ = Delete::remove_token_volumes(&db_conn).await;
-		let _ = Delete::remove_bridge_fee_log(&db_conn).await;
+		// let _ = Delete::remove_bridge_fee_log(&db_conn).await;
 		let _ = Delete::remove_launch_pad(&db_conn).await;
 	};
 

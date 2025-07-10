@@ -95,15 +95,15 @@ impl MigrationTrait for Migration {
 		manager
 			.create_table(
 				Table::create()
-					.table(LaunchPad::Table)
+					.table(Launchpad::Table)
 					.if_not_exists()
 					.col(
-						ColumnDef::new(LaunchPad::LaunchPad)
+						ColumnDef::new(Launchpad::Launchpad)
 							.string()
 							.not_null()
 							.primary_key(),
 					)
-					.col(ColumnDef::new(LaunchPad::CainisterId).string().not_null())
+					.col(ColumnDef::new(Launchpad::CainisterId).string().not_null())
 					.to_owned(),
 			)
 			.await?;
@@ -131,12 +131,12 @@ impl MigrationTrait for Migration {
 					.col(ColumnDef::new(TokenMeta::Icon).text().null())
 					.col(ColumnDef::new(TokenMeta::Metadata).json().not_null())
 					.col(ColumnDef::new(TokenMeta::DstChains).json().not_null())
-					.col(ColumnDef::new(TokenMeta::LaunchPad).string().null())
+					.col(ColumnDef::new(TokenMeta::Launchpad).string().null())
 					.foreign_key(
 						ForeignKey::create()
 							.name("fk_launch_pad")
-							.from(TokenMeta::Table, TokenMeta::LaunchPad)
-							.to(LaunchPad::Table, LaunchPad::LaunchPad),
+							.from(TokenMeta::Table, TokenMeta::Launchpad)
+							.to(Launchpad::Table, Launchpad::Launchpad),
 					)
 					.to_owned(),
 			)
@@ -233,7 +233,7 @@ pub enum TokenMeta {
 	Icon,
 	Metadata,
 	DstChains,
-	LaunchPad,
+	Launchpad,
 }
 
 #[derive(DeriveIden)]
@@ -324,8 +324,8 @@ pub enum TicketStatus {
 
 //2025.07.09
 #[derive(DeriveIden)]
-pub enum LaunchPad {
+pub enum Launchpad {
 	Table,
-	LaunchPad,
+	Launchpad,
 	CainisterId,
 }

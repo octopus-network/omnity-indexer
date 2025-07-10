@@ -3,10 +3,10 @@
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(table_name = "launch_pad")]
+#[sea_orm(table_name = "launchpad")]
 pub struct Model {
 	#[sea_orm(primary_key, auto_increment = false)]
-	pub launch_pad: String,
+	pub launchpad: String,
 	pub cainister_id: String,
 }
 

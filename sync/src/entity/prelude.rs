@@ -3,7 +3,7 @@
 pub use super::bridge_fee_log::Entity as BridgeFeeLog;
 pub use super::chain_meta::Entity as ChainMeta;
 pub use super::deleted_mint_ticket::Entity as DeletedMintTicket;
-pub use super::launch_pad::Entity as LaunchPad;
+pub use super::launchpad::Entity as Launchpad;
 pub use super::pending_ticket::Entity as PendingTicket;
 pub use super::ticket::Entity as Ticket;
 pub use super::token_ledger_id_on_chain::Entity as TokenLedgerIdOnChain;

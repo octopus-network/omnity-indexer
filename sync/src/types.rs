@@ -1,7 +1,7 @@
 use crate::entity;
 use candid::CandidType;
 use entity::{
-	bridge_fee_log, chain_meta, deleted_mint_ticket, launch_pad, pending_ticket,
+	bridge_fee_log, chain_meta, deleted_mint_ticket, launchpad, pending_ticket,
 	sea_orm_active_enums, ticket, token_ledger_id_on_chain, token_meta, token_on_chain,
 	token_volume,
 };
@@ -94,7 +94,7 @@ impl core::fmt::Display for TokenMeta {
 }
 
 impl token_meta::Model {
-	pub fn new(token_meta: TokenMeta, launch_pad: Option<String>) -> Self {
+	pub fn new(token_meta: TokenMeta, launchpad: Option<String>) -> Self {
 		token_meta::Model {
 			token_id: token_meta.token_id,
 			name: token_meta.name,
@@ -104,7 +104,7 @@ impl token_meta::Model {
 			icon: token_meta.icon,
 			metadata: json!(token_meta.metadata),
 			dst_chains: json!(token_meta.dst_chains),
-			launch_pad,
+			launchpad,
 		}
 	}
 }
@@ -125,10 +125,10 @@ impl From<token_meta::Model> for TokenMeta {
 	}
 }
 
-impl launch_pad::Model {
-	pub fn new(launch_pad: String, cainister_id: String) -> Self {
+impl launchpad::Model {
+	pub fn new(launchpad: String, cainister_id: String) -> Self {
 		Self {
-			launch_pad,
+			launchpad,
 			cainister_id,
 		}
 	}
