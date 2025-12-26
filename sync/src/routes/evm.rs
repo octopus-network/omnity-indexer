@@ -2,7 +2,7 @@ use crate::entity::{sea_orm_active_enums::TicketStatus, ticket};
 use crate::routes::MintTokenStatus;
 use crate::service::{Mutation, Query};
 use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg, ChainId};
-use log::info;
+// use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -21,42 +21,42 @@ impl EvmRoutes {
 	pub fn new() -> Self {
 		Self {
 			routes: vec![
-				EvmRoute {
-					canister: "BEVM_CHAIN_ID",
-					chain: "bevm".to_owned(),
-				},
+				// EvmRoute {
+				// 	canister: "BEVM_CHAIN_ID",
+				// 	chain: "bevm".to_owned(),
+				// },
 				EvmRoute {
 					canister: "BITLAYER_CHAIN_ID",
 					chain: "Bitlayer".to_owned(),
 				},
-				EvmRoute {
-					canister: "XLAYER_CHAIN_ID",
-					chain: "X Layer".to_owned(),
-				},
-				EvmRoute {
-					canister: "BSQUARE_CHAIN_ID",
-					chain: "B² Network".to_owned(),
-				},
-				EvmRoute {
-					canister: "MERLIN_CHAIN_ID",
-					chain: "Merlin".to_owned(),
-				},
-				EvmRoute {
-					canister: "BOB_CHAIN_ID",
-					chain: "Bob".to_owned(),
-				},
-				EvmRoute {
-					canister: "ROOTSTOCK_CHAIN_ID",
-					chain: "RootStock".to_owned(),
-				},
+				// EvmRoute {
+				// 	canister: "XLAYER_CHAIN_ID",
+				// 	chain: "X Layer".to_owned(),
+				// },
+				// EvmRoute {
+				// 	canister: "BSQUARE_CHAIN_ID",
+				// 	chain: "B² Network".to_owned(),
+				// },
+				// EvmRoute {
+				// 	canister: "MERLIN_CHAIN_ID",
+				// 	chain: "Merlin".to_owned(),
+				// },
+				// EvmRoute {
+				// 	canister: "BOB_CHAIN_ID",
+				// 	chain: "Bob".to_owned(),
+				// },
+				// EvmRoute {
+				// 	canister: "ROOTSTOCK_CHAIN_ID",
+				// 	chain: "RootStock".to_owned(),
+				// },
 				EvmRoute {
 					canister: "BITFINITY_CHAIN_ID",
 					chain: "Bitfinity".to_owned(),
 				},
-				EvmRoute {
-					canister: "AILAYER_CHAIN_ID",
-					chain: "AILayer".to_owned(),
-				},
+				// EvmRoute {
+				// 	canister: "AILAYER_CHAIN_ID",
+				// 	chain: "AILayer".to_owned(),
+				// },
 				EvmRoute {
 					canister: "EVM_CANISTER_ID",
 					chain: "Ethereum".to_owned(),
@@ -124,7 +124,7 @@ async fn sync_all_evm_token_ledger_id_on_chain(
 	chain: ChainId,
 ) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(canister, |agent, canister_id| async move {
-		info!("evm token ledger id on chain在工作 ... ");
+		// info!("evm token ledger id on chain在工作 ... ");
 		let token_ledgers = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
@@ -168,7 +168,7 @@ async fn sync_ticket_status_from_evm_route(
 	ticket: ticket::Model,
 ) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister(canister, |agent, canister_id| async move {
-		info!("evm状态更新在工作 ... ");
+		// info!("evm状态更新在工作 ... ");
 		let mint_evm_token_status = Arg::TI(ticket.ticket_id.clone())
 			.query_method(
 				agent.clone(),
@@ -182,7 +182,7 @@ async fn sync_ticket_status_from_evm_route(
 			.convert_to_mint_token_status();
 
 		if let MintTokenStatus::Finalized { tx_hash } = mint_evm_token_status {
-			if let Ok(ticket_model) = Mutation::update_ticket(
+			if let Ok(_ticket_model) = Mutation::update_ticket(
 				db,
 				ticket.clone(),
 				Some(TicketStatus::Finalized),
@@ -194,11 +194,11 @@ async fn sync_ticket_status_from_evm_route(
 			)
 			.await
 			{
-				info!(
-					"evm id({:?}) status:{:?} and its hash is {:?} ",
-					ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-				);
-			} else if let Ok(d_ticket_model) = Mutation::update_deleted_ticket_statu_and_tx_hash(
+				// info!(
+				// 	"evm id({:?}) status:{:?} and its hash is {:?} ",
+				// 	_ticket_model.ticket_id, _ticket_model.status, _ticket_model.tx_hash
+				// );
+			} else if let Ok(_d_ticket_model) = Mutation::update_deleted_ticket_statu_and_tx_hash(
 				db,
 				ticket.into(),
 				Some(tx_hash),
@@ -206,10 +206,10 @@ async fn sync_ticket_status_from_evm_route(
 			)
 			.await
 			{
-				info!(
-					"Deleted ticket id({:?}) status:{:?} and finalized on block {:?}",
-					d_ticket_model.ticket_id, d_ticket_model.status, d_ticket_model.tx_hash
-				);
+				// info!(
+				// 	"Deleted ticket id({:?}) status:{:?} and finalized on block {:?}",
+				// 	d_ticket_model.ticket_id, d_ticket_model.status, d_ticket_model.tx_hash
+				// );
 			}
 		}
 		Ok(())

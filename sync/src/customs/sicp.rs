@@ -1,6 +1,6 @@
 use crate::service::{Mutation, Query};
 use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg};
-use log::info;
+// use log::info;
 use reqwest::Client;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
@@ -59,7 +59,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!("icp custom状态更新在工作 ... ");
+			// info!("icp custom状态更新在工作 ... ");
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, ICP_CUSTOM_CHAIN_ID.to_owned()).await?;
 
@@ -98,7 +98,7 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 							}
 						}
 					}
-					if let Ok(ticket_model) = Mutation::update_ticket(
+					if let Ok(_ticket_model) = Mutation::update_ticket(
 						db,
 						unconfirmed_ticket.clone(),
 						Some(crate::entity::sea_orm_active_enums::TicketStatus::Finalized),
@@ -110,10 +110,10 @@ pub async fn sync_ticket_status_from_sicp(db: &DbConn) -> Result<(), Box<dyn Err
 					)
 					.await
 					{
-						info!(
-							"icp custom ticket id({:?}) and its hash is {:?} ",
-							ticket_model.ticket_id, ticket_model.tx_hash
-						);
+						// info!(
+						// 	"icp custom ticket id({:?}) and its hash is {:?} ",
+						// 	ticket_model.ticket_id, ticket_model.tx_hash
+						// );
 					}
 				}
 			}
@@ -128,7 +128,7 @@ pub async fn sync_all_icrc_token_canister_id_from_sicp(db: &DbConn) -> Result<()
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!("token canister id from sicp状态更新在工作 ... ");
+			// info!("token canister id from sicp状态更新在工作 ... ");
 			let token_canisters = Arg::V(Vec::<u8>::new())
 				.query_method(
 					agent.clone(),

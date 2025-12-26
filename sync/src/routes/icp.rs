@@ -1,7 +1,7 @@
 use crate::entity::{sea_orm_active_enums::TicketStatus, ticket};
 use crate::service::{Mutation, Query};
 use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg};
-use log::info;
+// use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -18,7 +18,7 @@ pub async fn sync_all_icp_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Bo
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!("icp token ledger id on chain在工作 ... ");
+			// info!("icp token ledger id on chain在工作 ... ");
 			for token in Query::get_all_tokens(db).await? {
 				let token_ledger = Arg::TokId(token.clone().token_id)
 					.query_method(
@@ -79,7 +79,7 @@ async fn ticket_status_from_icp_route(
 	with_omnity_canister(
 		"OMNITY_ROUTES_ICP_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!("icp route状态更新在工作 ... ");
+			// info!("icp route状态更新在工作 ... ");
 			let mint_token_status = Arg::TI(ticket.ticket_id.clone())
 				.query_method(
 					agent.clone(),
@@ -103,7 +103,7 @@ async fn ticket_status_from_icp_route(
 					let tx_hash = rep.contract_id + "_" + &block_index.to_string();
 
 					// update ticket status to finalized
-					if let Ok(ticket_model) = Mutation::update_ticket(
+					if let Ok(_ticket_model) = Mutation::update_ticket(
 						db,
 						ticket.clone(),
 						Some(TicketStatus::Finalized),
@@ -115,11 +115,11 @@ async fn ticket_status_from_icp_route(
 					)
 					.await
 					{
-						info!(
-							"Ticket id({:?}) status:{:?} and finalized on block {:?}",
-							ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-						);
-					} else if let Ok(d_ticket_model) =
+						// info!(
+						// 	"Ticket id({:?}) status:{:?} and finalized on block {:?}",
+						// 	ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+						// );
+					} else if let Ok(_d_ticket_model) =
 						Mutation::update_deleted_ticket_statu_and_tx_hash(
 							db,
 							ticket.into(),
@@ -128,10 +128,10 @@ async fn ticket_status_from_icp_route(
 						)
 						.await
 					{
-						info!(
-							"Deleted ticket id({:?}) status:{:?} and finalized on block {:?}",
-							d_ticket_model.ticket_id, d_ticket_model.status, d_ticket_model.tx_hash
-						);
+						// info!(
+						// 	"Deleted ticket id({:?}) status:{:?} and finalized on block {:?}",
+						// 	d_ticket_model.ticket_id, d_ticket_model.status, d_ticket_model.tx_hash
+						// );
 					}
 				}
 			}

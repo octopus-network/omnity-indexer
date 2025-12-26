@@ -2,7 +2,7 @@ use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::routes::MintTokenStatus;
 use crate::service::{Mutation, Query};
 use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg};
-use log::info;
+// use log::info;
 use sea_orm::DbConn;
 use std::error::Error;
 use std::str;
@@ -11,7 +11,7 @@ pub const TON_ROUTE_CHAIN_ID: &str = "Ton";
 
 pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("TON_CANISTER_ID", |agent, canister_id| async move {
-		info!("Ton状态更新在工作 ... ");
+		// info!("Ton状态更新在工作 ... ");
 		let unconfirmed_tickets =
 			Query::get_unconfirmed_tickets(db, TON_ROUTE_CHAIN_ID.to_owned()).await?;
 		for unconfirmed_ticket in unconfirmed_tickets {
@@ -28,7 +28,7 @@ pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), B
 				.convert_to_mint_token_status();
 
 			if let MintTokenStatus::Finalized { tx_hash } = mint_ton_token_status {
-				if let Ok(ticket_model) = Mutation::update_ticket(
+				if let Ok(_ticket_model) = Mutation::update_ticket(
 					db,
 					unconfirmed_ticket.clone(),
 					Some(TicketStatus::Finalized),
@@ -40,10 +40,10 @@ pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), B
 				)
 				.await
 				{
-					info!(
-						"ton ticket id({:?}) status:{:?} and its hash is {:?} ",
-						ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
-					);
+					// info!(
+					// 	"ton ticket id({:?}) status:{:?} and its hash is {:?} ",
+					// 	ticket_model.ticket_id, ticket_model.status, ticket_model.tx_hash
+					// );
 				}
 			}
 		}
@@ -54,7 +54,7 @@ pub async fn sync_all_tickets_status_from_ton_route(db: &DbConn) -> Result<(), B
 
 pub async fn sync_all_ton_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("TON_CANISTER_ID", |agent, canister_id| async move {
-		info!("ton token ledger id on chain状态更新在工作 ... ");
+		// info!("ton token ledger id on chain状态更新在工作 ... ");
 		let token_ledgers = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),

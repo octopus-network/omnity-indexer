@@ -358,13 +358,13 @@ impl Mutation {
 			.exec(db)
 			.await;
 		match insert_result {
-			Ok(ret) => {
-				info!("insert ticket result : {:?}", ret);
+			Ok(_ret) => {
+				// info!("insert ticket result : {:?}", ret);
 			}
 			Err(_) => {
 				if let Some(t) = Query::get_ticket_by_id(db, ticket.clone().ticket_id).await? {
 					if t.ticket_seq == None && t.status == TicketStatus::Finalized {
-						let model = Self::update_ticket(
+						let _model = Self::update_ticket(
 							db,
 							ticket.clone(),
 							None,
@@ -375,7 +375,7 @@ impl Mutation {
 							Some(ticket.clone().ticket_seq),
 						)
 						.await?;
-						info!("update ticket seq result {:?}", model.ticket_seq);
+						// info!("update ticket seq result {:?}", model.ticket_seq);
 					}
 				}
 			}
@@ -397,8 +397,8 @@ impl Mutation {
 			.exec(db)
 			.await;
 		match insert_result {
-			Ok(ret) => {
-				info!("insert deleted mint ticket result : {:?}", ret);
+			Ok(_ret) => {
+				// info!("insert deleted mint ticket result : {:?}", ret);
 			}
 			Err(_) => {}
 		}

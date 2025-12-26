@@ -18,7 +18,7 @@ pub const TOKEN_VOLUME_SYNC_INTERVAL: u64 = 60; // 1 min
 pub const FEE_LOG_SYNC_INTERVAL: u64 = 18000; //5 hrs
 
 pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("bridge fee log在工作...");
+	// info!("bridge fee log在工作...");
 
 	for chain in Query::get_all_chain(db).await? {
 		let mut date = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap_or_default();
@@ -79,7 +79,7 @@ pub async fn sync_bridge_fee_log(db: &DbConn) -> Result<(), Box<dyn Error>> {
 }
 
 pub async fn update_volume(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("token volumes在工作 ...");
+	// info!("token volumes在工作 ...");
 
 	for token in Query::get_all_tokens(db).await? {
 		let token_tickets = Query::get_token_tickets(db, token.clone().token_id).await?;
@@ -102,7 +102,7 @@ pub async fn update_volume(db: &DbConn) -> Result<(), Box<dyn Error>> {
 pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	// Find the tickets with no sender
 	let null_sender_tickets = Query::get_null_sender_tickets(db).await?;
-	info!("There are {:?} senders are null", null_sender_tickets.len());
+	// info!("There are {:?} senders are null", null_sender_tickets.len());
 	if null_sender_tickets.len() > 0 {
 		loop {
 			for ticket in null_sender_tickets.clone() {
@@ -117,7 +117,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 								let mut a = match serde_json::from_str::<serde_json::Value>(&body) {
 									Ok(v) => v,
 									Err(_) => {
-										let updated_ticket = Mutation::update_ticket(
+										let _updated_ticket = Mutation::update_ticket(
 											db,
 											ticket.clone(),
 											None,
@@ -128,10 +128,10 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 											None,
 										)
 										.await?;
-										info!(
-											"Ticket id({:?}) has changed its sender to {:?}",
-											ticket.ticket_id, updated_ticket.sender
-										);
+										// info!(
+										// 	"Ticket id({:?}) has changed its sender to {:?}",
+										// 	ticket.ticket_id, updated_ticket.sender
+										// );
 										continue;
 									}
 								};
@@ -142,7 +142,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 									{
 										let _sender = sender.to_string();
 										// Insert the sender into the ticket meta
-										let updated_ticket = Mutation::update_ticket(
+										let _updated_ticket = Mutation::update_ticket(
 											db,
 											ticket.clone(),
 											None,
@@ -154,10 +154,10 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 										)
 										.await?;
 
-										info!(
-											"Ticket id({:?}) has changed its sender to {:?}",
-											ticket.ticket_id, updated_ticket.sender
-										);
+										// info!(
+										// 	"Ticket id({:?}) has changed its sender to {:?}",
+										// 	ticket.ticket_id, updated_ticket.sender
+										// );
 									}
 								};
 							}
@@ -182,7 +182,7 @@ pub async fn update_sender(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // full synchronization for token on chain
 pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		info!("tokens on chains在工作 ... ");
+		// info!("tokens on chains在工作 ... ");
 		let tokens_on_chains_size = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
@@ -227,7 +227,7 @@ pub async fn sync_tokens_on_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // full synchronization for chains
 pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		info!("同步chains在工作 ... ");
+		// info!("同步chains在工作 ... ");
 		let chain_size = Arg::query_method(
 			Arg::V(Vec::<u8>::new()),
 			agent.clone(),
@@ -271,7 +271,7 @@ pub async fn sync_chains(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // full synchronization for tokens
 pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		info!("同步tokens在工作 ... ");
+		// info!("同步tokens在工作 ... ");
 		let token_size = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),
@@ -373,7 +373,7 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 // increment synchronization for ledger tickets and full synchronization for pending tickets
 pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OMNITY_HUB_CANISTER_ID", |agent, canister_id| async move {
-		info!("同步tickets在工作 ... ");
+		// info!("同步tickets在工作 ... ");
 		// Ledger tickets
 		let ticket_size = Arg::V(Vec::<u8>::new())
 			.query_method(
@@ -389,23 +389,23 @@ pub async fn sync_tickets(db: &DbConn) -> Result<(), Box<dyn Error>> {
 
 		//get latest ticket seq from  postgresql database
 		let latest_ticket_seq = Query::get_latest_ticket(db).await?.map(|t| {
-			info!("Latest ticket : {:?}", t.ticket_id);
+			// info!("Latest ticket : {:?}", t.ticket_id);
 			t.ticket_seq
 		});
 		let offset = match latest_ticket_seq {
 			Some(t) => {
-				info!("Latest ticket seq: {:?}", t);
+				// info!("Latest ticket seq: {:?}", t);
 				// the latest ticket seq may be Some or may be None
 				t.map_or(0u64, |t| (t + 1) as u64)
 			}
 			None => {
-				info!("No tickets found");
+				// info!("No tickets found");
 				0u64
 			}
 		};
 
-		let tickets_to_fetch = ticket_size.saturating_sub(offset);
-		info!("Need to fetch tickets size: {:?}", tickets_to_fetch);
+		// let tickets_to_fetch = ticket_size.saturating_sub(offset);
+		// info!("Need to fetch tickets size: {:?}", tickets_to_fetch);
 
 		let mut limit = FETCH_LIMIT;
 		for next_offset in (offset..ticket_size).step_by(limit as usize) {

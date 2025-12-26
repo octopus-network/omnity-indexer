@@ -65,7 +65,7 @@ pub struct MintTokenRequest {
 }
 
 pub async fn sync_ticket_status_from_solana_route(db: &DbConn) -> Result<(), Box<dyn Error>> {
-	info!("Solana状态更新在工作 ... ");
+	// info!("Solana状态更新在工作 ... ");
 	let unconfirmed_tickets =
 		Query::get_unconfirmed_tickets(db, SOLANA_ROUTE_CHAIN_ID.to_owned()).await?;
 	for unconfirmed_ticket in unconfirmed_tickets {
@@ -89,10 +89,10 @@ pub async fn ticket_status_from_solana_route(
 				.await?;
 
 			if let Ok(mint_token_req) = Decode!(&ret, Result<MintTokenRequest, CallError>)? {
-				info!(
-					"Solana Mint Token Status: {:?} ",
-					mint_token_req.clone().status
-				);
+				// info!(
+				// 	"Solana Mint Token Status: {:?} ",
+				// 	mint_token_req.clone().status
+				// );
 
 				match mint_token_req.status {
 					TxStatus::Finalized => {
@@ -109,7 +109,7 @@ pub async fn ticket_status_from_solana_route(
 						.await?;
 					}
 					TxStatus::Pending => {
-						info!("{:?} is Unknown in Solana", ticket.clone())
+						// info!("{:?} is Unknown in Solana", ticket.clone())
 					}
 					TxStatus::TxFailed { e } => {
 						info!("Solana error: {:?}  ", e)

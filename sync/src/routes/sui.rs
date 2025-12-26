@@ -31,7 +31,7 @@ pub enum TxStatus {
 
 pub async fn sync_ticket_status_from_sui(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("SUI_CANISTER_ID", |agent, canister_id| async move {
-		info!("sui状态更新在工作 ... ");
+		// info!("sui状态更新在工作 ... ");
 		let unconfirmed_tickets =
 			Query::get_unconfirmed_tickets(db, SUI_CHAIN_ID.to_owned()).await?;
 
@@ -59,10 +59,10 @@ pub async fn sync_ticket_status_from_sui(db: &DbConn) -> Result<(), Box<dyn Erro
 						.await?;
 					}
 					TxStatus::Pending => {
-						info!("{:?} is Unknown in sui", unconfirmed_ticket.clone())
+						// info!("{:?} is Unknown in sui", unconfirmed_ticket.clone())
 					}
 					TxStatus::New => {
-						info!("sui new ")
+						// info!("sui new ")
 					}
 					TxStatus::TxFailed { e } => {
 						info!("sui error: {:?}  ", e)

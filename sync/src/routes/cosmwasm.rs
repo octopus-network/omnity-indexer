@@ -2,7 +2,7 @@ use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::routes::MintTokenStatus;
 use crate::service::{Mutation, Query};
 use crate::{token_ledger_id_on_chain, with_omnity_canister, Arg, ChainId};
-use log::info;
+// use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -29,7 +29,7 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 
 	for osmosis_route in osmosis_routes.iter() {
 		with_omnity_canister(osmosis_route.canister, |agent, canister_id| async move {
-			info!("osmosis状态更新在工作 ... ");
+			// info!("osmosis状态更新在工作 ... ");
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, osmosis_route.chain.clone()).await?;
 
@@ -75,7 +75,7 @@ pub async fn sync_all_tickets_status_from_cosmwasm_route(
 
 pub async fn sync_all_cosmwasm_token_ledger_id_on_chain(db: &DbConn) -> Result<(), Box<dyn Error>> {
 	with_omnity_canister("OSMOSIS1_CHAIN_ID", |agent, canister_id| async move {
-		info!("cosmwasm token_ledger_id_on_chain状态更新在工作 ... ");
+		// info!("cosmwasm token_ledger_id_on_chain状态更新在工作 ... ");
 		let token_ledgers = Arg::V(Vec::<u8>::new())
 			.query_method(
 				agent.clone(),

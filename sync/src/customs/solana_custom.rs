@@ -1,6 +1,6 @@
 use crate::service::{Mutation, Query};
 use crate::{with_omnity_canister, Arg};
-use log::info;
+// use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -19,7 +19,7 @@ pub async fn sync_ticket_status_from_solana_custom(db: &DbConn) -> Result<(), Bo
 	with_omnity_canister(
 		"OMNITY_CUSTOMS_SOLANA_CANISTER_ID",
 		|agent, canister_id| async move {
-			info!("solana custom状态更新在工作 ... ");
+			// info!("solana custom状态更新在工作 ... ");
 
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, SOLANA_CUSTOM_CHAIN_ID.to_owned()).await?;

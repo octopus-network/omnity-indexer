@@ -2,7 +2,7 @@ use crate::entity::ticket;
 use crate::graphql::terms_amount::query_terms_amount;
 use crate::service::{Delete, Mutation, Query};
 use crate::{types::TicketId, with_omnity_canister, Arg, ChainId};
-use log::info;
+// use log::info;
 use sea_orm::DbConn;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -38,7 +38,7 @@ pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<
 
 	for btc_custom in btc_customs.iter() {
 		with_omnity_canister(btc_custom.canister, |agent, canister_id| async move {
-			info!("BTC状态更新在工作 ... ");
+			// info!("BTC状态更新在工作 ... ");
 			let unconfirmed_tickets =
 				Query::get_unconfirmed_tickets(db, btc_custom.chain.clone()).await?;
 
@@ -91,10 +91,10 @@ pub async fn sync_all_ticket_status_from_bitcoin(db: &DbConn) -> Result<(), Box<
 					)
 					.await?;
 				} else {
-					info!(
-						"btc ticket id({:?}) 状态: {:?}",
-						unconfirmed_ticket.ticket_id, mint_token_status
-					);
+					// info!(
+					// 	"btc ticket id({:?}) 状态: {:?}",
+					// 	unconfirmed_ticket.ticket_id, mint_token_status
+					// );
 				}
 			}
 			Ok(())
@@ -146,7 +146,7 @@ async fn process_deleted_mint_tickets(
 		if let Ok(_) =
 			Mutation::save_deleted_mint_ticket(db, ticket_should_be_removed.clone().into()).await
 		{
-			if let Ok(row) =
+			if let Ok(_row) =
 				Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await
 			{
 				match ticket_should_be_removed.clone().tx_hash {
@@ -173,11 +173,11 @@ async fn process_deleted_mint_tickets(
 						)
 						.await
 						{
-							info!(
-								"Ticket id({:?}) has been removed and {:?} row has been deleted",
-								ticket_should_be_removed.clone().ticket_id,
-								row
-							);
+							// info!(
+							// 	"Ticket id({:?}) has been removed and {:?} row has been deleted",
+							// 	ticket_should_be_removed.clone().ticket_id,
+							// 	row
+							// );
 						}
 					}
 					None => {
@@ -201,10 +201,10 @@ async fn process_deleted_mint_tickets(
 						)
 						.await?;
 						Mutation::update_ticket_tx_hash(db, mint_ticket.clone(), None).await?;
-						info!(
-							"Ticket id({:?}) is waiting to be finalized",
-							mint_ticket.clone().tx_hash
-						);
+						// info!(
+						// 	"Ticket id({:?}) is waiting to be finalized",
+						// 	mint_ticket.clone().tx_hash
+						// );
 					}
 				}
 			}
@@ -247,19 +247,19 @@ async fn process_deleted_mint_tickets(
 				.await?;
 			}
 			None => {
-				info!(
-					"Ticket id({:?}) is waiting to be finalized",
-					mint_ticket.clone().tx_hash
-				);
+				// info!(
+				// 	"Ticket id({:?}) is waiting to be finalized",
+				// 	mint_ticket.clone().tx_hash
+				// );
 			}
 		}
 	} else if let (Some(ticket_should_be_removed), Some(_removed_ticket)) =
 		(&existing_ticket, &removed_ticket)
 	{
-		if let Ok(row) =
+		if let Ok(_row) =
 			Delete::remove_ticket_by_id(db, ticket_should_be_removed.clone().ticket_id).await
 		{
-			info!("{:?} row has been deleted", row);
+			// info!("{:?} row has been deleted", row);
 		}
 		match &_removed_ticket.tx_hash {
 			Some(tx_hash) => {
@@ -276,10 +276,10 @@ async fn process_deleted_mint_tickets(
 				.await?;
 			}
 			None => {
-				info!(
-					"Ticket id({:?}) is waiting to be finalized",
-					mint_ticket.clone().tx_hash
-				);
+				// info!(
+				// 	"Ticket id({:?}) is waiting to be finalized",
+				// 	mint_ticket.clone().tx_hash
+				// );
 			}
 		}
 	}
