@@ -95,11 +95,11 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { cosmwasm::sync_all_cosmwasm_token_ledger_id_on_chain(&db_conn).await },
 	);
 
-	let sync_all_token_ledger_id_from_ton = spawn_sync_task(
-		db_conn.clone(),
-		TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
-		|db_conn| async move { ton::sync_all_ton_token_ledger_id_on_chain(&db_conn).await },
-	);
+	// let sync_all_token_ledger_id_from_ton = spawn_sync_task(
+	// 	db_conn.clone(),
+	// 	TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
+	// 	|db_conn| async move { ton::sync_all_ton_token_ledger_id_on_chain(&db_conn).await },
+	// );
 
 	let sync_tokens_on_chains_from_hub = spawn_sync_task(
 		db_conn.clone(),
@@ -119,11 +119,11 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		|db_conn| async move { solana::sync_ticket_status_from_solana_route(&db_conn).await },
 	);
 
-	let sync_ticket_status_from_solana_custom = spawn_sync_task(
-		db_conn.clone(),
-		TICKET_SYNC_INTERVAL,
-		|db_conn| async move { solana_custom::sync_ticket_status_from_solana_custom(&db_conn).await },
-	);
+	// let sync_ticket_status_from_solana_custom = spawn_sync_task(
+	// 	db_conn.clone(),
+	// 	TICKET_SYNC_INTERVAL,
+	// 	|db_conn| async move { solana_custom::sync_ticket_status_from_solana_custom(&db_conn).await },
+	// );
 
 	let sync_ticket_status_from_bitcoin = spawn_sync_task(
 		db_conn.clone(),
@@ -201,11 +201,11 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		sync_all_token_ledger_id_from_evm,
 		sync_all_token_canister_id_from_sicp,
 		sync_all_token_ledger_id_from_cosmwasm,
-		sync_all_token_ledger_id_from_ton,
+		// sync_all_token_ledger_id_from_ton,
 		sync_tokens_on_chains_from_hub,
 		sync_ticket_status_from_doge,
 		sync_ticket_status_from_solana_route,
-		sync_ticket_status_from_solana_custom,
+		// sync_ticket_status_from_solana_custom,
 		sync_ticket_status_from_bitcoin,
 		sync_ticket_status_from_sicp,
 		sync_ticket_status_from_eicp,
