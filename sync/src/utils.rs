@@ -137,7 +137,6 @@ pub enum ReturnType {
 	ICPCustomRelaseTokenStatus(ICPCustomRelaseTokenStatus),
 	DogecoinReleaseTokenStatus(DogecoinReleaseTokenStatus),
 	SolanaCustomReleaseTokenStatus(SolanaCustomReleaseTokenStatus),
-	String(Option<String>),
 	Non(()),
 }
 
@@ -242,12 +241,6 @@ impl ReturnType {
 		match self {
 			Self::SolanaCustomReleaseTokenStatus(solana) => return solana.clone(),
 			_ => return SolanaCustomReleaseTokenStatus::Unknown,
-		}
-	}
-	pub fn convert_to_string(&self) -> Option<String> {
-		match self {
-			Self::String(u) => return u.to_owned(),
-			_ => return None,
 		}
 	}
 }
@@ -394,10 +387,6 @@ impl Arg {
 					decoded_return_output,
 				));
 			}
-			"Option<String>" => {
-				let decoded_return_output = Decode!(&return_output, Option<String>)?;
-				return Ok(ReturnType::String(decoded_return_output));
-			}
 			_ => {
 				let _decoded_return_output =
 					Decode!(&return_output, Result<(), OmnityError>)?.unwrap();
@@ -417,14 +406,14 @@ mod tests {
 			Principal::from_text("7rvjr-3qaaa-aaaar-qaeyq-cai").expect("valid canister id");
 		let error: Box<dyn Error> = canister_query_error(
 			&canister_id,
-			"query_etching_canister_by_runes",
+			"get_token_metas",
 			"instruction limit exceeded, error code Some(\"IC0522\")",
 		)
 		.into();
 		let displayed = error.to_string();
 
 		assert!(displayed.contains("7rvjr-3qaaa-aaaar-qaeyq-cai"));
-		assert!(displayed.contains("method=query_etching_canister_by_runes"));
+		assert!(displayed.contains("method=get_token_metas"));
 		assert!(displayed.contains("IC0522"));
 	}
 

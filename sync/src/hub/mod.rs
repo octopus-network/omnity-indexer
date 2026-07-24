@@ -1,4 +1,4 @@
-use crate::entity::{launchpad, token_meta};
+use crate::entity::token_meta;
 use crate::{
 	bridge_fee_log, pending_ticket,
 	service::{Mutation, Query},
@@ -303,65 +303,8 @@ pub async fn sync_tokens(db: &DbConn) -> Result<(), Box<dyn Error>> {
 			}
 
 			for token in tokens.iter() {
-				with_omnity_canister(
-					"OMNITY_CUSTOMS_BITCOIN_CANISTER_ID",
-					|agent, canister_id| async move {
-						let etching_canister = Arg::TokId(token.clone().name)
-							.query_method(
-								agent.clone(),
-								canister_id,
-								"query_etching_canister_by_runes",
-								None,
-								None,
-								"Option<String>",
-							)
-							.await?
-							.convert_to_string();
-
-						match etching_canister {
-							Some(canister) => {
-								match canister.as_str() {
-									"u32fb-xyaaa-aaaaj-az4eq-cai" => {
-										let launch_pad = "odin".to_string();
-										let launch_pad_model =
-											launchpad::Model::new(launch_pad.clone(), canister);
-										Mutation::save_launch_pad(db, launch_pad_model).await?;
-
-										let updated_token =
-											token_meta::Model::new(token.clone(), Some(launch_pad));
-										Mutation::save_token(db, updated_token).await?;
-									}
-									"gga4m-4yaaa-aaaae-qakzq-cai" => {
-										let launch_pad = "blockminer".to_string();
-										let launch_pad_model =
-											launchpad::Model::new(launch_pad.clone(), canister);
-										Mutation::save_launch_pad(db, launch_pad_model).await?;
-
-										let updated_token =
-											token_meta::Model::new(token.clone(), Some(launch_pad));
-										Mutation::save_token(db, updated_token).await?;
-									}
-									_ => {
-										let updated_token =
-											token_meta::Model::new(token.clone(), None);
-										Mutation::save_token(db, updated_token).await?;
-									}
-								}
-
-								// let updated_token =
-								// 	token_meta::Model::new(token.clone(), Some(launch_pad));
-								// Mutation::save_token(db, updated_token).await?;
-							}
-							None => {
-								let updated_token = token_meta::Model::new(token.clone(), None);
-								Mutation::save_token(db, updated_token).await?;
-							}
-						}
-
-						Ok(())
-					},
-				)
-				.await?;
+				let token = token_meta::Model::new(token.clone(), None);
+				Mutation::save_token(db, token).await?;
 			}
 			offset += tokens.len() as u64;
 		}
