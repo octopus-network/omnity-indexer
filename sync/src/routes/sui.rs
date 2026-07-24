@@ -1,5 +1,6 @@
 use crate::entity::sea_orm_active_enums::TicketStatus;
 use crate::service::{Mutation, Query};
+use crate::utils::canister_query_error;
 use crate::{with_omnity_canister, CallError, TicketId};
 use candid::{Decode, Encode};
 use log::info;
@@ -41,7 +42,8 @@ pub async fn sync_ticket_status_from_sui(db: &DbConn) -> Result<(), Box<dyn Erro
 				.query(&canister_id, "mint_token_req")
 				.with_arg(args)
 				.call()
-				.await?;
+				.await
+				.map_err(|error| canister_query_error(&canister_id, "mint_token_req", error))?;
 
 			if let Ok(mint_token_req) = Decode!(&ret, Result<SuiMintTokenRequest, CallError>)? {
 				match mint_token_req.status {

@@ -6,9 +6,9 @@ use crate::hub::{
 use crate::routes::TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL;
 use crate::Delete;
 use crate::{
-	customs::{bitcoin, doge, sicp, solana_custom},
+	customs::{bitcoin, doge, sicp},
 	evm, hub,
-	routes::{cosmwasm, icp, solana, ton},
+	routes::{cosmwasm, icp, solana},
 };
 use futures::Future;
 use log::error;
@@ -24,11 +24,24 @@ where
 	F: Fn(Arc<DbConn>) -> Fut + Send + Sync + 'static,
 	Fut: Future<Output = Result<(), Box<dyn Error>>> + Send + 'static,
 {
+	spawn_named_sync_task("unnamed", db_conn, interval, sync_fn)
+}
+
+fn spawn_named_sync_task<F, Fut>(
+	task_name: &'static str,
+	db_conn: Arc<DbConn>,
+	interval: u64,
+	sync_fn: F,
+) -> tokio::task::JoinHandle<()>
+where
+	F: Fn(Arc<DbConn>) -> Fut + Send + Sync + 'static,
+	Fut: Future<Output = Result<(), Box<dyn Error>>> + Send + 'static,
+{
 	tokio::spawn(async move {
 		let mut interval = tokio::time::interval(Duration::from_secs(interval));
 		loop {
 			sync_fn(db_conn.clone()).await.unwrap_or_else(|e| {
-				error!("sync task error: {}", e);
+				error!("sync task error: task={}, error={}", task_name, e);
 			});
 			interval.tick().await;
 		}
@@ -49,143 +62,169 @@ pub async fn execute_sync_tasks(db_conn: Arc<DbConn>) {
 		let _ = Delete::remove_launch_pad(&db_conn).await;
 	};
 
-	// let _sync_ticket_status_from_sui = spawn_sync_task(
+	// let _sync_ticket_status_from_sui = spawn_named_sync_task(
+	// 	"sync_ticket_status_from_sui",
 	// 	db_conn.clone(),
 	// 	TICKET_SYNC_INTERVAL,
 	// 	|db_conn| async move { sui::sync_ticket_status_from_sui(&db_conn).await },
 	// );
 
-	let sync_chains_task =
-		spawn_sync_task(db_conn.clone(), CHAIN_SYNC_INTERVAL, |db_conn| async move {
-			hub::sync_chains(&db_conn).await
-		});
+	let sync_chains_task = spawn_named_sync_task(
+		"sync_chains",
+		db_conn.clone(),
+		CHAIN_SYNC_INTERVAL,
+		|db_conn| async move { hub::sync_chains(&db_conn).await },
+	);
 
-	let sync_tokens_task =
-		spawn_sync_task(db_conn.clone(), TOKEN_SYNC_INTERVAL, |db_conn| async move {
-			hub::sync_tokens(&db_conn).await
-		});
+	let sync_tokens_task = spawn_named_sync_task(
+		"sync_tokens",
+		db_conn.clone(),
+		TOKEN_SYNC_INTERVAL,
+		|db_conn| async move { hub::sync_tokens(&db_conn).await },
+	);
 
-	let sync_tickets_task = spawn_sync_task(
+	let sync_tickets_task = spawn_named_sync_task(
+		"sync_tickets",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { hub::sync_tickets(&db_conn).await },
 	);
 
-	let sync_all_token_ledger_id_on_chain_from_icp = spawn_sync_task(
+	let sync_all_token_ledger_id_on_chain_from_icp = spawn_named_sync_task(
+		"sync_all_icp_token_ledger_id_on_chain",
 		db_conn.clone(),
 		TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
 		|db_conn| async move { icp::sync_all_icp_token_ledger_id_on_chain(&db_conn).await },
 	);
 
-	let sync_all_token_ledger_id_from_evm = spawn_sync_task(
+	let sync_all_token_ledger_id_from_evm = spawn_named_sync_task(
+		"sync_all_token_ledger_id_from_evm_route",
 		db_conn.clone(),
 		TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
 		|db_conn| async move { evm::sync_all_token_ledger_id_from_evm_route(&db_conn).await },
 	);
 
-	let sync_all_token_canister_id_from_sicp = spawn_sync_task(
+	let sync_all_token_canister_id_from_sicp = spawn_named_sync_task(
+		"sync_all_icrc_token_canister_id_from_sicp",
 		db_conn.clone(),
 		TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
 		|db_conn| async move { sicp::sync_all_icrc_token_canister_id_from_sicp(&db_conn).await },
 	);
 
-	let sync_all_token_ledger_id_from_cosmwasm = spawn_sync_task(
+	let sync_all_token_ledger_id_from_cosmwasm = spawn_named_sync_task(
+		"sync_all_cosmwasm_token_ledger_id_on_chain",
 		db_conn.clone(),
 		TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
 		|db_conn| async move { cosmwasm::sync_all_cosmwasm_token_ledger_id_on_chain(&db_conn).await },
 	);
 
-	// let sync_all_token_ledger_id_from_ton = spawn_sync_task(
+	// let sync_all_token_ledger_id_from_ton = spawn_named_sync_task(
+	// 	"sync_all_ton_token_ledger_id_on_chain",
 	// 	db_conn.clone(),
 	// 	TOKEN_LEDGER_ID_ON_CHAIN_SYNC_INTERVAL,
 	// 	|db_conn| async move { ton::sync_all_ton_token_ledger_id_on_chain(&db_conn).await },
 	// );
 
-	let sync_tokens_on_chains_from_hub = spawn_sync_task(
+	let sync_tokens_on_chains_from_hub = spawn_named_sync_task(
+		"sync_tokens_on_chains",
 		db_conn.clone(),
 		TOKEN_ON_CHAIN_SYNC_INTERVAL,
 		|db_conn| async move { hub::sync_tokens_on_chains(&db_conn).await },
 	);
 
-	let sync_ticket_status_from_doge = spawn_sync_task(
+	let sync_ticket_status_from_doge = spawn_named_sync_task(
+		"sync_ticket_status_from_doge",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { doge::sync_ticket_status_from_doge(&db_conn).await },
 	);
 
-	let sync_ticket_status_from_solana_route = spawn_sync_task(
+	let sync_ticket_status_from_solana_route = spawn_named_sync_task(
+		"sync_ticket_status_from_solana_route",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { solana::sync_ticket_status_from_solana_route(&db_conn).await },
 	);
 
-	// let sync_ticket_status_from_solana_custom = spawn_sync_task(
+	// let sync_ticket_status_from_solana_custom = spawn_named_sync_task(
+	// 	"sync_ticket_status_from_solana_custom",
 	// 	db_conn.clone(),
 	// 	TICKET_SYNC_INTERVAL,
 	// 	|db_conn| async move { solana_custom::sync_ticket_status_from_solana_custom(&db_conn).await },
 	// );
 
-	let sync_ticket_status_from_bitcoin = spawn_sync_task(
+	let sync_ticket_status_from_bitcoin = spawn_named_sync_task(
+		"sync_all_ticket_status_from_bitcoin",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { bitcoin::sync_all_ticket_status_from_bitcoin(&db_conn).await },
 	);
 
-	let sync_ticket_status_from_sicp = spawn_sync_task(
+	let sync_ticket_status_from_sicp = spawn_named_sync_task(
+		"sync_ticket_status_from_sicp",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { sicp::sync_ticket_status_from_sicp(&db_conn).await },
 	);
 
-	let sync_ticket_status_from_eicp = spawn_sync_task(
+	let sync_ticket_status_from_eicp = spawn_named_sync_task(
+		"sync_ticket_status_from_icp_route",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { icp::sync_ticket_status_from_icp_route(&db_conn).await },
 	);
 
-	let sync_all_tickets_status_from_evm = spawn_sync_task(
+	let sync_all_tickets_status_from_evm = spawn_named_sync_task(
+		"sync_all_tickets_status_from_evm_route",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { evm::sync_all_tickets_status_from_evm_route(&db_conn).await },
 	);
 
-	let sync_all_tickets_status_from_cosmwasm = spawn_sync_task(
+	let sync_all_tickets_status_from_cosmwasm = spawn_named_sync_task(
+		"sync_all_tickets_status_from_cosmwasm_route",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { cosmwasm::sync_all_tickets_status_from_cosmwasm_route(&db_conn).await },
 	);
 
-	// let sync_all_tickets_status_from_ton = spawn_sync_task(
+	// let sync_all_tickets_status_from_ton = spawn_named_sync_task(
+	// 	"sync_all_tickets_status_from_ton_route",
 	// 	db_conn.clone(),
 	// 	TICKET_SYNC_INTERVAL,
 	// 	|db_conn| async move { ton::sync_all_tickets_status_from_ton_route(&db_conn).await },
 	// );
 
-	let update_sender_tickets_from_hub = spawn_sync_task(
+	let update_sender_tickets_from_hub = spawn_named_sync_task(
+		"update_sender",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { hub::update_sender(&db_conn).await },
 	);
 
-	let update_mint_tickets_from_btc = spawn_sync_task(
+	let update_mint_tickets_from_btc = spawn_named_sync_task(
+		"update_mint_tickets",
 		db_conn.clone(),
 		TICKET_SYNC_INTERVAL,
 		|db_conn| async move { bitcoin::update_mint_tickets(&db_conn).await },
 	);
 
-	let update_deleted_mint_tickets_from_btc = spawn_sync_task(
+	let update_deleted_mint_tickets_from_btc = spawn_named_sync_task(
+		"update_deleted_mint_tickets",
 		db_conn.clone(),
 		UPDATE_DELETED_MINT_TICKET_SYNC_INTERVAL,
 		|db_conn| async move { bitcoin::update_deleted_mint_tickets(&db_conn).await },
 	);
 
-	let update_total_volumes_from_hub = spawn_sync_task(
+	let update_total_volumes_from_hub = spawn_named_sync_task(
+		"update_volume",
 		db_conn.clone(),
 		TOKEN_VOLUME_SYNC_INTERVAL,
 		|db_conn| async move { hub::update_volume(&db_conn).await },
 	);
 
-	let update_sync_bridge_fee_log_hub = spawn_sync_task(
+	let update_sync_bridge_fee_log_hub = spawn_named_sync_task(
+		"sync_bridge_fee_log",
 		db_conn.clone(),
 		FEE_LOG_SYNC_INTERVAL,
 		|db_conn| async move { hub::sync_bridge_fee_log(&db_conn).await },

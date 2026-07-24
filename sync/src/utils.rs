@@ -11,9 +11,15 @@ use ic_agent::identity::Secp256k1Identity;
 use ic_agent::{agent::http_transport::ReqwestTransport, export::Principal, Agent, Identity};
 use log::info;
 use sea_orm::{ConnectOptions, DatabaseConnection};
-use std::sync::Arc;
+use std::sync::{
+	atomic::{AtomicBool, Ordering},
+	Arc,
+};
 use std::time::Duration;
 use std::{error::Error, future::Future};
+
+const DECOMMISSIONED_CANISTER_IDS: &[&str] = &["ystyg-kaaaa-aaaar-qaieq-cai"];
+static DECOMMISSIONED_CANISTER_SKIP_LOGGED: AtomicBool = AtomicBool::new(false);
 
 pub async fn create_agent(identity: impl Identity + 'static) -> Result<Agent, String> {
 	let network = std::env::var("DFX_NETWORK")
@@ -58,16 +64,27 @@ where
 	R: Future<Output = Result<(), Box<dyn Error>>>,
 	F: FnOnce(Agent, Principal) -> R,
 {
-	with_agent(|agent| async move {
-		let canister_id = create_omnity_canister(canister).await?;
-		f(agent, canister_id).await
-	})
-	.await
+	let canister_id = create_omnity_canister(canister).await?;
+	if is_decommissioned_canister(&canister_id) {
+		if !DECOMMISSIONED_CANISTER_SKIP_LOGGED.swap(true, Ordering::Relaxed) {
+			info!(
+				"skipping decommissioned canister: env={}, canister_id={}",
+				canister, canister_id
+			);
+		}
+		return Ok(());
+	}
+
+	with_agent(|agent| async move { f(agent, canister_id).await }).await
 }
 
 pub async fn create_omnity_canister(canister: &str) -> Result<Principal, Box<dyn Error>> {
 	let canister_id = std::env::var(canister)?;
 	Ok(Principal::from_text(canister_id)?)
+}
+
+pub(crate) fn is_decommissioned_canister(canister_id: &Principal) -> bool {
+	DECOMMISSIONED_CANISTER_IDS.contains(&canister_id.to_text().as_str())
 }
 
 pub struct Database {
@@ -243,6 +260,19 @@ pub enum Arg {
 	TokId(String),
 }
 
+pub(crate) fn canister_query_error(
+	canister_id: &Principal,
+	method: &str,
+	error: impl std::fmt::Display,
+) -> anyhow::Error {
+	anyhow!(
+		"canister query failed: canister_id={}, method={}: {}",
+		canister_id,
+		method,
+		error
+	)
+}
+
 impl Arg {
 	pub async fn query_method(
 		self,
@@ -273,7 +303,8 @@ impl Arg {
 			.query(&canister_id, method)
 			.with_arg(encoded_args)
 			.call()
-			.await?;
+			.await
+			.map_err(|error| canister_query_error(&canister_id, method, error))?;
 
 		match re_type {
 			"u64" => {
@@ -373,5 +404,38 @@ impl Arg {
 				return Ok(ReturnType::Non(()));
 			}
 		};
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn canister_query_error_includes_method_canister_and_source_error() {
+		let canister_id =
+			Principal::from_text("7rvjr-3qaaa-aaaar-qaeyq-cai").expect("valid canister id");
+		let error: Box<dyn Error> = canister_query_error(
+			&canister_id,
+			"query_etching_canister_by_runes",
+			"instruction limit exceeded, error code Some(\"IC0522\")",
+		)
+		.into();
+		let displayed = error.to_string();
+
+		assert!(displayed.contains("7rvjr-3qaaa-aaaar-qaeyq-cai"));
+		assert!(displayed.contains("method=query_etching_canister_by_runes"));
+		assert!(displayed.contains("IC0522"));
+	}
+
+	#[test]
+	fn only_the_decommissioned_canister_is_skipped() {
+		let decommissioned =
+			Principal::from_text("ystyg-kaaaa-aaaar-qaieq-cai").expect("valid canister id");
+		let active =
+			Principal::from_text("7rvjr-3qaaa-aaaar-qaeyq-cai").expect("valid canister id");
+
+		assert!(is_decommissioned_canister(&decommissioned));
+		assert!(!is_decommissioned_canister(&active));
 	}
 }
